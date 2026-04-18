@@ -1,0 +1,581 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .phone-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem 0;
+  }
+
+  .phone {
+    width: 320px;
+    background: #f5f0e8;
+    border-radius: 40px;
+    border: 2px solid #d4c9b5;
+    overflow: hidden;
+  }
+
+  .notch-bar {
+    height: 36px;
+    background: #f5f0e8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    position: relative;
+  }
+
+  .notch-bar .time {
+    font-family: -apple-system, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #3d2e1e;
+  }
+
+  .notch-bar .icons {
+    font-size: 11px;
+    color: #3d2e1e;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .pill-notch {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 24px;
+    background: #f5f0e8;
+    border-radius: 12px;
+    top: 6px;
+    border: 1.5px solid #d4c9b5;
+  }
+
+  .map-container {
+    position: relative;
+    width: 320px;
+    height: 420px;
+    background: #ede8dc;
+    overflow: hidden;
+  }
+
+  .map-block {
+    position: absolute;
+    background: #e4ddd0;
+    border: 1px solid #d8d0c2;
+  }
+
+  .map-road {
+    position: absolute;
+    background: #f0ebe0;
+  }
+
+  /* Radar rings — teal family */
+  .radar-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
+  }
+
+  .ring1 { width: 80px; height: 80px; border-color: rgba(74, 142, 130, 0.35); }
+  .ring2 { width: 160px; height: 160px; border-color: rgba(74, 142, 130, 0.22); }
+  .ring3 { width: 260px; height: 260px; border-color: rgba(74, 142, 130, 0.13); }
+  .ring4 { width: 380px; height: 380px; border-color: rgba(74, 142, 130, 0.06); }
+
+  .radar-sweep {
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    left: 50%;
+    top: 50%;
+    transform-origin: 0% 0%;
+    background: conic-gradient(from 0deg, transparent 70%, rgba(74, 142, 130, 0.18) 100%);
+    animation: sweep 4s linear infinite;
+    border-radius: 0 100% 0 0;
+  }
+
+  @keyframes sweep {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .user-dot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+  }
+
+  .user-pulse {
+    width: 14px;
+    height: 14px;
+    background: #4a8e82;
+    border-radius: 50%;
+    position: relative;
+  }
+
+  .user-pulse::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid rgba(74, 142, 130, 0.5);
+    animation: ping 2s ease-out infinite;
+  }
+
+  .user-pulse::after {
+    content: '';
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    border: 1px solid rgba(74, 142, 130, 0.2);
+    animation: ping 2s ease-out 0.5s infinite;
+  }
+
+  @keyframes ping {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+
+  .dot {
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 15;
+    transition: transform 0.2s;
+  }
+
+  .dot:hover { transform: translate(-50%, -50%) scale(1.15); }
+
+  .dot-person {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: -apple-system, sans-serif;
+    letter-spacing: 0.02em;
+  }
+
+  /* Earth tone people colors */
+  .person-teal   { background: #d4eae7; border-color: #4a8e82; color: #2d5f58; }
+  .person-brown  { background: #e8ddd2; border-color: #8b6047; color: #5c3d26; }
+  .person-rust   { background: #f0ddd5; border-color: #b85c38; color: #7a3520; }
+  .person-olive  { background: #e2e8d4; border-color: #7a8c52; color: #4e5c2e; }
+
+  .dot-place {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    border: 1.5px solid;
+  }
+
+  /* Promo = warm amber/brown */
+  .place-amber { background: #f2e8d4; border-color: #c49a3c; }
+  /* Event = rust/terracotta */
+  .place-rust   { background: #f0ddd5; border-color: #b85c38; }
+
+  .dot-icon { font-size: 13px; line-height: 1; }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute;
+    background: #faf7f2;
+    border: 1px solid #d4c9b5;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-family: -apple-system, sans-serif;
+    z-index: 30;
+    pointer-events: none;
+    display: none;
+    min-width: 115px;
+  }
+
+  .tooltip.show { display: block; }
+
+  .tooltip-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #3d2e1e;
+    margin-bottom: 2px;
+  }
+
+  .tooltip-sub {
+    font-size: 10px;
+    color: #8a7a68;
+  }
+
+  .tooltip-badge {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  /* HUD */
+  .hud-bar {
+    background: #f5f0e8;
+    border-top: 1px solid #d4c9b5;
+    padding: 12px 16px 8px;
+  }
+
+  .hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .hud-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #3d2e1e;
+    letter-spacing: 0.12em;
+    font-style: italic;
+  }
+
+  .mode-badge {
+    font-family: -apple-system, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: #2d5f58;
+    background: #d4eae7;
+    border: 1px solid #a0c8c3;
+    border-radius: 20px;
+    padding: 3px 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .hud-stats {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .stat-pill {
+    flex: 1;
+    background: #ede8dc;
+    border: 1px solid #d4c9b5;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-family: -apple-system, sans-serif;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 16px;
+    font-weight: 700;
+    color: #3d2e1e;
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    color: #9a8a78;
+    display: block;
+    margin-top: 1px;
+  }
+
+  .stat-num.teal   { color: #4a8e82; }
+  .stat-num.amber  { color: #c49a3c; }
+  .stat-num.rust   { color: #b85c38; }
+
+  .legend {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: -apple-system, sans-serif;
+    font-size: 9px;
+    color: #9a8a78;
+  }
+
+  .legend-dot    { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-square { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* Vibe signal meter */
+  .vibr-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 20;
+    background: rgba(245, 240, 232, 0.88);
+    border: 1px solid #d4c9b5;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-family: -apple-system, sans-serif;
+  }
+
+  .vibr-label {
+    font-size: 8px;
+    color: #9a8a78;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .vibr-bars { display: flex; gap: 2px; align-items: flex-end; }
+
+  .vibr-bar-seg {
+    width: 4px;
+    border-radius: 1px;
+    animation: barPulse 1.2s ease-in-out infinite;
+  }
+
+  .vibr-bar-seg:nth-child(1) { height: 6px;  background: #4a8e82; animation-delay: 0s; }
+  .vibr-bar-seg:nth-child(2) { height: 10px; background: #4a8e82; animation-delay: 0.1s; }
+  .vibr-bar-seg:nth-child(3) { height: 14px; background: #c49a3c; animation-delay: 0.2s; }
+  .vibr-bar-seg:nth-child(4) { height: 10px; background: #c49a3c; animation-delay: 0.1s; }
+  .vibr-bar-seg:nth-child(5) { height: 6px;  background: #b85c38; animation-delay: 0s; }
+
+  @keyframes barPulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+  }
+
+  .ring-label {
+    position: absolute;
+    font-family: -apple-system, sans-serif;
+    font-size: 8px;
+    color: rgba(74, 142, 130, 0.45);
+    z-index: 5;
+  }
+
+  /* Nav bar */
+  .nav-bar {
+    background: #f5f0e8;
+    border-top: 1px solid #d4c9b5;
+    display: flex;
+    padding: 6px 0 10px;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+  }
+
+  .nav-icon { font-size: 18px; opacity: 0.28; }
+  .nav-icon.active { opacity: 1; }
+
+  .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: #4a8e82; opacity: 0; }
+  .nav-dot.active { opacity: 1; }
+</style>
+
+<div class="phone-wrap">
+  <div class="phone">
+    <!-- Status bar -->
+    <div class="notch-bar">
+      <span class="time">9:41</span>
+      <div class="pill-notch"></div>
+      <div class="icons"><span>●●●</span><span>WiFi</span><span>88%</span></div>
+    </div>
+
+    <!-- Map -->
+    <div class="map-container" id="mapContainer">
+      <!-- City blocks -->
+      <div class="map-block" style="left:0;top:0;width:90px;height:70px;"></div>
+      <div class="map-block" style="left:100px;top:0;width:70px;height:50px;"></div>
+      <div class="map-block" style="left:180px;top:0;width:140px;height:80px;"></div>
+      <div class="map-block" style="left:0;top:80px;width:50px;height:90px;"></div>
+      <div class="map-block" style="left:60px;top:60px;width:80px;height:70px;"></div>
+      <div class="map-block" style="left:200px;top:90px;width:120px;height:60px;"></div>
+      <div class="map-block" style="left:0;top:180px;width:100px;height:60px;"></div>
+      <div class="map-block" style="left:115px;top:140px;width:60px;height:50px;"></div>
+      <div class="map-block" style="left:220px;top:160px;width:100px;height:70px;"></div>
+      <div class="map-block" style="left:0;top:260px;width:70px;height:80px;"></div>
+      <div class="map-block" style="left:80px;top:230px;width:80px;height:60px;"></div>
+      <div class="map-block" style="left:180px;top:240px;width:140px;height:90px;"></div>
+      <div class="map-block" style="left:20px;top:350px;width:120px;height:70px;"></div>
+      <div class="map-block" style="left:180px;top:340px;width:140px;height:80px;"></div>
+
+      <!-- Roads -->
+      <div class="map-road" style="left:0;top:70px;width:320px;height:8px;opacity:0.5;"></div>
+      <div class="map-road" style="left:0;top:170px;width:320px;height:8px;opacity:0.5;"></div>
+      <div class="map-road" style="left:0;top:250px;width:320px;height:8px;opacity:0.5;"></div>
+      <div class="map-road" style="left:0;top:340px;width:320px;height:8px;opacity:0.5;"></div>
+      <div class="map-road" style="left:90px;top:0;width:8px;height:420px;opacity:0.5;"></div>
+      <div class="map-road" style="left:178px;top:0;width:8px;height:420px;opacity:0.5;"></div>
+      <div class="map-road" style="left:278px;top:0;width:8px;height:420px;opacity:0.5;"></div>
+
+      <!-- Radar rings -->
+      <div class="radar-ring ring1"></div>
+      <div class="radar-ring ring2"></div>
+      <div class="radar-ring ring3"></div>
+      <div class="radar-ring ring4"></div>
+
+      <!-- Ring labels -->
+      <div class="ring-label" style="left:calc(50% + 44px);top:calc(50% - 6px);">50m</div>
+      <div class="ring-label" style="left:calc(50% + 84px);top:calc(50% - 6px);">100m</div>
+      <div class="ring-label" style="left:calc(50% + 134px);top:calc(50% - 6px);">250m</div>
+
+      <!-- Sweep -->
+      <div class="radar-sweep"></div>
+
+      <!-- People -->
+      <div class="dot" style="left:58%;top:40%;" onclick="showTip('tip-alex',this)">
+        <div style="position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(74,142,130,0.15);top:-6px;left:-6px;animation:ping 2.5s ease-out infinite;pointer-events:none;"></div>
+        <div class="dot-person person-teal">AJ</div>
+      </div>
+      <div id="tip-alex" class="tooltip" style="left:62%;top:28%;">
+        <div class="tooltip-name">Alex J.</div>
+        <div class="tooltip-sub">Startup · Design · Coffee</div>
+        <div class="tooltip-badge" style="background:#d4eae7;color:#2d5f58;">~30m away</div>
+      </div>
+
+      <div class="dot" style="left:35%;top:28%;" onclick="showTip('tip-mia',this)">
+        <div class="dot-person person-brown">MK</div>
+      </div>
+      <div id="tip-mia" class="tooltip" style="left:40%;top:16%;">
+        <div class="tooltip-name">Mia K.</div>
+        <div class="tooltip-sub">Music · Fitness · Art</div>
+        <div class="tooltip-badge" style="background:#e8ddd2;color:#5c3d26;">~90m away</div>
+      </div>
+
+      <div class="dot" style="left:78%;top:65%;" onclick="showTip('tip-sam',this)">
+        <div class="dot-person person-rust">SR</div>
+      </div>
+      <div id="tip-sam" class="tooltip" style="left:40%;top:56%;">
+        <div class="tooltip-name">Sam R.</div>
+        <div class="tooltip-sub">Tech · Travel · Food</div>
+        <div class="tooltip-badge" style="background:#f0ddd5;color:#7a3520;">~180m away</div>
+      </div>
+
+      <div class="dot" style="left:22%;top:62%;" onclick="showTip('tip-jay',this)">
+        <div class="dot-person person-olive">JD</div>
+      </div>
+      <div id="tip-jay" class="tooltip" style="left:26%;top:50%;">
+        <div class="tooltip-name">Jay D.</div>
+        <div class="tooltip-sub">Photography · Gaming</div>
+        <div class="tooltip-badge" style="background:#e2e8d4;color:#4e5c2e;">~140m away</div>
+      </div>
+
+      <!-- Establishments (amber) -->
+      <div class="dot" style="left:70%;top:28%;" onclick="showTip('tip-cafe',this)">
+        <div class="dot-place place-amber"><span class="dot-icon">☕</span></div>
+      </div>
+      <div id="tip-cafe" class="tooltip" style="left:36%;top:18%;">
+        <div class="tooltip-name">Sip & Co.</div>
+        <div class="tooltip-sub">20% off cold brew</div>
+        <div class="tooltip-badge" style="background:#f2e8d4;color:#8a6020;">Promo · 60m</div>
+      </div>
+
+      <div class="dot" style="left:55%;top:72%;" onclick="showTip('tip-bar',this)">
+        <div class="dot-place place-amber"><span class="dot-icon">🍻</span></div>
+      </div>
+      <div id="tip-bar" class="tooltip" style="left:22%;top:63%;">
+        <div class="tooltip-name">Draft House</div>
+        <div class="tooltip-sub">Happy hour · 2-for-1</div>
+        <div class="tooltip-badge" style="background:#f2e8d4;color:#8a6020;">Promo · 150m</div>
+      </div>
+
+      <!-- Event (rust/terracotta) -->
+      <div class="dot" style="left:25%;top:38%;" onclick="showTip('tip-event',this)">
+        <div class="dot-place place-rust"><span class="dot-icon">⚡</span></div>
+      </div>
+      <div id="tip-event" class="tooltip" style="left:30%;top:25%;">
+        <div class="tooltip-name">Startup Mixer</div>
+        <div class="tooltip-sub">Tonight · 7pm · 80 going</div>
+        <div class="tooltip-badge" style="background:#f0ddd5;color:#7a3520;">Event · 110m</div>
+      </div>
+
+      <!-- User dot -->
+      <div class="user-dot"><div class="user-pulse"></div></div>
+
+      <!-- Vibe signal -->
+      <div class="vibr-indicator">
+        <span class="vibr-label">Vibe signal</span>
+        <div class="vibr-bars">
+          <div class="vibr-bar-seg"></div>
+          <div class="vibr-bar-seg"></div>
+          <div class="vibr-bar-seg"></div>
+          <div class="vibr-bar-seg"></div>
+          <div class="vibr-bar-seg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div class="hud-bar">
+      <div class="hud-top">
+        <span class="hud-title">vibr8.me</span>
+        <span class="mode-badge">Networking</span>
+      </div>
+      <div class="hud-stats">
+        <div class="stat-pill">
+          <span class="stat-num teal">4</span>
+          <span class="stat-label">People nearby</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num amber">2</span>
+          <span class="stat-label">Promos active</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num rust">1</span>
+          <span class="stat-label">Events</span>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#4a8e82;"></div>People</div>
+        <div class="legend-item"><div class="legend-square" style="background:#c49a3c;border-radius:2px;"></div>Promos</div>
+        <div class="legend-item"><div class="legend-square" style="background:#b85c38;border-radius:2px;"></div>Events</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4a8e82;border:2px solid #4a8e82;"></div>You</div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <div class="nav-bar">
+      <div class="nav-item"><span class="nav-icon active" style="font-size:18px;color:#4a8e82;">◎</span><div class="nav-dot active"></div></div>
+      <div class="nav-item"><span class="nav-icon" style="font-size:18px;color:#8b6047;">♡</span><div class="nav-dot"></div></div>
+      <div class="nav-item"><span class="nav-icon" style="font-size:18px;color:#8b6047;">≡</span><div class="nav-dot"></div></div>
+      <div class="nav-item"><span class="nav-icon" style="font-size:18px;color:#8b6047;">○</span><div class="nav-dot"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let activeTip = null;
+  function showTip(tipId, dotEl) {
+    if (activeTip === tipId) {
+      document.getElementById(tipId).classList.remove('show');
+      activeTip = null;
+      return;
+    }
+    if (activeTip) document.getElementById(activeTip).classList.remove('show');
+    document.getElementById(tipId).classList.add('show');
+    activeTip = tipId;
+  }
+  document.getElementById('mapContainer').addEventListener('click', function(e) {
+    if (!e.target.closest('.dot') && activeTip) {
+      document.getElementById(activeTip).classList.remove('show');
+      activeTip = null;
+    }
+  });
+</script>

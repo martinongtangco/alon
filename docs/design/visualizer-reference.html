@@ -1,0 +1,508 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+.viz-shell {
+  width: 100%;
+  background: #1a1208;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  user-select: none;
+}
+
+canvas#viz {
+  display: block;
+  width: 100%;
+  height: 420px;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.viz-hud {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px 18px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(transparent, rgba(15,10,4,0.85));
+  pointer-events: none;
+}
+
+.viz-brand {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
+  color: rgba(205,185,140,0.7);
+  letter-spacing: 0.12em;
+}
+
+.mode-name {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(205,185,140,0.55);
+}
+
+.viz-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.tilt-hint {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  color: rgba(205,185,140,0.4);
+  letter-spacing: 0.08em;
+}
+
+.mode-dots {
+  display: flex;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.mode-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(205,185,140,0.2);
+}
+.mode-dot.active { background: rgba(205,185,140,0.8); }
+
+.tap-btn {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(205,185,140,0.08);
+  border: 1px solid rgba(205,185,140,0.2);
+  border-radius: 50px;
+  padding: 10px 22px;
+  font-family: -apple-system, sans-serif;
+  font-size: 11px;
+  color: rgba(205,185,140,0.5);
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  transition: opacity 0.6s;
+}
+</style>
+
+<h2 class="sr-only">vibr8.me interactive visualizer — move your mouse or touch the screen to control the animation</h2>
+
+<div class="viz-shell">
+  <canvas id="viz"></canvas>
+
+  <div class="viz-top">
+    <span class="tilt-hint">move to vibe</span>
+    <div class="mode-dots" id="modeDots"></div>
+  </div>
+
+  <div id="tapHint" class="tap-btn">wave it around</div>
+
+  <div class="viz-hud">
+    <span class="viz-brand">vibr8.me</span>
+    <span class="mode-name" id="modeName">Pulse</span>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('viz');
+const ctx = canvas.getContext('2d');
+const modeNameEl = document.getElementById('modeName');
+const tapHint = document.getElementById('tapHint');
+const dotsEl = document.getElementById('modeDots');
+
+const MODES = ['Pulse', 'Lava', 'Constellation', 'Fracture', 'Aurora'];
+const PALETTE = [
+  '#c49a3c', '#8b6047', '#4a8e82', '#b85c38',
+  '#7a8c52', '#d4a853', '#5c8a7a', '#c47840',
+  '#a0522d', '#6b8e6b', '#cd853f', '#4a7a6a'
+];
+
+let W, H, dpr;
+let tiltX = 0, tiltY = 0;
+let smoothX = 0, smoothY = 0;
+let currentMode = 0;
+let frame = 0;
+let hasInteracted = false;
+let modeTimer = 0;
+let particles = [];
+let lavaBlobs = [];
+let stars = [];
+let fractures = [];
+
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  W = rect.width;
+  H = rect.height;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+  initMode();
+}
+
+function buildDots() {
+  dotsEl.innerHTML = '';
+  MODES.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'mode-dot' + (i === currentMode ? ' active' : '');
+    dotsEl.appendChild(d);
+  });
+}
+
+function initMode() {
+  particles = [];
+  lavaBlobs = [];
+  stars = [];
+  fractures = [];
+
+  if (currentMode === 0) {
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: W/2 + (Math.random()-0.5)*W*0.6,
+        y: H/2 + (Math.random()-0.5)*H*0.6,
+        r: Math.random()*3+1,
+        c: PALETTE[Math.floor(Math.random()*PALETTE.length)],
+        angle: Math.random()*Math.PI*2,
+        speed: Math.random()*0.4+0.1,
+        life: Math.random()*100
+      });
+    }
+  }
+  if (currentMode === 1) {
+    for (let i = 0; i < 12; i++) {
+      lavaBlobs.push({
+        x: Math.random()*W, y: Math.random()*H,
+        vx: (Math.random()-0.5)*0.6, vy: (Math.random()-0.5)*0.6,
+        r: Math.random()*55+30,
+        c: PALETTE[Math.floor(Math.random()*PALETTE.length)],
+        phase: Math.random()*Math.PI*2
+      });
+    }
+  }
+  if (currentMode === 2) {
+    for (let i = 0; i < 100; i++) {
+      stars.push({
+        x: Math.random()*W, y: Math.random()*H,
+        r: Math.random()*2+0.5,
+        c: PALETTE[Math.floor(Math.random()*PALETTE.length)],
+        twinkle: Math.random()*Math.PI*2,
+        speed: Math.random()*0.02+0.005
+      });
+    }
+  }
+  if (currentMode === 3) {
+    for (let i = 0; i < 18; i++) {
+      fractures.push({
+        x1: Math.random()*W, y1: Math.random()*H,
+        x2: Math.random()*W, y2: Math.random()*H,
+        c: PALETTE[Math.floor(Math.random()*PALETTE.length)],
+        life: Math.random()*60, maxLife: 60+Math.random()*80,
+        w: Math.random()*2+0.5
+      });
+    }
+  }
+}
+
+function nextMode() {
+  currentMode = (currentMode + 1) % MODES.length;
+  modeNameEl.textContent = MODES[currentMode];
+  buildDots();
+  initMode();
+}
+
+buildDots();
+
+function drawPulse() {
+  ctx.fillStyle = 'rgba(15,10,4,0.18)';
+  ctx.fillRect(0,0,W,H);
+
+  const cx = W/2, cy = H/2;
+  const dist = Math.sqrt(smoothX*smoothX + smoothY*smoothY);
+  const rings = 7;
+
+  for (let r = 0; r < rings; r++) {
+    const phase = frame*0.018 + r*0.45;
+    const rad = (r+1) * (Math.min(W,H)*0.075) + Math.sin(phase)*22*dist + dist*30;
+    const alpha = (1 - r/rings) * 0.55;
+    const c = PALETTE[(r + Math.floor(frame/40)) % PALETTE.length];
+
+    ctx.beginPath();
+    const pts = 6 + r*2;
+    for (let i = 0; i <= pts; i++) {
+      const a = (i/pts)*Math.PI*2 + frame*0.004*(r%2?1:-1);
+      const wobble = 1 + 0.18*Math.sin(a*3 + phase) + 0.1*dist;
+      const rx2 = rad*wobble + smoothX*18*(r/rings);
+      const ry2 = rad*wobble*0.85 + smoothY*18*(r/rings);
+      const px = cx + Math.cos(a)*rx2;
+      const py = cy + Math.sin(a)*ry2;
+      i === 0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = c + Math.floor(alpha*255).toString(16).padStart(2,'0');
+    ctx.lineWidth = 1.5 - r*0.1;
+    ctx.stroke();
+  }
+
+  particles.forEach(p => {
+    p.life += p.speed;
+    const pulse = Math.sin(p.life*0.08 + frame*0.02)*0.5+0.5;
+    p.x += Math.cos(p.angle + smoothX*2)*0.8 + smoothX*0.4;
+    p.y += Math.sin(p.angle + smoothY*2)*0.8 + smoothY*0.4;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r*(0.5+pulse*0.8), 0, Math.PI*2);
+    ctx.fillStyle = p.c + Math.floor(pulse*180+30).toString(16).padStart(2,'0');
+    ctx.fill();
+  });
+}
+
+function drawLava() {
+  ctx.fillStyle = 'rgba(12,8,3,0.22)';
+  ctx.fillRect(0,0,W,H);
+
+  lavaBlobs.forEach((b, i) => {
+    b.phase += 0.012;
+    b.x += b.vx + smoothX*1.2;
+    b.y += b.vy + smoothY*1.2;
+    if (b.x < -b.r) b.x = W+b.r;
+    if (b.x > W+b.r) b.x = -b.r;
+    if (b.y < -b.r) b.y = H+b.r;
+    if (b.y > H+b.r) b.y = -b.r;
+
+    const wobR = b.r + Math.sin(b.phase)*12 + Math.abs(smoothX+smoothY)*15;
+
+    ctx.beginPath();
+    const segs = 14;
+    for (let j = 0; j <= segs; j++) {
+      const a = (j/segs)*Math.PI*2;
+      const nr = wobR*(1 + 0.25*Math.sin(a*3+b.phase) + 0.15*Math.sin(a*5-b.phase*0.7));
+      const px = b.x + Math.cos(a)*nr;
+      const py = b.y + Math.sin(a)*nr*0.75;
+      j === 0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = b.c + '55';
+    ctx.fill();
+    ctx.strokeStyle = b.c + 'aa';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  lavaBlobs.forEach((a, i) => {
+    lavaBlobs.forEach((b, j) => {
+      if (j <= i) return;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if (dist < 160) {
+        const alpha = Math.floor((1-dist/160)*120).toString(16).padStart(2,'0');
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.quadraticCurveTo((a.x+b.x)/2, (a.y+b.y)/2 + Math.sin(frame*0.03)*20, b.x, b.y);
+        ctx.strokeStyle = a.c + alpha;
+        ctx.lineWidth = (1-dist/160)*2.5;
+        ctx.stroke();
+      }
+    });
+  });
+}
+
+function drawConstellation() {
+  ctx.fillStyle = 'rgba(10,8,3,0.14)';
+  ctx.fillRect(0,0,W,H);
+
+  const cx = W/2 + smoothX*40, cy = H/2 + smoothY*40;
+
+  stars.forEach(s => {
+    s.twinkle += s.speed + Math.abs(smoothX+smoothY)*0.04;
+    const bright = (Math.sin(s.twinkle)*0.5+0.5);
+    const sx = s.x + smoothX * (s.x/W - 0.5)*30;
+    const sy = s.y + smoothY * (s.y/H - 0.5)*30;
+
+    ctx.beginPath();
+    ctx.arc(sx, sy, s.r*(0.4+bright*0.9), 0, Math.PI*2);
+    ctx.fillStyle = s.c + Math.floor(bright*220+35).toString(16).padStart(2,'0');
+    ctx.fill();
+  });
+
+  const visible = stars.filter((_,i) => i < 50);
+  visible.forEach((a, i) => {
+    visible.forEach((b, j) => {
+      if (j <= i) return;
+      const ax = a.x + smoothX*(a.x/W-0.5)*30;
+      const ay = a.y + smoothY*(a.y/H-0.5)*30;
+      const bx = b.x + smoothX*(b.x/W-0.5)*30;
+      const by = b.y + smoothY*(b.y/H-0.5)*30;
+      const dist = Math.sqrt((bx-ax)**2+(by-ay)**2);
+      if (dist < 100) {
+        const alpha = Math.floor((1-dist/100)*70).toString(16).padStart(2,'0');
+        ctx.beginPath();
+        ctx.moveTo(ax,ay); ctx.lineTo(bx,by);
+        ctx.strokeStyle = PALETTE[i%PALETTE.length] + alpha;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    });
+  });
+
+  [1,2,3].forEach(ring => {
+    const rad = ring * Math.min(W,H)*0.12 + Math.sin(frame*0.015+ring)*15*(1+Math.abs(smoothX));
+    ctx.beginPath();
+    ctx.arc(cx, cy, rad, 0, Math.PI*2);
+    ctx.strokeStyle = PALETTE[ring*2] + '30';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  });
+}
+
+function drawFracture() {
+  ctx.fillStyle = 'rgba(10,7,2,0.25)';
+  ctx.fillRect(0,0,W,H);
+
+  const energy = Math.sqrt(smoothX*smoothX + smoothY*smoothY);
+
+  if (Math.random() < 0.12 + energy*0.3) {
+    const sx = Math.random()*W, sy = Math.random()*H;
+    const len = 60 + Math.random()*120 + energy*80;
+    const angle = Math.random()*Math.PI*2;
+    const segs = 3 + Math.floor(Math.random()*4);
+    fractures.push({
+      x1: sx, y1: sy,
+      x2: sx + Math.cos(angle)*len,
+      y2: sy + Math.sin(angle)*len,
+      segs,
+      c: PALETTE[Math.floor(Math.random()*PALETTE.length)],
+      life: 0, maxLife: 30 + Math.random()*50,
+      w: Math.random()*2.5+0.5
+    });
+  }
+
+  fractures = fractures.filter(f => f.life < f.maxLife);
+  fractures.forEach(f => {
+    f.life++;
+    const t = f.life/f.maxLife;
+    const alpha = Math.floor(Math.sin(t*Math.PI)*200).toString(16).padStart(2,'0');
+
+    ctx.beginPath();
+    ctx.moveTo(f.x1, f.y1);
+    const mx = (f.x1+f.x2)/2 + (Math.random()-0.5)*30;
+    const my = (f.y1+f.y2)/2 + (Math.random()-0.5)*30;
+    ctx.quadraticCurveTo(mx, my, f.x2, f.y2);
+    ctx.strokeStyle = f.c + alpha;
+    ctx.lineWidth = f.w*(1-t*0.5);
+    ctx.stroke();
+
+    if (Math.random() < 0.15 + energy*0.2) {
+      const tx = f.x1 + (f.x2-f.x1)*Math.random();
+      const ty = f.y1 + (f.y2-f.y1)*Math.random();
+      ctx.beginPath();
+      ctx.arc(tx, ty, Math.random()*3+1, 0, Math.PI*2);
+      ctx.fillStyle = f.c + alpha;
+      ctx.fill();
+    }
+  });
+}
+
+function drawAurora() {
+  ctx.fillStyle = 'rgba(8,6,2,0.12)';
+  ctx.fillRect(0,0,W,H);
+
+  const bands = 5;
+  for (let b = 0; b < bands; b++) {
+    const baseY = H * (0.15 + b*0.16) + smoothY*35*(b%2?1:-1);
+    const c = PALETTE[(b*3 + Math.floor(frame/60)) % PALETTE.length];
+    const pts = 24;
+
+    ctx.beginPath();
+    for (let i = 0; i <= pts; i++) {
+      const x = (i/pts)*W;
+      const freq1 = frame*0.006 + b*0.8;
+      const freq2 = frame*0.009 + b*1.2;
+      const amp = 28 + Math.abs(smoothX)*40 + Math.sin(frame*0.02+b)*10;
+      const y = baseY
+        + Math.sin(i*0.4 + freq1)*amp
+        + Math.sin(i*0.7 - freq2)*amp*0.5
+        + smoothX*20*Math.sin(i*0.3);
+      i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+
+    for (let i = pts; i >= 0; i--) {
+      const x = (i/pts)*W;
+      const freq1 = frame*0.006 + b*0.8;
+      const amp = 28 + Math.abs(smoothX)*40;
+      const y = baseY + 30 + Math.sin(i*0.4+freq1+1)*amp*0.6 + smoothX*15;
+      ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = c + '28';
+    ctx.fill();
+    ctx.strokeStyle = c + '60';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+function draw() {
+  if (currentMode === 0) drawPulse();
+  else if (currentMode === 1) drawLava();
+  else if (currentMode === 2) drawConstellation();
+  else if (currentMode === 3) drawFracture();
+  else if (currentMode === 4) drawAurora();
+}
+
+function loop() {
+  smoothX += (tiltX - smoothX) * 0.06;
+  smoothY += (tiltY - smoothY) * 0.06;
+
+  modeTimer++;
+  if (modeTimer > 380) { modeTimer = 0; nextMode(); }
+
+  draw();
+  frame++;
+  requestAnimationFrame(loop);
+}
+
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  tiltX = ((e.clientX - r.left) / r.width - 0.5) * 2;
+  tiltY = ((e.clientY - r.top) / r.height - 0.5) * 2;
+  if (!hasInteracted) { tapHint.style.opacity = '0'; hasInteracted = true; }
+});
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  const t = e.touches[0];
+  tiltX = ((t.clientX - r.left) / r.width - 0.5) * 2;
+  tiltY = ((t.clientY - r.top) / r.height - 0.5) * 2;
+  if (!hasInteracted) { tapHint.style.opacity = '0'; hasInteracted = true; }
+}, { passive: false });
+
+canvas.addEventListener('click', () => {
+  modeTimer = 0;
+  nextMode();
+});
+
+if (typeof DeviceMotionEvent !== 'undefined') {
+  window.addEventListener('devicemotion', e => {
+    const a = e.accelerationIncludingGravity;
+    if (!a) return;
+    tiltX = Math.max(-1, Math.min(1, (a.x || 0) / 9));
+    tiltY = Math.max(-1, Math.min(1, (a.y || 0) / 9));
+    if (!hasInteracted) { tapHint.style.opacity = '0'; hasInteracted = true; }
+  });
+}
+
+window.addEventListener('resize', resize);
+resize();
+loop();
+</script>
