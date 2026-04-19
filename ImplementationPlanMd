@@ -1,0 +1,222 @@
+# vibr8.me Implementation Plan
+
+## Overview
+This document outlines the implementation strategy for vibr8.me, following the architectural guidelines and requirements specified in the app spec. The app is built with React Native for iOS and Android platforms, focusing on passive proximity detection using BLE while maintaining strict battery efficiency and privacy standards.
+
+## Architecture Components
+
+### 1. Core Services Structure
+
+The mobile application will implement the following core services as defined in the architecture overview:
+
+#### BLE Service (`app/src/services/ble`)
+- **Purpose**: Handle scanning, advertising, and proximity token broadcast
+- **Key Functions**:
+  - Start/stop BLE scanning for nearby devices
+  - Advertise anonymized proximity tokens
+  - Handle BLE connection events
+  - Manage BLE state transitions (background/foreground)
+  
+#### Location Service (`app/src/services/location`)
+- **Purpose**: Handle location-based features with minimal battery impact
+- **Key Functions**:
+  - Implement significant change mode for iOS 
+  - Use balanced power priority for Android
+  - Manage geofencing for promo triggers
+  - Handle background location updates appropriately
+  
+#### Haptics Service (`app/src/services/haptics`)
+- **Purpose**: Generate vibration patterns based on proximity and compatibility
+- **Key Functions**:
+  - Implement named vibration patterns (faint_pulse, steady_rhythm, strong_buzz, buzz_me)
+  - Handle platform-specific haptic APIs (CoreHaptics for iOS, VibrationEffect for Android)
+  - Manage vibration intensity based on distance and compatibility scores
+  
+#### Proximity Service (`app/src/services/proximity`)
+- **Purpose**: Combine BLE + location signals into meaningful proximity events
+- **Key Functions**:
+  - Process BLE scan results and convert to proximity events
+  - Calculate compatibility scores between users
+  - Determine appropriate haptic patterns based on distance + compatibility
+  - Cache proximity data for offline scenarios
+  
+#### API Service (`app/src/services/api`)
+- **Purpose**: Backend communication layer
+- **Key Functions**:
+  - Handle authentication and token management
+  - Implement retry logic for network requests
+  - Manage API calls for profile, matching, buzz operations, etc.
+  - Handle error boundaries and offline behavior
+
+### 2. State Management
+
+Based on the spec's passive/ambient model, we need to implement a state management solution:
+
+#### Decision: Zustand 
+- **Rationale**: Lightweight, easy to use, fits well with React Native's component model
+- **Implementation**:
+  - Global store for user profile, settings, and active connections
+  - Local stores for screen-specific data (radar, matches, feed)
+  - Middleware for persistence and debugging
+
+### 3. Platform-Specific Implementation
+
+#### iOS Implementation
+- Use CoreBluetooth for BLE operations
+- Use CoreLocation with significant location change mode 
+- Use CoreHaptics for advanced haptic feedback
+- Implement background modes in Info.plist
+
+#### Android Implementation  
+- Use BluetoothLeScanner for BLE operations
+- Use FusedLocationProviderClient for location services
+- Use VibrationEffect for haptic feedback
+- Configure background services and permissions
+
+### 4. Key Features Implementation Plan
+
+#### A. Proximity Vibration Engine
+1. **BLE Scanning**: Implement periodic scanning with low power consumption
+2. **Distance Calculation**: Convert BLE signal strength to approximate distances (50m, 100m, 250m zones)
+3. **Compatibility Scoring**: Compare user Vibes to calculate compatibility weights
+4. **Vibration Patterns**: Implement 4 distinct patterns based on proximity + compatibility
+
+#### B. Buzz Me Feature
+1. **Proximity Validation**: Ensure buzz is only possible within ~100m range
+2. **Rate Limiting**: Implement backend validation for max 3 buzzes per person per day
+3. **Notification System**: Send notification to recipient's device
+4. **Visualizer Integration**: Support mutual Visualizer activation
+
+#### C. Ghost Mode
+1. **Complete Suspension**: Halt all BLE scanning, location monitoring, and haptic notifications
+2. **State Persistence**: Maintain user state even when ghost mode is active
+3. **UI Indication**: Clearly indicate ghost mode status to users
+
+#### D. Radar Map Implementation
+1. **Background Rendering**: UI only refreshes when user opens the app
+2. **Data Aggregation**: Collect proximity data from services and render on map
+3. **HUD Components**: Implement Vibe Signal Meter, stat pills, mode badge
+4. **Interaction Handling**: Card displays for nearby users
+
+#### E. Visualizer Feature
+1. **Accelerometer Integration**: Use device motion to drive visual patterns
+2. **Mode Cycling**: Implement 5 distinct visual modes with auto-cycle
+3. **Performance Optimization**: Ensure foreground-only operation for battery efficiency
+4. **User Controls**: Tap and shake interactions for mode switching
+
+### 5. Privacy & Security Implementation
+
+#### Anonymized Proximity Tokens
+1. **Token Generation**: Create rotating tokens using secure randomization
+2. **Rotation Schedule**: Define cadence for token rotation (security vs UX balance)
+3. **Broadcast Protection**: Ensure tokens never include user identifiers
+4. **Storage Security**: Securely store tokens on device
+
+#### Data Minimization
+1. **Location Handling**: Only use approximate zones, no raw coordinates
+2. **Profile Sharing**: Implement mutual opt-in for reveals 
+3. **Network Usage**: Minimize data transfer to backend services
+
+### 6. Battery Efficiency Implementation
+
+#### Background Execution Model
+1. **BLE Scanning Optimization**: Use platform-specific low-power scanning modes
+2. **Location Management**: Implement significant change and geofencing appropriately  
+3. **Batched Operations**: Schedule background work during idle/charging periods
+4. **UI Optimization**: Radar map only refreshes when app is foregrounded
+
+#### Power Monitoring
+1. **Battery Impact Tracking**: Monitor and report battery usage
+2. **Low Power Mode**: Implement option to reduce scanning frequency
+
+### 7. Backend Integration Points
+
+The minimal backend surface area includes:
+1. **Profile Management**: User identity, Vibes, mode settings  
+2. **Vibe Matching**: Compatibility scoring algorithm
+3. **Proximity Tokens**: Token rotation and validation
+4. **Promo CMS**: Partner establishment content management
+5. **Event Ingestion**: Manual curation pipeline for MVP
+
+## Implementation Order
+
+### Phase 1: Core Infrastructure
+1. Set up React Native project structure
+2. Implement state management (Zustand)
+3. Create basic service scaffolding
+4. Configure platform-specific permissions and background modes
+
+### Phase 2: BLE & Location Services
+1. Implement BLE scanning and advertising
+2. Build location services with low-power mode
+3. Integrate with haptics service for proximity alerts
+4. Create proximity event processing pipeline
+
+### Phase 3: Core Features
+1. Implement radar map UI with HUD elements
+2. Build Buzz Me functionality with validation
+3. Develop Ghost Mode toggle and behavior
+4. Add Vibe card reveal system
+
+### Phase 4: Advanced Features  
+1. Implement Visualizer with 5 modes
+2. Add promo notifications and event feed
+3. Build profile management interface
+4. Add battery usage monitoring
+
+### Phase 5: Privacy & Battery Optimization
+1. Finalize anonymized token implementation
+2. Optimize all background processes for battery efficiency
+3. Implement comprehensive error handling and offline behavior
+4. Conduct battery impact testing
+
+## File Structure Overview
+
+```
+app/
+├── src/
+│   ├── components/              # Shared UI components
+│   ├── screens/                 # Main app screens (Radar, Matches, Feed, Profile, Visualizer)
+│   ├── services/                # Core service implementations
+│   │   ├── ble/                 # BLE operations
+│   │   ├── location/            # Location services  
+│   │   ├── haptics/             # Haptic feedback
+│   │   ├── proximity/           # Proximity detection and scoring
+│   │   └── api/                 # Backend API client
+│   ├── state/                   # Global state management (Zustand)
+│   ├── hooks/                   # Custom React hooks
+│   ├── theme/                   # Styling and design system
+│   ├── utils/                   # Utility functions
+│   ├── types/                   # TypeScript type definitions
+│   └── constants/               # App constants
+└── assets/                      # Images, fonts, etc.
+```
+
+## Key Implementation Considerations
+
+1. **Platform Differences**: Account for iOS vs Android background execution models and OEM battery optimization differences
+2. **Battery Efficiency**: Maintain 3-6% per hour target through careful implementation of BLE scanning and location services
+3. **Privacy First**: Implement all privacy measures from the start - anonymized tokens, no user ID exposure, mutual reveals
+4. **Minimal Surface Area**: Build only what's specified in the spec; no chat infrastructure or messaging components
+5. **Offline Behavior**: Design for graceful degradation when network is unavailable
+6. **Performance Testing**: Regular battery impact measurement throughout development
+
+## Required ADRs to be Created
+
+1. State Management Library (Zustand) - Decision rationale and implementation details
+2. BLE Library Selection - Justification for platform-specific implementations  
+3. Backend Framework - Minimal backend architecture decisions
+4. Matching Engine Topology - How compatibility scoring is implemented
+5. Proximity Token Rotation Cadence - Security vs UX balance
+6. Offline Behavior Specification - How radar behaves when network is down
+7. Event Ingestion Pipeline Design - Manual curation approach for MVP
+8. Age Verification Strategy - Safety and moderation approach
+
+## Risk Mitigation
+
+1. **Background Execution Limitations**: Plan for platform-specific restrictions on background BLE scanning
+2. **Battery Performance**: Monitor and optimize continuously to maintain target efficiency
+3. **Privacy Compliance**: Implement security measures from the start, not as afterthought
+4. **Platform Differences**: Develop and test thoroughly on both iOS and Android platforms
+
+This implementation plan ensures we build a robust, privacy-focused, battery-efficient proximity-based social app that meets all requirements in the specification.
