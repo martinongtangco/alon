@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "vibr8.me",
+    "slug": "vibr8me",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "me.vibr8.app"
+    },
+    "android": {
+      "package": "me.vibr8.app",
+      "edgeToEdgeEnabled": true
+    },
+    "splash": {
+      "backgroundColor": "#f5f0e8"
+    },
+    "assetBundlePatterns": ["**/*"]
+  }
+}
