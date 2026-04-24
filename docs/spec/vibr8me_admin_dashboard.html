@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vibr8.me — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #F5A623;
+    --brand-dim: #C47D0A;
+    --brand-glow: rgba(245,166,35,0.12);
+    --bg: #080807;
+    --bg2: #100F0D;
+    --bg3: #181612;
+    --bg4: #1E1C17;
+    --bg5: #252319;
+    --surface: #2A271E;
+    --border: rgba(255,255,255,0.07);
+    --border-med: rgba(255,255,255,0.12);
+    --border-brand: rgba(245,166,35,0.25);
+    --text: #EDE9DF;
+    --text2: #8C8880;
+    --text3: #4A4840;
+    --success: #27C27D;
+    --danger: #E84545;
+    --info: #4A9EFF;
+    --warning: #F5A623;
+    --purple: #9B6DFF;
+    --radius: 8px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; }
+  .main { margin-left: 220px; flex: 1; }
+
+  /* SIDEBAR */
+  .sidebar-top { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
+  .admin-badge { display: flex; align-items: center; gap: 8px; }
+  .admin-dot { width: 8px; height: 8px; background: var(--danger); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .admin-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); }
+  .brand-mark { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--brand); letter-spacing: -0.5px; margin-top: 6px; }
+
+  .nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+  .nav-sect { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); padding: 0 8px; margin: 18px 0 6px; }
+  .nav-sect:first-child { margin-top: 0; }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--radius); cursor: pointer; transition: all 0.12s; color: var(--text2); font-size: 13px; user-select: none; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--brand-glow); color: var(--brand); border: 1px solid var(--border-brand); }
+  .nav-icon { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-count { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); background: var(--bg4); padding: 1px 6px; border-radius: 4px; }
+  .nav-alert { margin-left: auto; width: 7px; height: 7px; background: var(--danger); border-radius: 50%; }
+
+  .sidebar-admin { padding: 12px 16px; border-top: 1px solid var(--border); }
+  .admin-user { display: flex; align-items: center; gap: 10px; }
+  .admin-avatar { width: 30px; height: 30px; border-radius: 6px; background: var(--danger); opacity: 0.8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; flex-shrink: 0; }
+
+  /* TOPBAR */
+  .topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.12s; border: none; }
+  .btn-primary { background: var(--brand); color: #0E0D0B; }
+  .btn-primary:hover { background: #e09810; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border-med); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border-brand); }
+  .btn-danger { background: rgba(232,69,69,0.1); color: var(--danger); border: 1px solid rgba(232,69,69,0.2); }
+  .btn-success { background: rgba(39,194,125,0.1); color: var(--success); border: 1px solid rgba(39,194,125,0.2); }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+  .content { padding: 28px; }
+
+  /* SYSTEM STATUS BAR */
+  .status-bar { display: flex; gap: 12px; align-items: center; background: var(--bg3); border-bottom: 1px solid var(--border); padding: 8px 28px; font-size: 12px; }
+  .status-item { display: flex; align-items: center; gap: 6px; color: var(--text2); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .dot-green { background: var(--success); }
+  .dot-yellow { background: var(--warning); }
+  .dot-red { background: var(--danger); }
+  .status-sep { color: var(--text3); }
+
+  /* STAT CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; }
+  .stat-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .delta-up { color: var(--success); }
+  .delta-dn { color: var(--danger); }
+
+  /* CARD */
+  .card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; }
+  .card-body { padding: 20px; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; color: var(--text2); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .td-primary { color: var(--text); font-weight: 500; }
+  .td-mono { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); }
+
+  /* BADGE */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 500; }
+  .b-green { background: rgba(39,194,125,0.12); color: var(--success); }
+  .b-yellow { background: rgba(245,166,35,0.12); color: var(--warning); }
+  .b-red { background: rgba(232,69,69,0.12); color: var(--danger); }
+  .b-blue { background: rgba(74,158,255,0.12); color: var(--info); }
+  .b-purple { background: rgba(155,109,255,0.12); color: var(--purple); }
+  .b-gray { background: var(--bg4); color: var(--text3); border: 1px solid var(--border); }
+
+  /* SEARCH BAR */
+  .search-bar { display: flex; align-items: center; gap: 8px; background: var(--bg4); border: 1px solid var(--border-med); border-radius: var(--radius); padding: 7px 12px; }
+  .search-bar input { background: transparent; border: none; outline: none; color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif; width: 220px; }
+  .search-bar input::placeholder { color: var(--text3); }
+
+  /* FILTERS */
+  .filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-chip { padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); color: var(--text3); background: var(--bg4); transition: all 0.12s; }
+  .filter-chip.active { background: var(--brand-glow); color: var(--brand); border-color: var(--border-brand); }
+  .filter-chip:hover:not(.active) { color: var(--text); border-color: var(--border-med); }
+
+  /* FORM */
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 11px; letter-spacing: 0.5px; color: var(--text2); }
+  input, select, textarea { background: var(--bg); border: 1px solid var(--border-med); border-radius: var(--radius); padding: 8px 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; transition: border-color 0.12s; outline: none; width: 100%; }
+  input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+  select option { background: var(--bg2); }
+
+  /* TOGGLE */
+  .toggle { width: 34px; height: 20px; background: var(--bg5); border-radius: 10px; cursor: pointer; position: relative; transition: background 0.15s; flex-shrink: 0; }
+  .toggle.on { background: var(--success); }
+  .toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: left 0.15s; }
+  .toggle.on::after { left: 17px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab { padding: 10px 18px; font-size: 13px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.12s; }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+  /* PROGRESS */
+  .progress { height: 3px; background: var(--bg5); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--brand); border-radius: 2px; }
+
+  /* ALERTS */
+  .alert { border-radius: var(--radius); padding: 12px 14px; font-size: 13px; margin-bottom: 16px; border: 1px solid; display: flex; align-items: flex-start; gap: 8px; }
+  .alert-warn { background: rgba(245,166,35,0.06); border-color: rgba(245,166,35,0.2); color: #E8B04A; }
+  .alert-danger { background: rgba(232,69,69,0.06); border-color: rgba(232,69,69,0.2); color: #E87070; }
+  .alert-info { background: rgba(74,158,255,0.06); border-color: rgba(74,158,255,0.2); color: #7BB8FF; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border-med); border-radius: var(--radius-lg); width: 520px; max-height: 85vh; overflow-y: auto; }
+  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+  .modal-close { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer { padding: 14px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+  /* MAP GRID */
+  .map-placeholder { background: var(--bg4); border-radius: var(--radius); height: 200px; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-med); flex-direction: column; gap: 8px; color: var(--text3); font-size: 12px; }
+
+  /* HEAT DOTS */
+  .heat-grid { display: grid; grid-template-columns: repeat(24, 1fr); gap: 3px; }
+  .heat-cell { height: 14px; border-radius: 2px; }
+
+  /* LOG LINES */
+  .log-line { font-family: 'DM Mono', monospace; font-size: 11px; padding: 4px 0; border-bottom: 1px solid var(--border); color: var(--text2); display: flex; gap: 12px; }
+  .log-time { color: var(--text3); flex-shrink: 0; }
+  .log-level-info { color: var(--info); }
+  .log-level-warn { color: var(--warning); }
+  .log-level-err { color: var(--danger); }
+
+  /* REVIEW CARD */
+  .review-card { background: var(--bg4); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
+  .review-card.flagged { border-color: rgba(232,69,69,0.3); background: rgba(232,69,69,0.03); }
+
+  /* USER CARD (inline) */
+  .user-cell { display: flex; align-items: center; gap: 10px; }
+  .user-av { width: 28px; height: 28px; border-radius: 6px; background: var(--bg5); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--text2); flex-shrink: 0; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 2px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mb-24 { margin-bottom: 24px; }
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .gap-16 { gap: 16px; }
+  .text-muted { color: var(--text2); }
+  .text-dim { color: var(--text3); }
+  .text-brand { color: var(--brand); }
+  .text-success { color: var(--success); }
+  .text-danger { color: var(--danger); }
+  .text-sm { font-size: 12px; }
+  .text-xs { font-size: 11px; }
+  .font-mono { font-family: 'DM Mono', monospace; }
+  .font-syne { font-family: 'Syne', sans-serif; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .fw500 { font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="admin-badge">
+        <div class="admin-dot"></div>
+        <div class="admin-label">Admin Panel</div>
+      </div>
+      <div class="brand-mark">vibr8.me</div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-sect">Overview</div>
+      <div class="nav-item active" onclick="showPage('overview', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Platform Overview
+      </div>
+      <div class="nav-item" onclick="showPage('activity', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Live Activity
+        <span class="nav-alert"></span>
+      </div>
+
+      <div class="nav-sect">Users</div>
+      <div class="nav-item" onclick="showPage('users', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Users
+        <span class="nav-count">84.2k</span>
+      </div>
+      <div class="nav-item" onclick="showPage('flags', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Flags & Reports
+        <span class="nav-count" style="background: rgba(232,69,69,0.15); color: var(--danger);">14</span>
+      </div>
+
+      <div class="nav-sect">Partners</div>
+      <div class="nav-item" onclick="showPage('businesses', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Businesses
+        <span class="nav-count">318</span>
+      </div>
+      <div class="nav-item" onclick="showPage('promos', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        Promos
+      </div>
+      <div class="nav-item" onclick="showPage('events', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Events
+      </div>
+
+      <div class="nav-sect">Finance</div>
+      <div class="nav-item" onclick="showPage('revenue', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        Revenue
+      </div>
+
+      <div class="nav-sect">System</div>
+      <div class="nav-item" onclick="showPage('logs', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        System Logs
+      </div>
+      <div class="nav-item" onclick="showPage('config', this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Platform Config
+      </div>
+    </nav>
+
+    <div class="sidebar-admin">
+      <div class="admin-user">
+        <div class="admin-avatar">SA</div>
+        <div>
+          <div class="text-sm fw500">Super Admin</div>
+          <div class="text-xs text-dim">admin@vibr8.me</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- PLATFORM OVERVIEW PAGE -->
+    <div id="page-overview" class="page active">
+      <div class="status-bar">
+        <div class="status-item"><div class="status-dot dot-green"></div> API Healthy</div>
+        <div class="status-sep">·</div>
+        <div class="status-item"><div class="status-dot dot-green"></div> BLE Engine Online</div>
+        <div class="status-sep">·</div>
+        <div class="status-item"><div class="status-dot dot-green"></div> Promo CMS Online</div>
+        <div class="status-sep">·</div>
+        <div class="status-item"><div class="status-dot dot-yellow"></div> Push Notifications — Degraded</div>
+        <div style="margin-left: auto;" class="text-xs text-dim">Last sync: 14s ago</div>
+      </div>
+      <div class="topbar">
+        <div class="page-title">Platform Overview</div>
+        <div class="topbar-actions">
+          <span class="text-xs text-dim font-mono">Apr 19, 2026 · 22:41 PHT</span>
+        </div>
+      </div>
+      <div class="content">
+
+        <div class="alert alert-warn">
+          ⚠ Push notification delivery is degraded. Firebase reports 12% failure rate on Android. Engineering has been alerted.
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">84,218</div>
+            <div class="stat-sub delta-up">↑ 3.2% this week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Now</div>
+            <div class="stat-value" style="color: var(--success);">1,402</div>
+            <div class="stat-sub">in last 15 min</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Partner Businesses</div>
+            <div class="stat-value">318</div>
+            <div class="stat-sub delta-up">↑ 7 this week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Live Promos</div>
+            <div class="stat-value">874</div>
+            <div class="stat-sub">across all partners</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">MRR</div>
+            <div class="stat-value">₱1.58M</div>
+            <div class="stat-sub delta-up">↑ 11% vs last month</div>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-20">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Daily Active Users — 7 days</div>
+            </div>
+            <div class="card-body">
+              <div style="display: flex; align-items: flex-end; gap: 5px; height: 90px;">
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="background: rgba(245,166,35,0.2); border: 1px solid rgba(245,166,35,0.3); border-radius: 3px 3px 0 0; width: 100%; height: 68%;"></div><div class="text-xs text-dim">M</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="background: rgba(245,166,35,0.2); border: 1px solid rgba(245,166,35,0.3); border-radius: 3px 3px 0 0; width: 100%; height: 72%;"></div><div class="text-xs text-dim">T</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="background: rgba(245,166,35,0.2); border: 1px solid rgba(245,166,35,0.3); border-radius: 3px 3px 0 0; width: 100%; height: 61%;"></div><div class="text-xs text-dim">W</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="background: rgba(245,166,35,0.2); border: 1px solid rgba(245,166,35,0.3); border-radius: 3px 3px 0 0; width: 100%; height: 84%;"></div><div class="text-xs text-dim">T</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="background: rgba(245,166,35,0.45); border: 1px solid var(--brand); border-radius: 3px 3px 0 0; width: 100%; height: 100%;"></div><div class="text-xs" style="color:var(--brand)">F</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="background: rgba(245,166,35,0.2); border: 1px solid rgba(245,166,35,0.3); border-radius: 3px 3px 0 0; width: 100%; height: 93%;"></div><div class="text-xs text-dim">S</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="background: rgba(245,166,35,0.2); border: 1px solid rgba(245,166,35,0.3); border-radius: 3px 3px 0 0; width: 100%; height: 48%;"></div><div class="text-xs text-dim">S</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title">Platform Health</div></div>
+            <div class="card-body">
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div><div class="flex justify-between mb-16" style="margin-bottom: 5px;"><span class="text-xs text-muted">API Response (p95)</span><span class="text-xs font-mono" style="color: var(--success);">142ms</span></div><div class="progress"><div class="progress-fill" style="width: 14%; background: var(--success);"></div></div></div>
+                <div><div class="flex justify-between mb-16" style="margin-bottom: 5px;"><span class="text-xs text-muted">BLE Broadcast Success Rate</span><span class="text-xs font-mono" style="color: var(--success);">99.1%</span></div><div class="progress"><div class="progress-fill" style="width: 99%;"></div></div></div>
+                <div><div class="flex justify-between mb-16" style="margin-bottom: 5px;"><span class="text-xs text-muted">Push Notification Delivery</span><span class="text-xs font-mono" style="color: var(--warning);">87.9%</span></div><div class="progress"><div class="progress-fill" style="width: 88%; background: var(--warning);"></div></div></div>
+                <div><div class="flex justify-between mb-16" style="margin-bottom: 5px;"><span class="text-xs text-muted">DB Query Time (avg)</span><span class="text-xs font-mono" style="color: var(--success);">8ms</span></div><div class="progress"><div class="progress-fill" style="width: 8%;"></div></div></div>
+                <div><div class="flex justify-between mb-16" style="margin-bottom: 5px;"><span class="text-xs text-muted">Promo CMS CDN Latency</span><span class="text-xs font-mono" style="color: var(--success);">34ms</span></div><div class="progress"><div class="progress-fill" style="width: 20%;"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">New Business Signups — Pending Review</div><span class="badge b-yellow">5 pending</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Business</th><th>Category</th><th>Registered</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="td-primary">Cafe Analog</td>
+                    <td><span class="badge b-blue">Cafe</span></td>
+                    <td class="text-xs text-dim">2h ago</td>
+                    <td><div class="flex gap-8"><button class="btn btn-success" style="padding: 3px 8px; font-size: 11px;" onclick="openModal('modal-biz')">Review</button></div></td>
+                  </tr>
+                  <tr>
+                    <td class="td-primary">Grind House BGC</td>
+                    <td><span class="badge b-blue">Gym</span></td>
+                    <td class="text-xs text-dim">5h ago</td>
+                    <td><div class="flex gap-8"><button class="btn btn-success" style="padding: 3px 8px; font-size: 11px;" onclick="openModal('modal-biz')">Review</button></div></td>
+                  </tr>
+                  <tr>
+                    <td class="td-primary">The Studio MNL</td>
+                    <td><span class="badge b-purple">Arts</span></td>
+                    <td class="text-xs text-dim">Yesterday</td>
+                    <td><div class="flex gap-8"><button class="btn btn-success" style="padding: 3px 8px; font-size: 11px;" onclick="openModal('modal-biz')">Review</button></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title">Recent Flags</div><span class="badge b-red">14 open</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Type</th><th>Reported</th><th>Severity</th><th></th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="td-primary">Inappropriate profile</td>
+                    <td class="text-xs text-dim">30m ago</td>
+                    <td><span class="badge b-red">High</span></td>
+                    <td><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button></td>
+                  </tr>
+                  <tr>
+                    <td class="td-primary">Promo fraud attempt</td>
+                    <td class="text-xs text-dim">2h ago</td>
+                    <td><span class="badge b-yellow">Med</span></td>
+                    <td><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button></td>
+                  </tr>
+                  <tr>
+                    <td class="td-primary">Spam buzz report</td>
+                    <td class="text-xs text-dim">4h ago</td>
+                    <td><span class="badge b-gray">Low</span></td>
+                    <td><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BUSINESSES PAGE -->
+    <div id="page-businesses" class="page">
+      <div class="topbar">
+        <div class="page-title">Businesses</div>
+        <div class="topbar-actions">
+          <div class="search-bar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search businesses...">
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-biz')">+ Add Business</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="filter-row">
+          <span class="text-xs text-dim" style="margin-right: 4px;">Filter:</span>
+          <div class="filter-chip active" onclick="toggleFilter(this)">All (318)</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Active (294)</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Pending Review (5)</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Suspended (8)</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Partner Pro</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Partner Basic</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Enterprise</div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Business</th>
+                  <th>Category</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Location</th>
+                  <th>Active Promos</th>
+                  <th>MRR</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div class="user-cell"><div class="user-av">BR</div><span class="td-primary">Bar Rogue</span></div></td>
+                  <td><span class="badge b-purple">Bar</span></td>
+                  <td><span class="badge b-yellow">Pro</span></td>
+                  <td><span class="badge b-green">● Active</span></td>
+                  <td class="text-xs text-dim">BGC, Taguig</td>
+                  <td class="font-mono">3</td>
+                  <td class="font-mono text-sm">₱4,990</td>
+                  <td class="text-xs text-dim">Mar 2026</td>
+                  <td><div class="flex gap-8"><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">Edit</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Suspend</button></div></td>
+                </tr>
+                <tr>
+                  <td><div class="user-cell"><div class="user-av" style="background: rgba(74,158,255,0.2); color: var(--info);">SC</div><span class="td-primary">Sip & Co.</span></div></td>
+                  <td><span class="badge b-blue">Cafe</span></td>
+                  <td><span class="badge b-gray">Basic</span></td>
+                  <td><span class="badge b-green">● Active</span></td>
+                  <td class="text-xs text-dim">Makati CBD</td>
+                  <td class="font-mono">1</td>
+                  <td class="font-mono text-sm">₱1,990</td>
+                  <td class="text-xs text-dim">Jan 2026</td>
+                  <td><div class="flex gap-8"><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">Edit</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Suspend</button></div></td>
+                </tr>
+                <tr>
+                  <td><div class="user-cell"><div class="user-av" style="background: rgba(39,194,125,0.2); color: var(--success);">GF</div><span class="td-primary">GymFlow PH</span></div></td>
+                  <td><span class="badge b-green">Gym</span></td>
+                  <td><span class="badge" style="background: rgba(155,109,255,0.12); color: var(--purple);">Enterprise</span></td>
+                  <td><span class="badge b-green">● Active</span></td>
+                  <td class="text-xs text-dim">Ortigas, Pasig</td>
+                  <td class="font-mono">7</td>
+                  <td class="font-mono text-sm">₱12,000</td>
+                  <td class="text-xs text-dim">Nov 2025</td>
+                  <td><div class="flex gap-8"><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">Edit</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Suspend</button></div></td>
+                </tr>
+                <tr>
+                  <td><div class="user-cell"><div class="user-av" style="background: rgba(245,166,35,0.15); color: var(--warning);">CA</div><span class="td-primary">Cafe Analog</span></div></td>
+                  <td><span class="badge b-blue">Cafe</span></td>
+                  <td><span class="badge b-gray">Basic</span></td>
+                  <td><span class="badge b-yellow">⏳ Pending</span></td>
+                  <td class="text-xs text-dim">Poblacion, Makati</td>
+                  <td class="font-mono">0</td>
+                  <td class="font-mono text-sm">₱1,990</td>
+                  <td class="text-xs text-dim">Today</td>
+                  <td><div class="flex gap-8"><button class="btn btn-success" style="padding: 3px 8px; font-size: 11px;" onclick="openModal('modal-biz')">Approve</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Reject</button></div></td>
+                </tr>
+                <tr>
+                  <td><div class="user-cell"><div class="user-av" style="background: rgba(232,69,69,0.1); color: var(--danger);">NX</div><span class="td-primary">Nox Lounge</span></div></td>
+                  <td><span class="badge b-purple">Bar</span></td>
+                  <td><span class="badge b-yellow">Pro</span></td>
+                  <td><span class="badge b-red">Suspended</span></td>
+                  <td class="text-xs text-dim">Quezon City</td>
+                  <td class="font-mono">0</td>
+                  <td class="font-mono text-sm">—</td>
+                  <td class="text-xs text-dim">Dec 2025</td>
+                  <td><div class="flex gap-8"><button class="btn btn-success" style="padding: 3px 8px; font-size: 11px;">Reinstate</button><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS PAGE -->
+    <div id="page-users" class="page">
+      <div class="topbar">
+        <div class="page-title">Users</div>
+        <div class="topbar-actions">
+          <div class="search-bar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search by name, email, ID...">
+          </div>
+          <button class="btn btn-ghost">Export</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="filter-row">
+          <div class="filter-chip active" onclick="toggleFilter(this)">All Users</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">vibr8 Pro</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Ghost Mode</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Flagged</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Banned</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">iOS</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Android</div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>User</th><th>ID</th><th>Mode</th><th>Vibes</th><th>Plan</th><th>Status</th><th>Last Active</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div class="user-cell"><div class="user-av">MR</div><div><div class="td-primary" style="font-size: 13px;">Maya R.</div><div class="text-xs text-dim">iOS</div></div></div></td>
+                  <td class="td-mono">usr_9f3a</td>
+                  <td><span class="badge b-blue">Networking</span></td>
+                  <td class="text-xs text-dim">Music, Art, Coffee</td>
+                  <td><span class="badge b-yellow">Pro</span></td>
+                  <td><span class="badge b-green">Active</span></td>
+                  <td class="text-xs text-dim">2m ago</td>
+                  <td><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button></td>
+                </tr>
+                <tr>
+                  <td><div class="user-cell"><div class="user-av" style="background: rgba(155,109,255,0.2); color: var(--purple);">JK</div><div><div class="td-primary" style="font-size: 13px;">James K.</div><div class="text-xs text-dim">Android</div></div></div></td>
+                  <td class="td-mono">usr_2b8c</td>
+                  <td><span class="badge b-yellow">Dating</span></td>
+                  <td class="text-xs text-dim">Fitness, Chill</td>
+                  <td><span class="badge b-gray">Free</span></td>
+                  <td><span class="badge b-green">Active</span></td>
+                  <td class="text-xs text-dim">15m ago</td>
+                  <td><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button></td>
+                </tr>
+                <tr>
+                  <td><div class="user-cell"><div class="user-av" style="background: rgba(232,69,69,0.15); color: var(--danger);">AP</div><div><div class="td-primary" style="font-size: 13px;">Alex P.</div><div class="text-xs text-dim">iOS</div></div></div></td>
+                  <td class="td-mono">usr_7e1d</td>
+                  <td><span class="badge b-gray">Chill</span></td>
+                  <td class="text-xs text-dim">Gaming, Music</td>
+                  <td><span class="badge b-gray">Free</span></td>
+                  <td><span class="badge b-red">⚑ Flagged</span></td>
+                  <td class="text-xs text-dim">1h ago</td>
+                  <td><div class="flex gap-8"><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Ban</button></div></td>
+                </tr>
+                <tr>
+                  <td><div class="user-cell"><div class="user-av" style="background: rgba(39,194,125,0.15); color: var(--success);">SL</div><div><div class="td-primary" style="font-size: 13px;">Sofia L.</div><div class="text-xs text-dim">iOS</div></div></div></td>
+                  <td class="td-mono">usr_4c2f</td>
+                  <td><span class="badge b-green">Explorer</span></td>
+                  <td class="text-xs text-dim">Travel, Food, Art</td>
+                  <td><span class="badge b-yellow">Pro</span></td>
+                  <td><span class="badge" style="background: rgba(74,158,255,0.1); color: var(--info);">Ghost</span></td>
+                  <td class="text-xs text-dim">8m ago</td>
+                  <td><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMOS PAGE -->
+    <div id="page-promos" class="page">
+      <div class="topbar">
+        <div class="page-title">Promos</div>
+        <div class="topbar-actions">
+          <div class="search-bar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search promos...">
+          </div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="filter-row">
+          <div class="filter-chip active" onclick="toggleFilter(this)">All</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Active</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Paused</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Pending Approval</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Expired</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Flagged</div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Promo</th><th>Business</th><th>Radius</th><th>Redemptions</th><th>Limit</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="td-primary">Happy Hour — 20% Off Drinks</td>
+                  <td class="text-sm text-muted">Bar Rogue</td>
+                  <td class="font-mono">75m</td>
+                  <td class="font-mono">68</td>
+                  <td class="font-mono">100/day</td>
+                  <td><span class="badge b-green">● Active</span></td>
+                  <td class="text-xs text-dim">Apr 12</td>
+                  <td><div class="flex gap-8"><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Pause</button></div></td>
+                </tr>
+                <tr>
+                  <td class="td-primary">Free Americano on First Visit</td>
+                  <td class="text-sm text-muted">Sip & Co.</td>
+                  <td class="font-mono">50m</td>
+                  <td class="font-mono">12</td>
+                  <td class="font-mono">50/week</td>
+                  <td><span class="badge b-green">● Active</span></td>
+                  <td class="text-xs text-dim">Apr 8</td>
+                  <td><div class="flex gap-8"><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Pause</button></div></td>
+                </tr>
+                <tr>
+                  <td class="td-primary" style="color: var(--danger);">⚑ 50% Off — Unlimited Redemptions</td>
+                  <td class="text-sm text-muted">Nox Lounge</td>
+                  <td class="font-mono">200m</td>
+                  <td class="font-mono">840</td>
+                  <td class="font-mono text-danger">Unlimited</td>
+                  <td><span class="badge b-red">Flagged</span></td>
+                  <td class="text-xs text-dim">Mar 30</td>
+                  <td><div class="flex gap-8"><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Kill</button><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">Review</button></div></td>
+                </tr>
+                <tr>
+                  <td class="td-primary">Monthly Gym Pass — ₱999</td>
+                  <td class="text-sm text-muted">GymFlow PH</td>
+                  <td class="font-mono">100m</td>
+                  <td class="font-mono">203</td>
+                  <td class="font-mono">500/month</td>
+                  <td><span class="badge b-green">● Active</span></td>
+                  <td class="text-xs text-dim">Apr 1</td>
+                  <td><div class="flex gap-8"><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">View</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Pause</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVENTS PAGE -->
+    <div id="page-events" class="page">
+      <div class="topbar">
+        <div class="page-title">Events</div>
+        <div class="topbar-actions">
+          <div class="search-bar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search events...">
+          </div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="filter-row">
+          <div class="filter-chip active" onclick="toggleFilter(this)">All Events</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Live Now</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Upcoming</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Pending Review</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Featured</div>
+          <div class="filter-chip" onclick="toggleFilter(this)">Community</div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Event</th><th>Organizer</th><th>Date</th><th>Vibes</th><th>Reach</th><th>Status</th><th>Featured</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="td-primary">Friday Night Live DJ</td>
+                  <td class="text-sm text-muted">Bar Rogue</td>
+                  <td class="text-xs text-dim">Apr 25 · 9PM</td>
+                  <td><span class="badge b-purple">Music</span></td>
+                  <td class="font-mono">1,240</td>
+                  <td><span class="badge b-green">● Live</span></td>
+                  <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                  <td><div class="flex gap-8"><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">Edit</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Remove</button></div></td>
+                </tr>
+                <tr>
+                  <td class="td-primary">Sunday Pop-Up Market</td>
+                  <td class="text-sm text-muted">Community</td>
+                  <td class="text-xs text-dim">Apr 27 · 10AM</td>
+                  <td><span class="badge b-green">Social</span></td>
+                  <td class="font-mono">880</td>
+                  <td><span class="badge b-yellow">Scheduled</span></td>
+                  <td><div class="toggle" onclick="this.classList.toggle('on')"></div></td>
+                  <td><div class="flex gap-8"><button class="btn btn-ghost" style="padding: 3px 8px; font-size: 11px;">Edit</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Remove</button></div></td>
+                </tr>
+                <tr>
+                  <td class="td-primary">Networking Brunch — Tech Founders</td>
+                  <td class="text-sm text-muted">Community</td>
+                  <td class="text-xs text-dim">May 3 · 10AM</td>
+                  <td><span class="badge b-blue">Networking</span></td>
+                  <td class="font-mono">—</td>
+                  <td><span class="badge b-yellow">⏳ Review</span></td>
+                  <td><div class="toggle" onclick="this.classList.toggle('on')"></div></td>
+                  <td><div class="flex gap-8"><button class="btn btn-success" style="padding: 3px 8px; font-size: 11px;">Approve</button><button class="btn btn-danger" style="padding: 3px 8px; font-size: 11px;">Reject</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLAGS PAGE -->
+    <div id="page-flags" class="page">
+      <div class="topbar">
+        <div class="page-title">Flags & Reports</div>
+      </div>
+      <div class="content">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this)">Open (14)</div>
+          <div class="tab" onclick="switchTab(this)">In Review (3)</div>
+          <div class="tab" onclick="switchTab(this)">Resolved (142)</div>
+        </div>
+
+        <div class="review-card flagged mb-16">
+          <div class="flex justify-between items-center mb-16" style="margin-bottom: 10px;">
+            <div class="flex items-center gap-8">
+              <span class="badge b-red">High Severity</span>
+              <span class="badge b-purple">Profile Report</span>
+            </div>
+            <span class="text-xs text-dim">Reported 30m ago · usr_7e1d</span>
+          </div>
+          <div class="text-sm fw500 mb-16" style="margin-bottom: 4px;">Inappropriate content in bio</div>
+          <div class="text-xs text-dim" style="margin-bottom: 12px;">User Alex P. (usr_7e1d) was reported by 3 different users for an inappropriate bio that violates community standards.</div>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost" style="padding: 5px 10px; font-size: 12px;">View Profile</button>
+            <button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">Suspend User</button>
+            <button class="btn btn-success" style="padding: 5px 10px; font-size: 12px;">Dismiss</button>
+          </div>
+        </div>
+
+        <div class="review-card mb-16">
+          <div class="flex justify-between items-center mb-16" style="margin-bottom: 10px;">
+            <div class="flex items-center gap-8">
+              <span class="badge b-yellow">Med Severity</span>
+              <span class="badge b-blue">Promo Fraud</span>
+            </div>
+            <span class="text-xs text-dim">Reported 2h ago · Nox Lounge</span>
+          </div>
+          <div class="text-sm fw500 mb-16" style="margin-bottom: 4px;">Suspicious promo redemption pattern</div>
+          <div class="text-xs text-dim" style="margin-bottom: 12px;">Nox Lounge has 840 redemptions on a promo with no limit set. Pattern suggests coordinated abuse. Partner account is currently suspended.</div>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost" style="padding: 5px 10px; font-size: 12px;">View Business</button>
+            <button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">Kill Promo</button>
+            <button class="btn btn-success" style="padding: 5px 10px; font-size: 12px;">Mark Resolved</button>
+          </div>
+        </div>
+
+        <div class="review-card">
+          <div class="flex justify-between items-center mb-16" style="margin-bottom: 10px;">
+            <div class="flex items-center gap-8">
+              <span class="badge b-gray">Low Severity</span>
+              <span class="badge b-gray">Buzz Spam</span>
+            </div>
+            <span class="text-xs text-dim">Reported 4h ago · usr_9f3a</span>
+          </div>
+          <div class="text-sm fw500 mb-16" style="margin-bottom: 4px;">User sending rapid buzz signals</div>
+          <div class="text-xs text-dim" style="margin-bottom: 12px;">Maya R. sent 40+ buzz signals in under 5 minutes. Possible misuse of the Buzz Me feature.</div>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost" style="padding: 5px 10px; font-size: 12px;">View Activity</button>
+            <button class="btn btn-ghost" style="padding: 5px 10px; font-size: 12px;">Rate Limit User</button>
+            <button class="btn btn-success" style="padding: 5px 10px; font-size: 12px;">Dismiss</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVENUE PAGE -->
+    <div id="page-revenue" class="page">
+      <div class="topbar">
+        <div class="page-title">Revenue</div>
+        <div class="topbar-actions">
+          <select style="background: var(--bg3); border: 1px solid var(--border-med); border-radius: var(--radius); padding: 6px 10px; color: var(--text); font-size: 12px; outline: none;">
+            <option>April 2026</option>
+            <option>March 2026</option>
+            <option>Q1 2026</option>
+          </select>
+          <button class="btn btn-ghost">Export</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">MRR</div>
+            <div class="stat-value">₱1.58M</div>
+            <div class="stat-sub delta-up">↑ 11% MoM</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Partner Subscriptions</div>
+            <div class="stat-value">₱1.21M</div>
+            <div class="stat-sub">318 businesses</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">vibr8 Pro (users)</div>
+            <div class="stat-value">₱224k</div>
+            <div class="stat-sub">4,480 subscribers</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Event Boosts</div>
+            <div class="stat-value">₱87k</div>
+            <div class="stat-sub">174 events</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Brand Activations</div>
+            <div class="stat-value">₱58k</div>
+            <div class="stat-sub">3 campaigns</div>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-20">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Revenue by Plan</div></div>
+            <div class="card-body">
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <div class="flex justify-between" style="margin-bottom: 5px;"><span class="text-xs text-muted">Enterprise</span><span class="text-xs font-mono" style="color: var(--purple);">₱480k · 40 businesses</span></div>
+                  <div class="progress" style="height: 5px;"><div class="progress-fill" style="width: 100%; background: var(--purple);"></div></div>
+                </div>
+                <div>
+                  <div class="flex justify-between" style="margin-bottom: 5px;"><span class="text-xs text-muted">Partner Pro</span><span class="text-xs font-mono" style="color: var(--warning);">₱549k · 110 businesses</span></div>
+                  <div class="progress" style="height: 5px;"><div class="progress-fill" style="width: 88%;"></div></div>
+                </div>
+                <div>
+                  <div class="flex justify-between" style="margin-bottom: 5px;"><span class="text-xs text-muted">Partner Basic</span><span class="text-xs font-mono">₱336k · 168 businesses</span></div>
+                  <div class="progress" style="height: 5px;"><div class="progress-fill" style="width: 55%;"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title">Recent Transactions</div></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Business</th><th>Plan</th><th>Amount</th><th>Date</th></tr></thead>
+                <tbody>
+                  <tr><td class="td-primary" style="font-size: 12px;">GymFlow PH</td><td><span class="badge b-purple" style="font-size: 9px;">Enterprise</span></td><td class="font-mono text-sm text-success">₱12,000</td><td class="text-xs text-dim">Apr 19</td></tr>
+                  <tr><td class="td-primary" style="font-size: 12px;">Bar Rogue</td><td><span class="badge b-yellow" style="font-size: 9px;">Pro</span></td><td class="font-mono text-sm text-success">₱4,990</td><td class="text-xs text-dim">Apr 19</td></tr>
+                  <tr><td class="td-primary" style="font-size: 12px;">Sip & Co.</td><td><span class="badge b-gray" style="font-size: 9px;">Basic</span></td><td class="font-mono text-sm text-success">₱1,990</td><td class="text-xs text-dim">Apr 18</td></tr>
+                  <tr><td class="td-primary" style="font-size: 12px;">Event Boost — 8 businesses</td><td><span class="badge b-blue" style="font-size: 9px;">One-time</span></td><td class="font-mono text-sm text-success">₱4,000</td><td class="text-xs text-dim">Apr 18</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS PAGE -->
+    <div id="page-logs" class="page">
+      <div class="topbar">
+        <div class="page-title">System Logs</div>
+        <div class="topbar-actions">
+          <div class="filter-chip active" onclick="toggleFilter(this)" style="font-size: 11px;">All</div>
+          <div class="filter-chip" onclick="toggleFilter(this)" style="font-size: 11px;">Errors</div>
+          <div class="filter-chip" onclick="toggleFilter(this)" style="font-size: 11px;">Warnings</div>
+          <div class="filter-chip" onclick="toggleFilter(this)" style="font-size: 11px;">Info</div>
+          <button class="btn btn-ghost">Download</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="card-body" style="padding: 16px;">
+            <div class="log-line"><span class="log-time">22:41:02</span><span class="log-level-warn">[WARN]</span><span>Firebase push notification failure rate: 12.3% on Android · Region: APAC</span></div>
+            <div class="log-line"><span class="log-time">22:40:58</span><span class="log-level-info">[INFO]</span><span>Promo redeemed · promo_id=prm_3a9f · biz=Bar Rogue · dist=23m · user=usr_anon_8821</span></div>
+            <div class="log-line"><span class="log-time">22:40:44</span><span class="log-level-info">[INFO]</span><span>BLE broadcast tick · 1,402 devices active · avg_scan_cycle=220ms</span></div>
+            <div class="log-line"><span class="log-time">22:39:11</span><span class="log-level-warn">[WARN]</span><span>High redemption velocity · promo_id=prm_nox01 · 840 redeems on unlimited promo · flagged</span></div>
+            <div class="log-line"><span class="log-time">22:38:55</span><span class="log-level-info">[INFO]</span><span>New business registration · biz=Grind House BGC · status=pending_review</span></div>
+            <div class="log-line"><span class="log-time">22:37:30</span><span class="log-level-info">[INFO]</span><span>User buzz signal · from=usr_9f3a · to=usr_anon_4418 · dist=12m · mode=networking</span></div>
+            <div class="log-line"><span class="log-time">22:35:08</span><span class="log-level-err">[ERROR]</span><span>Push notification failed · usr_2b8c · Android 14 · FCM timeout · retry=2/3</span></div>
+            <div class="log-line"><span class="log-time">22:34:52</span><span class="log-level-info">[INFO]</span><span>Mutual reveal completed · users: usr_9f3a × usr_anon_7731 · both opted in</span></div>
+            <div class="log-line"><span class="log-time">22:33:01</span><span class="log-level-info">[INFO]</span><span>Event indexed · event_id=evt_bar002 · Friday Night Live DJ · reach_estimate=1,240</span></div>
+            <div class="log-line"><span class="log-time">22:31:40</span><span class="log-level-warn">[WARN]</span><span>User buzz rate limit triggered · usr_9f3a · 40 buzzes in 5min · rate limited for 15min</span></div>
+            <div class="log-line"><span class="log-time">22:30:00</span><span class="log-level-info">[INFO]</span><span>DB health check passed · pg_primary: 8ms · pg_replica: 11ms · redis: 1ms</span></div>
+            <div class="log-line"><span class="log-time">22:29:55</span><span class="log-level-info">[INFO]</span><span>Promo geofence triggered · promo_id=prm_sip01 · user within 50m · push sent</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG PAGE -->
+    <div id="page-config" class="page">
+      <div class="topbar">
+        <div class="page-title">Platform Config</div>
+        <div class="topbar-actions">
+          <button class="btn btn-danger">Reset to Defaults</button>
+          <button class="btn btn-primary">Save Changes</button>
+        </div>
+      </div>
+      <div class="content" style="max-width: 800px;">
+        <div class="alert alert-danger">
+          ⚠ Changes here affect live app behavior for all users. Verify before saving.
+        </div>
+
+        <div class="card mb-20">
+          <div class="card-header"><div class="card-title">Proximity Engine</div></div>
+          <div class="card-body">
+            <div class="grid-2 mb-16">
+              <div class="form-group">
+                <label>BLE Scan Interval (ms)</label>
+                <input type="number" value="220">
+              </div>
+              <div class="form-group">
+                <label>Buzz Cooldown (seconds)</label>
+                <input type="number" value="30">
+              </div>
+              <div class="form-group">
+                <label>Max Proximity Radius (m)</label>
+                <input type="number" value="200">
+              </div>
+              <div class="form-group">
+                <label>Ghost Mode BLE Behavior</label>
+                <select>
+                  <option selected>Halt all scanning</option>
+                  <option>Halt advertising only</option>
+                  <option>Full halt (no BLE)</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm fw500">Enable UWB (Ultra-Wideband)</div>
+                <div class="text-xs text-dim">iPhone 11+ and supported Android only</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-20">
+          <div class="card-header"><div class="card-title">Promo Rules</div></div>
+          <div class="card-body">
+            <div class="grid-2 mb-16">
+              <div class="form-group">
+                <label>Min Promo Radius (m)</label>
+                <input type="number" value="25">
+              </div>
+              <div class="form-group">
+                <label>Max Promo Radius — Basic Plan (m)</label>
+                <input type="number" value="75">
+              </div>
+              <div class="form-group">
+                <label>Max Promo Radius — Pro Plan (m)</label>
+                <input type="number" value="200">
+              </div>
+              <div class="form-group">
+                <label>Max Redemption Limit (per promo)</label>
+                <input type="number" value="10000">
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm fw500">Require approval for new promos</div>
+                <div class="text-xs text-dim">Admin must review before promos go live</div>
+              </div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-20">
+          <div class="card-header"><div class="card-title">Moderation Settings</div></div>
+          <div class="card-body">
+            <div class="grid-2 mb-16">
+              <div class="form-group">
+                <label>Auto-flag threshold (buzz rate / min)</label>
+                <input type="number" value="8">
+              </div>
+              <div class="form-group">
+                <label>Reports before auto-suspension</label>
+                <input type="number" value="5">
+              </div>
+            </div>
+            <div class="flex items-center justify-between mb-16" style="padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+              <div>
+                <div class="text-sm fw500">Auto-suspend flagged accounts</div>
+                <div class="text-xs text-dim">Suspend automatically after threshold is reached</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm fw500">Email admin on high-severity flags</div>
+                <div class="text-xs text-dim">Immediate alert for severity ≥ High</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">Feature Flags</div></div>
+          <div class="card-body">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div class="flex items-center justify-between">
+                <div><div class="text-sm fw500">Visualizer feature</div><div class="text-xs text-dim">Full-screen accelerometer art mode</div></div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div><div class="text-sm fw500">Dating mode</div><div class="text-xs text-dim">Enable dating-specific discovery mode</div></div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div><div class="text-sm fw500">Community event submissions</div><div class="text-xs text-dim">Allow non-partner users to submit events</div></div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div><div class="text-sm fw500">Brand activation campaigns</div><div class="text-xs text-dim">Enterprise geo-fenced brand campaigns</div></div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div><div class="text-sm fw500">vibr8 Pro subscriptions</div><div class="text-xs text-dim">User-facing Pro tier</div></div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY PAGE -->
+    <div id="page-activity" class="page">
+      <div class="topbar">
+        <div class="page-title">
+          Live Activity
+          <span class="badge b-green" style="font-size: 10px;">● Live</span>
+        </div>
+        <div class="topbar-actions">
+          <span class="text-xs font-mono text-dim">Auto-refreshing every 5s</span>
+        </div>
+      </div>
+      <div class="content">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Active Sessions</div>
+            <div class="stat-value" style="color: var(--success);">1,402</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">BLE Devices Broadcasting</div>
+            <div class="stat-value">1,388</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Buzzes / min</div>
+            <div class="stat-value">48</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Promos Triggered / min</div>
+            <div class="stat-value">12</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">API Req / sec</div>
+            <div class="stat-value">340</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Active Users by Mode</div></div>
+            <div class="card-body">
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div><div class="flex justify-between" style="margin-bottom: 5px;"><span class="text-xs text-muted">🌐 Networking</span><span class="text-xs font-mono">524</span></div><div class="progress" style="height: 5px;"><div class="progress-fill" style="width: 74%; background: var(--info);"></div></div></div>
+                <div><div class="flex justify-between" style="margin-bottom: 5px;"><span class="text-xs text-muted">🌿 Chill</span><span class="text-xs font-mono">380</span></div><div class="progress" style="height: 5px;"><div class="progress-fill" style="width: 54%;"></div></div></div>
+                <div><div class="flex justify-between" style="margin-bottom: 5px;"><span class="text-xs text-muted">💘 Dating</span><span class="text-xs font-mono">314</span></div><div class="progress" style="height: 5px;"><div class="progress-fill" style="width: 45%; background: var(--danger);"></div></div></div>
+                <div><div class="flex justify-between" style="margin-bottom: 5px;"><span class="text-xs text-muted">🧭 Explorer</span><span class="text-xs font-mono">184</span></div><div class="progress" style="height: 5px;"><div class="progress-fill" style="width: 26%; background: var(--success);"></div></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title">Live Event Log</div></div>
+            <div class="card-body" style="padding: 12px;">
+              <div class="log-line" style="border: none; padding: 5px 0;"><span class="log-time">22:41</span><span class="log-level-info">[BUZZ]</span><span>Mutual reveal · Makati · 8m apart</span></div>
+              <div class="log-line" style="border: none; padding: 5px 0;"><span class="log-time">22:41</span><span class="log-level-info">[PROMO]</span><span>Bar Rogue triggered · 23m away</span></div>
+              <div class="log-line" style="border: none; padding: 5px 0;"><span class="log-time">22:40</span><span class="log-level-info">[BUZZ]</span><span>Signal sent · BGC · networking mode</span></div>
+              <div class="log-line" style="border: none; padding: 5px 0;"><span class="log-time">22:40</span><span class="log-level-warn">[WARN]</span><span>Push fail · FCM · Android 14</span></div>
+              <div class="log-line" style="border: none; padding: 5px 0;"><span class="log-time">22:39</span><span class="log-level-info">[PROMO]</span><span>GymFlow triggered · 45m away</span></div>
+              <div class="log-line" style="border: none; padding: 5px 0;"><span class="log-time">22:39</span><span class="log-level-info">[JOIN]</span><span>New session · iOS · Quezon City</span></div>
+              <div class="log-line" style="border: none; padding: 5px 0; border-bottom: none;"><span class="log-time">22:38</span><span class="log-level-info">[BUZZ]</span><span>Signal sent · Ortigas · chill mode</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL: Business Review -->
+<div class="modal-overlay" id="modal-biz" onclick="if(event.target===this)closeModal('modal-biz')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Review Business — Cafe Analog</div>
+      <button class="modal-close" onclick="closeModal('modal-biz')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid-2 mb-16">
+        <div class="form-group">
+          <label>Business Name</label>
+          <input type="text" value="Cafe Analog" readonly style="opacity: 0.7;">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <input type="text" value="Cafe" readonly style="opacity: 0.7;">
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <input type="text" value="Poblacion, Makati City" readonly style="opacity: 0.7;">
+        </div>
+        <div class="form-group">
+          <label>Plan Selected</label>
+          <input type="text" value="Partner Basic — ₱1,990/mo" readonly style="opacity: 0.7;">
+        </div>
+        <div class="form-group">
+          <label>Contact</label>
+          <input type="text" value="Ana Cruz — ana@cafeanalog.ph" readonly style="opacity: 0.7;">
+        </div>
+        <div class="form-group">
+          <label>Submitted</label>
+          <input type="text" value="Apr 19, 2026 · 8:02 PM" readonly style="opacity: 0.7;">
+        </div>
+      </div>
+      <div class="form-group mb-16">
+        <label>Admin Notes (optional)</label>
+        <textarea placeholder="Add any notes about this application..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Assign Plan Override</label>
+        <select>
+          <option>Keep as selected (Basic)</option>
+          <option>Upgrade to Partner Pro</option>
+          <option>Upgrade to Enterprise</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-biz')">Cancel</button>
+      <button class="btn btn-danger">Reject</button>
+      <button class="btn btn-success">Approve & Activate</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPage(name, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  navEl.classList.add('active');
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toggleFilter(el) {
+  el.closest('.filter-row').querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+function switchTab(el) {
+  el.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
