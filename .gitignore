@@ -45,6 +45,7 @@ android/local.properties
 .env.local
 .env.*.local
 *.pem
+.dev-keys.json
 
 # Build / coverage
 coverage/

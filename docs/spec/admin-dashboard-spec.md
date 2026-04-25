@@ -411,15 +411,34 @@ Audit logs are retained for a minimum of 12 months. They are read-only — no ad
 
 ---
 
-## Open Questions
+## Open Questions — Resolved 2026-04-25
 
-- What is the RBAC model exactly? Are there more roles beyond Super Admin / Ops / Finance?
-- Should the audit log be accessible within the dashboard UI, or only via log aggregator (Datadog, etc.)?
-- How do we handle admin access revocation when a team member offboards?
-- Should Partner Review (new business approvals) trigger a Slack notification to the ops team, or email only?
-- Is Platform Config truly zero-downtime for all settings, or do some require a deploy?
+Previously open questions have been resolved. Decisions are recorded in ADRs; rationale is summarised here for spec continuity.
+
+**1. RBAC model — exactly which roles?**
+v1 ships with exactly three roles: **Super Admin**, **Ops / Moderation**, and **Finance**, as described above in §Users. The data model uses a role enum so additional roles can be added without a schema migration. No additional roles are in scope for v1. See [ADR 0008](../decisions/0008-admin-auth-rbac.md).
+
+**2. Audit log — dashboard UI or log aggregator only?**
+Both. A read-only Audit Log page (Super Admin only) is accessible within the dashboard, providing filtered browsing and CSV export. Separately, entries are mirrored asynchronously to a structured log aggregator for long-term archival and cross-system incident search. The PostgreSQL table is the authoritative source; the aggregator is secondary. See [ADR 0009](../decisions/0009-audit-log-architecture.md).
+
+**3. Admin access revocation when a team member offboards?**
+A Super Admin deactivates the admin account record. On deactivation: all active refresh tokens for that admin are immediately invalidated via a DB flag check on every token refresh; any in-flight access tokens expire naturally within 15 minutes (access token TTL). Deactivation is logged to the audit trail. No self-service offboarding — requires another Super Admin to act. See [ADR 0008](../decisions/0008-admin-auth-rbac.md).
+
+**4. Partner Review notifications — Slack or email?**
+**Email only for v1.** New business approval triggers a welcome email to the partner; rejection triggers a rejection email with required reason. Internal ops team notification is also email (configurable recipient list). Slack integration is a post-v1 enhancement — it introduces a dependency on a third-party webhook and out-of-band configuration that is out of scope for launch.
+
+**5. Platform Config — zero-downtime for all settings?**
+Not all. Settings fall into two tiers:
+
+| Tier | Behaviour | Examples |
+|---|---|---|
+| **Hot** — takes effect immediately, no deploy | Config value read from DB on each use | BLE Scan Interval, Buzz Cooldown, Promo radius limits, Auto-flag thresholds, Feature flags |
+| **Warm** — requires process restart, not a full deploy | Value read at process startup | JWT signing keys, DB connection strings |
+| **Cold** — requires a deploy | Structural changes | New feature flag entries, schema changes to config format |
+
+Hot-tier settings cover all settings listed in §Platform Config. The warning banner on that page remains accurate: changes to hot-tier settings affect live app behaviour immediately.
 
 ---
 
-*Last updated: April 2026 — Initial draft, based on Admin Dashboard v1 prototype*
+*Last updated: 2026-04-25 — Open questions resolved; ADRs 0004–0009 drafted*
 *Reference implementation: `vibr8me_admin_dashboard.html`*
