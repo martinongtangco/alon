@@ -1,138 +1,173 @@
-import { BrowserRouter as Router, Routes, Route, NavLink, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import {
-  LayoutDashboard, Activity, Users, ShieldAlert, Store,
-  Tag, Calendar, DollarSign, Server, Settings, ScrollText,
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Activity, Users, ShieldAlert, Store, Tag, Calendar, DollarSign, Settings, Server, LogOut, Radio } from 'lucide-react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Login } from './pages/Login';
+import { LiveActivity } from './pages/LiveActivity';
+import { Users as UsersPage } from './pages/Users';
+import { Flags as FlagsPage } from './pages/Flags';
+import { Businesses as BusinessesPage } from './pages/Businesses';
+import { Promos as PromosPage } from './pages/Promos';
+import { getAccessToken } from './lib/api';
 
 const queryClient = new QueryClient();
 
-const navItems = [
-  { to: '/',        label: 'Overview',        icon: LayoutDashboard },
-  { to: '/live',    label: 'Live Activity',   icon: Activity },
-  { to: '/users',   label: 'Users',           icon: Users },
-  { to: '/flags',   label: 'Flags & Reports', icon: ShieldAlert },
-  { to: '/businesses', label: 'Businesses',   icon: Store },
-  { to: '/promos',  label: 'Promos',          icon: Tag },
-  { to: '/events',  label: 'Events',          icon: Calendar },
-  { to: '/revenue', label: 'Revenue',         icon: DollarSign },
-  { to: '/logs',    label: 'System Logs',     icon: Server },
-  { to: '/config',  label: 'Platform Config', icon: Settings },
-  { to: '/audit',   label: 'Audit Log',       icon: ScrollText },
-];
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+  const { logout, role } = useAuth();
+  const location = useLocation();
+  const [status, setStatus] = useState<any>(null);
 
-const DashboardLayout = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex h-screen bg-gray-900 text-gray-100">
-    <aside className="w-64 bg-gray-950 border-r border-gray-800 flex flex-col shrink-0">
-      <div className="p-4 border-b border-gray-800">
-        <h1 className="text-xl font-bold tracking-wider text-white">vibr8.me ADMIN</h1>
-      </div>
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            className={({ isActive }) =>
-              `flex items-center space-x-3 p-2 rounded text-sm transition-colors ${
-                isActive
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-              }`
-            }
-          >
-            <Icon size={16} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token) return;
 
-    <main className="flex-1 flex flex-col min-w-0">
-      <header className="h-14 bg-gray-900 border-b border-gray-800 flex items-center px-6 justify-between shrink-0">
-        <div className="flex items-center space-x-4">
-          <span className="flex items-center text-sm text-gray-400">
-            <span className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-            API: Healthy
-          </span>
-          <span className="flex items-center text-sm text-gray-400">
-            <span className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-            DB: Healthy
-          </span>
+    const statusSource = new EventSource(`/api/v1/admin/sse/status?token=${token}`);
+    statusSource.addEventListener('status', (e) => {
+      setStatus(JSON.parse(e.data));
+    });
+
+    return () => statusSource.close();
+  }, []);
+
+  const navItemClass = (path: string) => `flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+    location.pathname === path 
+      ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' 
+      : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+  }`;
+
+  return (
+    <div className="flex h-screen bg-gray-900 text-gray-100 font-sans">
+      <aside className="w-64 bg-gray-950 border-r border-gray-800 flex flex-col z-20">
+        <div className="p-6 border-b border-gray-800">
+          <div className="flex items-center space-x-2">
+            <ShieldAlert className="text-blue-500 w-6 h-6" />
+            <h1 className="text-xl font-bold tracking-wider text-white">vibr8.me</h1>
+          </div>
+          <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest">Admin Control</p>
         </div>
-        <div className="text-sm text-gray-400">admin@vibr8.me</div>
-      </header>
-      <div className="flex-1 p-6 overflow-y-auto">{children}</div>
-    </main>
-  </div>
-);
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <Link to="/" className={navItemClass('/')}><Activity size={18} /><span>Overview</span></Link>
+          <Link to="/activity" className={navItemClass('/activity')}><Radio size={18} /><span>Live Activity</span></Link>
+          <Link to="/users" className={navItemClass('/users')}><Users size={18} /><span>Users</span></Link>
+          <Link to="/flags" className={navItemClass('/flags')}><ShieldAlert size={18} /><span>Flags & Reports</span></Link>
+          <Link to="/businesses" className={navItemClass('/businesses')}><Store size={18} /><span>Businesses</span></Link>
+          <Link to="/promos" className={navItemClass('/promos')}><Tag size={18} /><span>Promos</span></Link>
+          <Link to="/events" className={navItemClass('/events')}><Calendar size={18} /><span>Events</span></Link>
+          <Link to="/revenue" className={navItemClass('/revenue')}><DollarSign size={18} /><span>Revenue</span></Link>
+          <Link to="/logs" className={navItemClass('/logs')}><Server size={18} /><span>System Logs</span></Link>
+          
+          {role === 'SUPER_ADMIN' && (
+            <>
+              <div className="pt-4 mt-4 border-t border-gray-800"></div>
+              <Link to="/config" className={navItemClass('/config')}><Settings size={18} /><span>Platform Config</span></Link>
+            </>
+          )}
+        </nav>
+        <div className="p-4 border-t border-gray-800">
+          <button 
+            onClick={logout}
+            className="flex items-center space-x-3 w-full p-3 rounded-lg text-gray-400 hover:bg-red-900/50 hover:text-red-400 transition-colors"
+          >
+            <LogOut size={18} /><span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
 
-const Placeholder = ({ title }: { title: string }) => (
-  <div>
-    <h2 className="text-2xl font-semibold mb-6 text-white">{title}</h2>
-    <div className="p-8 bg-gray-800 rounded-lg border border-gray-700 text-gray-400">
-      Not yet implemented.
+      <main className="flex-1 flex flex-col overflow-hidden bg-gray-950">
+        {/* System Status Bar */}
+        <div className="h-10 bg-gray-900 border-b border-gray-800 flex items-center px-6 justify-between text-xs z-10 shadow-sm">
+          <div className="flex space-x-6 font-mono">
+            {['api', 'db', 'ble', 'promo', 'push'].map(svc => (
+              <div key={svc} className="flex items-center">
+                <span className={`w-2 h-2 rounded-full mr-2 ${!status ? 'bg-gray-600' : status[svc] === 'healthy' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'bg-red-500'}`}></span>
+                <span className="text-gray-400 uppercase">{svc}</span>
+              </div>
+            ))}
+          </div>
+          <div className="text-gray-500 font-mono">
+            SYNC: {status?.timestamp ? new Date(status.timestamp).toLocaleTimeString() : 'CONNECTING...'}
+          </div>
+        </div>
+
+        <header className="h-14 bg-gray-950 border-b border-gray-800 flex items-center px-6 justify-between">
+          <div className="text-sm font-medium text-gray-300">
+            {location.pathname === '/' ? 'Platform Overview' : location.pathname.substring(1).toUpperCase()}
+          </div>
+          <div className="flex items-center space-x-3">
+            <span className="text-xs font-bold px-2 py-1 bg-blue-900/50 text-blue-300 rounded border border-blue-800/50">{role}</span>
+          </div>
+        </header>
+        <div className="p-8 overflow-y-auto h-full relative">
+          {children}
+        </div>
+      </main>
     </div>
-  </div>
-);
+  );
+};
 
-const Overview = () => (
-  <div>
-    <h2 className="text-2xl font-semibold mb-6 text-white">Platform Overview</h2>
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {['Total Users', 'Active Promos', 'MRR', 'Open Flags'].map(metric => (
-        <div key={metric} className="p-4 bg-gray-800 rounded-lg border border-gray-700">
-          <p className="text-gray-400 text-sm">{metric}</p>
-          <p className="text-2xl font-bold text-white mt-1">—</p>
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="flex h-screen items-center justify-center bg-gray-950 text-white">Authenticating session...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const AuthRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="flex h-screen items-center justify-center bg-gray-950 text-white">Loading...</div>;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const DashboardHome = () => (
+  <div className="animate-in fade-in duration-500">
+    <h2 className="text-2xl font-bold mb-8 text-white tracking-wide">Platform Overview</h2>
+    <div className="grid grid-cols-4 gap-6">
+      {['Total Users', 'Active Promos', 'MRR', 'Open Flags'].map((metric, i) => (
+        <div key={metric} className="p-6 bg-gray-900 rounded-xl border border-gray-800 shadow-lg relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
+          <h3 className="text-gray-400 text-sm font-medium tracking-wide">{metric}</h3>
+          <p className="text-3xl font-bold text-white mt-2 font-mono">
+            {i === 2 ? '$--' : '--'}
+          </p>
         </div>
       ))}
     </div>
   </div>
 );
 
-const Login = () => (
-  <div className="flex items-center justify-center min-h-screen bg-gray-900">
-    <div className="w-full max-w-md p-8 space-y-6 bg-gray-950 rounded-xl border border-gray-800">
-      <h1 className="text-2xl font-bold text-center text-white">vibr8.me System Control</h1>
-      <form className="space-y-4">
-        <input className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-gray-500" placeholder="Email" type="email" />
-        <input className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-gray-500" placeholder="Password" type="password" />
-        <button className="w-full p-3 font-semibold text-white bg-indigo-600 rounded hover:bg-indigo-500 transition-colors" type="button">
-          Sign In
-        </button>
-      </form>
-    </div>
-  </div>
-);
-
 function App() {
-  const isAuthenticated = false;
-
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          {isAuthenticated ? (
-            <>
-              <Route path="/" element={<DashboardLayout><Overview /></DashboardLayout>} />
-              <Route path="/live"       element={<DashboardLayout><Placeholder title="Live Activity" /></DashboardLayout>} />
-              <Route path="/users"      element={<DashboardLayout><Placeholder title="Users" /></DashboardLayout>} />
-              <Route path="/flags"      element={<DashboardLayout><Placeholder title="Flags & Reports" /></DashboardLayout>} />
-              <Route path="/businesses" element={<DashboardLayout><Placeholder title="Businesses" /></DashboardLayout>} />
-              <Route path="/promos"     element={<DashboardLayout><Placeholder title="Promos" /></DashboardLayout>} />
-              <Route path="/events"     element={<DashboardLayout><Placeholder title="Events" /></DashboardLayout>} />
-              <Route path="/revenue"    element={<DashboardLayout><Placeholder title="Revenue" /></DashboardLayout>} />
-              <Route path="/logs"       element={<DashboardLayout><Placeholder title="System Logs" /></DashboardLayout>} />
-              <Route path="/config"     element={<DashboardLayout><Placeholder title="Platform Config" /></DashboardLayout>} />
-              <Route path="/audit"      element={<DashboardLayout><Placeholder title="Audit Log" /></DashboardLayout>} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </>
-          ) : (
-            <Route path="*" element={<DashboardLayout><Overview /></DashboardLayout>} />
-          )}
-        </Routes>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
+            <Route path="/" element={<ProtectedRoute><DashboardLayout><DashboardHome /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/activity" element={<ProtectedRoute><DashboardLayout><LiveActivity /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/users" element={<ProtectedRoute><DashboardLayout><UsersPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/flags" element={<ProtectedRoute><DashboardLayout><FlagsPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/businesses" element={<ProtectedRoute><DashboardLayout><BusinessesPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/promos" element={<ProtectedRoute><DashboardLayout><PromosPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

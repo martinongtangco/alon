@@ -3,13 +3,15 @@ import * as jose from 'jose';
 import { getPublicKey } from '../utils/keys';
 
 export const authAdmin = async (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing or invalid authorization header' });
+  let token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token && req.query.token) {
+    token = req.query.token as string;
   }
 
-  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Missing authorization token' });
+  }
 
   try {
     const publicKey = await jose.importSPKI(getPublicKey(), 'RS256');

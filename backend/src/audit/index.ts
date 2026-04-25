@@ -15,6 +15,8 @@ export enum AuditAction {
   CONFIG_UPDATE = 'CONFIG_UPDATE',
   ADMIN_LOGIN = 'ADMIN_LOGIN',
   ADMIN_LOGOUT = 'ADMIN_LOGOUT',
+  USER_REINSTATE = 'USER_REINSTATE',
+  BUSINESS_REINSTATE = 'BUSINESS_REINSTATE',
 }
 
 interface AuditContext {
@@ -27,7 +29,7 @@ export const withAudit = async (
   client: PoolClient,
   context: AuditContext,
   actionType: AuditAction,
-  subjectId?: string,
+  subjectId?: string | string[],
   beforeState?: any,
   afterState?: any
 ) => {
@@ -48,7 +50,7 @@ export const withAudit = async (
     context.adminId,
     context.adminRole,
     actionType,
-    subjectId || null,
+    Array.isArray(subjectId) ? subjectId[0] : (subjectId || null),
     beforeState ? JSON.stringify(beforeState) : null,
     afterState ? JSON.stringify(afterState) : null,
     context.ipAddress || null,

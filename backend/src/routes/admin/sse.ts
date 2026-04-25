@@ -60,3 +60,59 @@ setInterval(() => {
     client.res.write('event: heartbeat\ndata: {}\n\n');
   });
 }, 15000);
+
+// --- Mock Data Generators for Dashboard UI Testing ---
+// In production, these are triggered by actual mobile app traffic or redis pubsub
+
+// 1. Status Stream (Every 5s)
+setInterval(() => {
+  broadcastSSE('status', {
+    api: 'healthy',
+    db: 'healthy',
+    ble: 'healthy',
+    promo: 'healthy',
+    push: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+}, 5000);
+
+// 2. Activity Stream (Metrics & Modes - Every 5s)
+setInterval(() => {
+  broadcastSSE('activity', {
+    metrics: {
+      activeSessions: Math.floor(Math.random() * 5000) + 10000,
+      bleBroadcasting: Math.floor(Math.random() * 3000) + 8000,
+      buzzesPerMin: Math.floor(Math.random() * 500) + 100,
+      promosTriggered: Math.floor(Math.random() * 100) + 20,
+      apiReqPerSec: Math.floor(Math.random() * 800) + 200,
+    },
+    modes: {
+      Networking: Math.floor(Math.random() * 40) + 30, // %
+      Chill: Math.floor(Math.random() * 30) + 10,
+      Dating: Math.floor(Math.random() * 20) + 10,
+      Explorer: Math.floor(Math.random() * 10) + 5,
+    }
+  });
+}, 5000);
+
+// 3. Logs Stream (Random events every 2-8s)
+const logTypes = ['buzz_sent', 'mutual_reveal', 'promo_triggered', 'new_session', 'rate_limit_hit'];
+const streamLogs = () => {
+  const type = logTypes[Math.floor(Math.random() * logTypes.length)];
+  const isError = type === 'rate_limit_hit';
+  
+  broadcastSSE('logs', {
+    id: require('uuid').v4(),
+    timestamp: new Date().toISOString(),
+    level: isError ? 'WARN' : 'INFO',
+    type,
+    message: `Event: ${type}`,
+    metadata: {
+      userHash: require('crypto').randomBytes(4).toString('hex'),
+      duration: Math.floor(Math.random() * 100) + 'ms'
+    }
+  });
+
+  setTimeout(streamLogs, Math.random() * 6000 + 2000);
+};
+streamLogs();

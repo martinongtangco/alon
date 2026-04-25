@@ -39,6 +39,7 @@ What's the trade-off? What does this make harder?
 | [0007](0007-admin-realtime-transport.md) | Real-Time Transport for Admin Dashboard (SSE) | Accepted |
 | [0008](0008-admin-auth-rbac.md) | Admin Authentication and RBAC (JWT + TOTP + role enum) | Accepted |
 | [0009](0009-audit-log-architecture.md) | Audit Log Architecture (append-only Postgres + in-dashboard UI) | Accepted |
+| [0010](0010-app-schema-data-model.md) | App Schema Data Model (app.users, businesses, promos, events, flags) | Accepted |
 
 ## Open decisions awaiting an ADR
 
