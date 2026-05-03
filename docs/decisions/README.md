@@ -4,23 +4,7 @@ One file per architectural decision. Owned by the architect; read by everyone.
 
 ## Format
 
-```
-# ADR NNNN: <decision title>
-Status: Proposed | Accepted | Superseded by ADR-XXXX
-Date: YYYY-MM-DD
-
-## Context
-What's the problem? What constraints apply? Cite spec sections.
-
-## Decision
-What are we doing?
-
-## Alternatives considered
-What else did we look at? Why did we reject it?
-
-## Consequences
-What's the trade-off? What does this make harder?
-```
+See `.claude/skills/grill-with-docs/ADR-FORMAT.md` for the canonical format. Status values: `proposed | accepted | deprecated | superseded by ADR 0NNNN` (number only — never use filenames or `ADR-NNNN`).
 
 ## Naming
 

@@ -47,10 +47,74 @@ This is an accepted M1 limitation. Full background haptic delivery is an open qu
 3. **Accept flaky background on OEM devices** — fails the M1 success criterion. Rejected.
 4. **Require all M1 testing on Pixel hardware only** — acceptable for the 2-device lab test. This is the M1 recommendation: use a Pixel 7 or equivalent stock Android device.
 
+## Implementation notes
+
+**There is no `AndroidManifest.xml` to edit directly.** This is an Expo managed workflow — the manifest is generated at build time. Do not create or manually edit `AndroidManifest.xml`.
+
+### File to edit
+
+`app/app.json` — relative to the repo root. This is the only file that needs to change for ADR 0016.
+
+### What to add
+
+Add a `plugins` array and update the `android` block. The complete `expo` object in `app/app.json` should look like this after the change:
+
+```json
+{
+  "expo": {
+    "name": "vibr8.me",
+    "slug": "vibr8me",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "me.vibr8.app"
+    },
+    "android": {
+      "package": "me.vibr8.app",
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_SCAN",
+        "BLUETOOTH_ADVERTISE",
+        "BLUETOOTH_CONNECT"
+      ]
+    },
+    "splash": {
+      "backgroundColor": "#f5f0e8"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "plugins": [
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["peripheral", "central"],
+          "bluetoothAlwaysPermission": "Allow vibr8.me to use Bluetooth to detect nearby vibes"
+        }
+      ]
+    ]
+  }
+}
+```
+
+### What the plugin generates at build time
+
+The `react-native-ble-plx` plugin with `isBackgroundEnabled: true` generates all of the following in the Expo-managed `AndroidManifest.xml`:
+- The five BLE `<uses-permission>` entries (BLUETOOTH, BLUETOOTH_ADMIN, BLUETOOTH_SCAN, BLUETOOTH_ADVERTISE, BLUETOOTH_CONNECT)
+- `<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />`
+- `<uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />`
+- The `<service>` declaration under `<application>` with `android:foregroundServiceType="connectedDevice"`
+
+The `android.permissions` array handles runtime permission requests (what Android shows the user at runtime). The plugin handles manifest declarations (what Android requires at install time). Both are required.
+
 ## Consequences
 
 - A persistent notification is mandatory on Android for background BLE. It cannot be hidden. The notification must be designed as part of the product experience, not treated as a technical afterthought.
 - M1 battery impact: a foreground service adds approximately 1–2% baseline drain. Combined with BLE scanning at 1-second intervals, the total is estimated at 4–6% / hr — within the 3–6% target from the spec. Calibration on real hardware is required.
-- The engineer must add `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_CONNECTED_DEVICE` permissions to `AndroidManifest.xml` and declare the service under `<application>`.
+- The engineer adds the `react-native-ble-plx` plugin to `app/app.json` (see Implementation notes above). The Expo build system generates the required `AndroidManifest.xml` entries — no manual XML editing.
 - Background haptics in M1 require the app to be in foreground. This is a known limitation, not a bug. The foreground service keeps BLE alive; the user must have the app visible to feel the haptic.
 - This ADR closes the "Android OEM background-restriction handling" open decision for M1. OEM-specific hardening is deferred to M2.

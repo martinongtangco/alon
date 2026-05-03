@@ -38,6 +38,8 @@ If a feature request conflicts with any of these, flag it before building.
 
 All architectural decisions are recorded in `docs/decisions/`. **An accepted ADR is a build instruction — implementing code that follows an accepted ADR does not require a new ADR.** Only write a new ADR when making a new architectural decision not already covered.
 
+**Installing packages listed in an accepted ADR is part of implementing that ADR.** `react-native-ble-plx` (ADR 0002), `zustand` (ADR 0001), and every other package named in an accepted ADR are pre-authorized. Install them. Do not ask for a new ADR.
+
 ---
 
 ## Repository layout

@@ -132,5 +132,5 @@ If you find yourself adding an `/api/messages` endpoint, a message store, a typi
 - Description cites the spec section
 - Description lists devices tested (or explicitly says "no device testing needed and here's why")
 - No dead code, no commented-out code, no TODOs without an owner
-- No surprise dependency additions — if an ADR already lists a package (check `docs/decisions/README.md`), adding it is implementing an existing decision, not making a new one. A new ADR is only needed for packages not already covered.
+- Packages listed in accepted ADRs **must** be installed as part of implementing those ADRs — no new ADR or architect approval needed (check `docs/decisions/README.md` for the index). Only flag a dependency that has no covering ADR.
 - Respects the six core principles
