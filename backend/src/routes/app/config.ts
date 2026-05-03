@@ -2,8 +2,8 @@ import { Router, Request, Response } from 'express';
 
 export const appConfigRouter = Router();
 
-const DEFAULTS = {
-  BUZZ_COOLDOWN: 120,   // seconds; ADR 0012
+export const DEFAULTS = {
+  BUZZ_COOLDOWN: 120,
 };
 
 // GET /api/config
@@ -12,3 +12,4 @@ const DEFAULTS = {
 appConfigRouter.get('/', (_req: Request, res: Response) => {
   res.json(DEFAULTS);
 });
+
