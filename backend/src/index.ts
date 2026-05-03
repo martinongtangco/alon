@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { adminRouter } from './routes/admin';
+import { appRouter } from './routes/app';
 
 dotenv.config();
 
@@ -13,16 +14,13 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-// API version 1 prefix
-const v1Router = express.Router();
-v1Router.use('/admin', adminRouter);
+app.use('/api', appRouter);
+app.use('/api/v1/admin', adminRouter);
 
-app.use('/api/v1', v1Router);
-
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

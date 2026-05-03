@@ -44,14 +44,16 @@ What's the trade-off? What does this make harder?
 | [0012](0012-milestone-1-product-scope.md) | Milestone 1 Product Scope (Android lab test) | Accepted |
 | [0013](0013-proximity-rssi-smoothing.md) | Proximity RSSI Smoothing Strategy (hysteresis + rolling average) | Accepted |
 | [0014](0014-redis-first-token-store.md) | Redis-First Token Store (M1), Postgres supplement (M2) | Accepted |
+| [0015](0015-app-api-topology.md) | App-Facing API Topology and Device Authentication (M1) | Accepted |
+| [0016](0016-android-foreground-service.md) | Android Foreground Service Strategy | Accepted |
+| [0017](0017-deployment-platform.md) | Deployment Platform — Railway (M1) | Accepted |
 
 ## Open decisions awaiting an ADR
 
-From `docs/agents/architect.md` — mobile app decisions still unresolved:
+Deferred — none blocking M1:
 
-- Matching engine topology (inline / service / batch)
-- Offline radar behaviour
-- Event ingestion pipeline shape
-- Age verification / safety moderation
-- Android OEM background-restriction handling (Samsung / Xiaomi)
-- Server-enforced Ghost Mode (client-side accepted for M1 per ADR 0012; server-enforcement deferred to M3)
+- Matching engine topology (inline / service / batch) — M2
+- Offline radar behaviour — M2
+- Event ingestion pipeline shape — M2
+- Age verification / safety moderation — M2+ (pre-launch)
+- Server-enforced Ghost Mode — M3

@@ -47,8 +47,7 @@ We will use **Node.js with Express** as the backend framework.
 This choice aligns with the spec's emphasis on minimal surface area. Express provides a lightweight foundation that allows us to build exactly what we need without unnecessary complexity.
 
 ## Implementation Notes
-- Should use PostgreSQL or MongoDB for data storage (to be decided)
-- Will implement strict privacy controls with no user identifiers in proximity tokens
-- Must support geo-query capabilities for matching algorithms
-- Need to implement proper rate limiting and security measures
-- Should be designed for scalability while remaining simple
+- Database: PostgreSQL (admin surface, M2+ app surface) + Redis (M1 token store). See [ADR 0006](0006-primary-database-selection.md) and [ADR 0014](0014-redis-first-token-store.md).
+- Route topology: two namespaces on one process — `routes/app/` at `/api/` (device JWT) and `routes/admin/` at `/api/v1/admin/` (admin JWT + RBAC). See [ADR 0005](0005-admin-dashboard-backend-topology.md) and [ADR 0015](0015-app-api-topology.md).
+- Privacy: proximity tokens are rotating UUIDs. No user PII is stored in the token layer.
+- Rate limiting and geo-query capabilities are M2 concerns; M1 surface is token issuance, device registration, and blind buzz.
