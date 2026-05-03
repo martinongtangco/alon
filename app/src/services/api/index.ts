@@ -14,13 +14,18 @@ async function checked(res: Response): Promise<Response> {
 }
 
 export const apiService = {
-  async registerDevice(deviceId: string): Promise<{ token: string; expiresAt: number }> {
+  async registerDevice(deviceId: string): Promise<{ token: string; expiresAt: number; authToken: string }> {
     const res = await fetch(`${BASE_URL}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deviceId }),
     });
-    return (await checked(res)).json();
+    const data = await (await checked(res)).json();
+    // Persist the auth token for future authenticated requests
+    if (data.authToken) {
+      await AsyncStorage.setItem('authToken', data.authToken);
+    }
+    return { token: data.token, expiresAt: data.expiresAt, authToken: data.authToken };
   },
 
   async rotateToken(): Promise<{ token: string; expiresAt: number }> {
@@ -34,6 +39,7 @@ export const apiService = {
     return (await checked(res)).json();
   },
 
+  // Not part of M1 spec; keep for compatibility
   async getProfile(): Promise<UserProfile> {
     const res = await fetch(`${BASE_URL}/profile`, { headers: await authHeaders() });
     return (await checked(res)).json();
@@ -53,7 +59,7 @@ export const apiService = {
     return (await checked(res)).json();
   },
 
-  async sendBuzz(): Promise<'sent' | 'rate-limited' | 'too-far'> {
+  async sendBuzz(): Promise<'sent' | 'rate-limited'> {
     const headers = { ...await authHeaders(), 'Content-Type': 'application/json' };
     const res = await fetch(`${BASE_URL}/buzz`, { method: 'POST', headers });
     return (await checked(res)).json();
@@ -70,7 +76,7 @@ export const apiService = {
   },
 
   async fetchEvents(): Promise<MapEvent[]> {
-    const res = await fetch(`${BASE_URL}/events`);
+    const res = await fetch `${BASE_URL}/events`;
     return (await checked(res)).json();
   },
 
@@ -84,3 +90,4 @@ export const apiService = {
     return (await checked(res)).json();
   },
 };
+
