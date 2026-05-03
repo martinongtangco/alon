@@ -137,8 +137,7 @@ flagsRouter.post('/:id/escalate', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Flag not found' });
     }
 
-    // Usually escalating also notifies super admins, we log it for now
-    await withAudit(client, auditContext, AuditAction.FLAG_DISMISS, id as string, {}, { severity: 'High', resolution_action: 'escalated' });
+    await withAudit(client, auditContext, AuditAction.FLAG_ESCALATE, id as string, {}, { severity: 'High', resolution_action: 'escalated' });
 
     await client.query('COMMIT');
     res.json(result.rows[0]);
@@ -172,7 +171,7 @@ flagsRouter.post('/:id/resolve', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Flag not found' });
     }
 
-    await withAudit(client, auditContext, AuditAction.FLAG_DISMISS, id as string, { status: 'Open' }, { status: 'Resolved', resolution_action: action_taken });
+    await withAudit(client, auditContext, AuditAction.FLAG_RESOLVE, id as string, { status: 'Open' }, { status: 'Resolved', resolution_action: action_taken });
 
     await client.query('COMMIT');
     res.json(result.rows[0]);

@@ -1,7 +1,3 @@
 {
-  "$schema": "https://claude.ai/schemas/settings.json",
-  "project": {
-    "name": "vibr8.me",
-    "description": "Proximity-based social discovery mobile app. Haptics-first, no chat, battery-conscious. See CLAUDE.md."
-  }
+  "$schema": "https://json.schemastore.org/claude-code-settings.json"
 }

@@ -7,14 +7,16 @@ import { withAudit, AuditAction, extractAuditContext } from '../../audit';
 export const configRouter = Router();
 
 configRouter.use(authAdmin);
-configRouter.use(requireRole([AdminRole.SUPER_ADMIN])); // Only Super Admin can change config
+configRouter.use(requireRole([AdminRole.SUPER_ADMIN]));
 
 // GET /api/v1/admin/config
-configRouter.get('/', async (req: Request, res: Response) => {
+configRouter.get('/', async (_req: Request, res: Response) => {
   try {
-    const result = await pool.query('SELECT key, value, tier, updated_at FROM admin.platform_config ORDER BY key ASC');
+    const result = await pool.query(
+      'SELECT key, value, tier, updated_at FROM admin.platform_config ORDER BY key ASC'
+    );
     res.json(result.rows);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -26,28 +28,37 @@ configRouter.put('/:key', async (req: Request, res: Response) => {
   const auditContext = extractAuditContext(req);
 
   if (confirmation !== true) return res.status(400).json({ error: 'Confirmation required for config change' });
+  if (value === undefined) return res.status(400).json({ error: 'Missing value' });
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
-    const current = await client.query('SELECT value FROM admin.platform_config WHERE key = $1', [key]);
+    const current = await client.query(
+      'SELECT value FROM admin.platform_config WHERE key = $1',
+      [key]
+    );
     if (current.rowCount === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Config key not found' });
     }
 
-    const result = await client.query(`
-      UPDATE admin.platform_config 
-      SET value = $1, updated_at = NOW(), updated_by = $2
-      WHERE key = $3 RETURNING *
-    `, [JSON.stringify(value), auditContext.adminId, key]);
+    const result = await client.query(
+      `UPDATE admin.platform_config
+       SET value = $1, updated_at = NOW(), updated_by = $2
+       WHERE key = $3
+       RETURNING *`,
+      [JSON.stringify(value), auditContext.adminId, key]
+    );
 
-    await withAudit(client, auditContext, AuditAction.CONFIG_UPDATE, key, { value: current.rows[0].value }, { value });
+    await withAudit(client, auditContext, AuditAction.CONFIG_UPDATE, key,
+      { value: current.rows[0].value },
+      { value }
+    );
 
     await client.query('COMMIT');
     res.json(result.rows[0]);
-  } catch (error) {
+  } catch {
     await client.query('ROLLBACK');
     res.status(500).json({ error: 'Internal server error' });
   } finally {

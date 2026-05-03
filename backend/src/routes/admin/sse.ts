@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
 import { authAdmin } from '../../middleware/authAdmin';
 import { requireRole, AdminRole } from '../../middleware/rbac';
 import { v4 as uuidv4 } from 'uuid';
@@ -102,13 +103,13 @@ const streamLogs = () => {
   const isError = type === 'rate_limit_hit';
   
   broadcastSSE('logs', {
-    id: require('uuid').v4(),
+    id: uuidv4(),
     timestamp: new Date().toISOString(),
     level: isError ? 'WARN' : 'INFO',
     type,
     message: `Event: ${type}`,
     metadata: {
-      userHash: require('crypto').randomBytes(4).toString('hex'),
+      userHash: crypto.randomBytes(4).toString('hex'),
       duration: Math.floor(Math.random() * 100) + 'ms'
     }
   });

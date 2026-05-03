@@ -1,7 +1,8 @@
 # ADR 0001: State Management Library Selection
 
-Status: Proposed
+Status: Accepted
 Date: 2026-04-19
+Accepted: 2026-05-03
 
 ## Context
 The vibr8.me app requires a state management solution that fits the spec's passive/ambient model. The app needs to manage:

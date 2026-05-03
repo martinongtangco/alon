@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "ts-node-dev --respawn --files src/index.ts",
+    "seed": "node scripts/seed-dev.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -13,6 +13,7 @@ Because there is **no in-app chat**, the backend is dramatically smaller than a 
 | Proximity tokens | Rotating anonymized tokens for BLE broadcast |
 | Promo CMS | Partner establishment content |
 | Event ingestion | Manual-curation interface for MVP |
+| Platform Config | Admin-controlled platform settings |
 
 ## What this backend is NOT
 
@@ -22,6 +23,28 @@ Because there is **no in-app chat**, the backend is dramatically smaller than a 
 - Not a content moderation pipeline (no user-generated text to moderate)
 
 If you find yourself about to add one of these, stop and check [`../docs/spec/app-spec.md`](../docs/spec/app-spec.md) §Key Features.
+
+## Platform Config Module
+
+This backend includes an admin-controlled configuration system that allows platform administrators to manage various settings:
+
+### Configuration Endpoints
+- `GET /api/v1/admin/config` - Get all platform configurations
+- `PUT /api/v1/admin/config/:key` - Update specific config value
+- `POST /api/v1/admin/config` - Create new config entry
+
+### Default Configurations
+The system automatically creates the following default settings:
+- BLE_SCAN_INTERVAL (15 seconds)
+- BUZZ_COOLDOWN (60 seconds)
+- MAX_PROMO_RADIUS (2000 meters)
+- AUTO_FLAG_THRESHOLD (3 flags)
+- FEATURE_FLAGS (buzz_me: true, mutual_reveal: true)
+
+### Security Features
+- Only Super Admin users can modify configurations
+- All config changes are logged to audit trail
+- Confirmation required for all modifications
 
 ## Privacy rules
 
@@ -35,3 +58,4 @@ If you find yourself about to add one of these, stop and check [`../docs/spec/ap
 2. Read [`../docs/agents/engineer.md`](../docs/agents/engineer.md)
 3. Read [`../docs/architecture/overview.md`](../docs/architecture/overview.md)
 4. Confirm the ADR exists for whatever backend framework is being used
+

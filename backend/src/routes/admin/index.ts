@@ -8,6 +8,8 @@ import { eventsRouter } from './events';
 import { flagsRouter } from './flags';
 import { revenueRouter } from './revenue';
 import { configRouter } from './config';
+import { overviewRouter } from './overview';
+import { auditRouter } from './audit';
 
 export const adminRouter = Router();
 
@@ -20,3 +22,6 @@ adminRouter.use('/events', eventsRouter);
 adminRouter.use('/flags', flagsRouter);
 adminRouter.use('/revenue', revenueRouter);
 adminRouter.use('/config', configRouter);
+adminRouter.use('/overview', overviewRouter);
+adminRouter.use('/audit', auditRouter);
+

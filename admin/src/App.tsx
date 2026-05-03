@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
-import { Activity, Users, ShieldAlert, Store, Tag, Calendar, DollarSign, Settings, Server, LogOut, Radio } from 'lucide-react';
+import { Activity, Users, ShieldAlert, Store, Tag, Calendar, DollarSign, Settings, Server, LogOut, Radio, BookOpen } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './pages/Login';
 import { LiveActivity } from './pages/LiveActivity';
@@ -9,7 +9,12 @@ import { Users as UsersPage } from './pages/Users';
 import { Flags as FlagsPage } from './pages/Flags';
 import { Businesses as BusinessesPage } from './pages/Businesses';
 import { Promos as PromosPage } from './pages/Promos';
-import { getAccessToken } from './lib/api';
+import { Events as EventsPage } from './pages/Events';
+import { Revenue } from './pages/Revenue';
+import { SystemLogs } from './pages/SystemLogs';
+import { AuditLog } from './pages/AuditLog';
+import { PlatformConfig } from './pages/PlatformConfig';
+import { apiFetch, getAccessToken } from './lib/api';
 
 const queryClient = new QueryClient();
 
@@ -60,6 +65,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           {role === 'SUPER_ADMIN' && (
             <>
               <div className="pt-4 mt-4 border-t border-gray-800"></div>
+              <Link to="/audit" className={navItemClass('/audit')}><BookOpen size={18} /><span>Audit Log</span></Link>
               <Link to="/config" className={navItemClass('/config')}><Settings size={18} /><span>Platform Config</span></Link>
             </>
           )}
@@ -134,22 +140,38 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const DashboardHome = () => (
-  <div className="animate-in fade-in duration-500">
-    <h2 className="text-2xl font-bold mb-8 text-white tracking-wide">Platform Overview</h2>
-    <div className="grid grid-cols-4 gap-6">
-      {['Total Users', 'Active Promos', 'MRR', 'Open Flags'].map((metric, i) => (
-        <div key={metric} className="p-6 bg-gray-900 rounded-xl border border-gray-800 shadow-lg relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
-          <h3 className="text-gray-400 text-sm font-medium tracking-wide">{metric}</h3>
-          <p className="text-3xl font-bold text-white mt-2 font-mono">
-            {i === 2 ? '$--' : '--'}
-          </p>
-        </div>
-      ))}
+const DashboardHome = () => {
+  const { data } = useQuery({
+    queryKey: ['overview'],
+    queryFn: () => apiFetch('/overview'),
+    refetchInterval: 30000,
+  });
+
+  const metrics = [
+    { label: 'Total Users', value: data?.total_users ?? null, prefix: '' },
+    { label: 'Active Businesses', value: data?.active_businesses ?? null, prefix: '' },
+    { label: 'Active Promos', value: data?.active_promos ?? null, prefix: '' },
+    { label: 'Estimated MRR', value: data?.estimated_mrr != null ? parseFloat(data.estimated_mrr).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : null, prefix: '$' },
+    { label: 'Open Flags', value: data?.open_flags ?? null, prefix: '' },
+  ];
+
+  return (
+    <div className="animate-in fade-in duration-500">
+      <h2 className="text-2xl font-bold mb-8 text-white tracking-wide">Platform Overview</h2>
+      <div className="grid grid-cols-5 gap-5">
+        {metrics.map(({ label, value, prefix }) => (
+          <div key={label} className="p-6 bg-gray-900 rounded-xl border border-gray-800 shadow-lg relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150" />
+            <h3 className="text-gray-400 text-sm font-medium tracking-wide">{label}</h3>
+            <p className="text-3xl font-bold text-white mt-2 font-mono">
+              {value != null ? `${prefix}${value}` : `${prefix}--`}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 function App() {
   return (
@@ -164,6 +186,11 @@ function App() {
             <Route path="/flags" element={<ProtectedRoute><DashboardLayout><FlagsPage /></DashboardLayout></ProtectedRoute>} />
             <Route path="/businesses" element={<ProtectedRoute><DashboardLayout><BusinessesPage /></DashboardLayout></ProtectedRoute>} />
             <Route path="/promos" element={<ProtectedRoute><DashboardLayout><PromosPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/events" element={<ProtectedRoute><DashboardLayout><EventsPage /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/revenue" element={<ProtectedRoute><DashboardLayout><Revenue /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/logs" element={<ProtectedRoute><DashboardLayout><SystemLogs /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/audit" element={<ProtectedRoute><DashboardLayout><AuditLog /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/config" element={<ProtectedRoute><DashboardLayout><PlatformConfig /></DashboardLayout></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>
@@ -173,3 +200,4 @@ function App() {
 }
 
 export default App;
+

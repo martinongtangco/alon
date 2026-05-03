@@ -1,7 +1,8 @@
 # ADR 0003: Backend Framework Selection
 
-Status: Proposed
+Status: Accepted
 Date: 2026-04-19
+Accepted: 2026-05-03
 
 ## Context
 The vibr8.me backend needs to support a minimal surface area as specified in the spec. The backend should:

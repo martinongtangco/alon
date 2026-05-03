@@ -1,7 +1,8 @@
 # ADR 0002: BLE Library Selection
 
-Status: Proposed
+Status: Accepted
 Date: 2026-04-19
+Accepted: 2026-05-03
 
 ## Context
 The vibr8.me app requires a Bluetooth Low Energy (BLE) library that supports both scanning and advertising capabilities on both iOS and Android platforms. The spec mandates that BLE is the primary proximity tool, with strict battery efficiency requirements.

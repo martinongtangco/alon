@@ -55,8 +55,8 @@ eventsRouter.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/v1/admin/events/:id/feature
-eventsRouter.post('/:id/feature', async (req: Request, res: Response) => {
+// POST /api/v1/admin/events/:id/approve
+eventsRouter.post('/:id/approve', async (req: Request, res: Response) => {
   const { id } = req.params;
   const auditContext = extractAuditContext(req);
 
@@ -64,26 +64,94 @@ eventsRouter.post('/:id/feature', async (req: Request, res: Response) => {
   try {
     await client.query('BEGIN');
 
-    const result = await client.query(`
-      UPDATE app.events 
-      SET is_featured = true, updated_at = NOW()
-      WHERE id = $1 AND status IN ('Scheduled', 'Live') RETURNING *
-    `, [id]);
-
-    if (result.rowCount === 0) {
+    const currentRes = await client.query(
+      'SELECT status FROM app.events WHERE id = $1',
+      [id]
+    );
+    if (currentRes.rowCount === 0) {
       await client.query('ROLLBACK');
-      return res.status(404).json({ error: 'Event not found or cannot be featured' });
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    const currentStatus = currentRes.rows[0].status;
+    if (currentStatus !== 'Pending Review') {
+      await client.query('ROLLBACK');
+      return res
+        .status(400)
+        .json({ error: 'Can only approve events with Pending Review status' });
     }
 
-    // No specific AuditAction mapped for feature, but we log it as a config change or generic
-    await withAudit(client, auditContext, AuditAction.CONFIG_UPDATE, id, { is_featured: false }, { is_featured: true });
+    const result = await client.query(
+      `UPDATE app.events
+       SET status = 'Scheduled', approved_at = NOW(), approved_by = $1, updated_at = NOW()
+       WHERE id = $2 RETURNING *`,
+      [auditContext.adminId, id]
+    );
 
+    await withAudit(
+      client,
+      auditContext,
+      AuditAction.EVENT_APPROVE,
+      id,
+      { status: 'Pending Review' },
+      { status: 'Scheduled' }
+    );
     await client.query('COMMIT');
     res.json(result.rows[0]);
-  } catch (error) {
+  } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: 'Internal server error' });
   } finally {
     client.release();
   }
 });
+
+// POST /api/v1/admin/events/:id/reject
+eventsRouter.post('/:id/reject', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { rejection_reason } = req.body;
+  if (!rejection_reason) {
+    return res.status(400).json({ error: 'Rejection reason is required' });
+  }
+
+  const auditContext = extractAuditContext(req);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const currentRes = await client.query(
+      'SELECT status FROM app.events WHERE id = $1',
+      [id]
+    );
+    if (currentRes.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    const result = await client.query(
+      `UPDATE app.events
+       SET status = 'Rejected', rejection_reason = $1, rejected_at = NOW(), rejected_by = $2, updated_at = NOW()
+       WHERE id = $3 RETURNING *`,
+      [rejection_reason, auditContext.adminId, id]
+    );
+
+    await withAudit(
+      client,
+      auditContext,
+      AuditAction.EVENT_REJECT,
+      id,
+      { status: 'Pending Review' },
+      { status: 'Rejected', rejection_reason }
+    );
+
+    await client.query('COMMIT');
+    res.json(result.rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+
