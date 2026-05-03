@@ -10,13 +10,7 @@ import {
   UserProfile,
   Vibe,
 } from '../types';
-import {
-  mockEvents,
-  mockFeed,
-  mockMatches,
-  mockNearby,
-  mockPromos,
-} from '../constants/mockData';
+import { apiService } from '../services/api';
 
 interface AppState {
   onboarded: boolean;
@@ -29,7 +23,6 @@ interface AppState {
   feed: FeedItem[];
 
   signalLevel: SignalLevel;
-  buzzesSentToday: Record<string, number>;
 
   completeOnboarding: (profile: Partial<UserProfile>) => void;
   setMode: (mode: Mode) => void;
@@ -37,9 +30,10 @@ interface AppState {
   toggleGhostMode: () => void;
   setSignalLevel: (level: SignalLevel) => void;
   setNearby: (nearby: NearbyPerson[]) => void;
-  buzz: (token: string) => 'sent' | 'rate-limited' | 'too-far';
+  buzz: () => Promise<'sent' | 'rate-limited' | 'too-far'>;
   buzzBack: (matchId: string) => void;
   reveal: (token: string) => void;
+  hydrate: () => Promise<void>;
 }
 
 const defaultProfile: UserProfile = {
@@ -51,24 +45,25 @@ const defaultProfile: UserProfile = {
   ghostMode: false,
 };
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>((set) => ({
   onboarded: false,
   profile: defaultProfile,
 
-  nearby: mockNearby,
-  promos: mockPromos,
-  events: mockEvents,
-  matches: mockMatches,
-  feed: mockFeed,
+  nearby: [],
+  promos: [],
+  events: [],
+  matches: [],
+  feed: [],
 
   signalLevel: 3,
-  buzzesSentToday: {},
 
-  completeOnboarding: (profile) =>
+  completeOnboarding: (profile) => {
     set((s) => ({
       onboarded: true,
       profile: { ...s.profile, ...profile },
-    })),
+    }));
+    apiService.updateProfile(profile).catch(() => {});
+  },
 
   setMode: (mode) =>
     set((s) => ({ profile: { ...s.profile, mode } })),
@@ -87,7 +82,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const ghostMode = !s.profile.ghostMode;
       return {
         profile: { ...s.profile, ghostMode },
-        nearby: ghostMode ? [] : mockNearby,
+        nearby: ghostMode ? [] : s.nearby,
         signalLevel: ghostMode ? 0 : s.signalLevel,
       };
     }),
@@ -96,35 +91,22 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setNearby: (nearby) => set({ nearby }),
 
-  buzz: (token) => {
-    const state = get();
-    const target = state.nearby.find((n) => n.token === token);
-    if (!target) return 'too-far';
-    if (target.distanceMeters > 100) return 'too-far';
-    const sent = state.buzzesSentToday[token] ?? 0;
-    if (sent >= 3) return 'rate-limited';
-    set((s) => ({
-      buzzesSentToday: { ...s.buzzesSentToday, [token]: sent + 1 },
-      matches: [
-        {
-          id: `buzz_${Date.now()}`,
-          initials: target.initials,
-          vibes: target.vibes,
-          status: 'pending',
-          receivedAt: Date.now(),
-        },
-        ...s.matches,
-      ],
-    }));
-    return 'sent';
+  buzz: async () => {
+    try {
+      return await apiService.sendBuzz();
+    } catch {
+      return 'too-far';
+    }
   },
 
-  buzzBack: (matchId) =>
+  buzzBack: (matchId) => {
     set((s) => ({
       matches: s.matches.map((m) =>
         m.id === matchId ? { ...m, status: 'mutual' } : m,
       ),
-    })),
+    }));
+    apiService.buzzBack(matchId).catch(() => {});
+  },
 
   reveal: (token) =>
     set((s) => ({
@@ -132,4 +114,14 @@ export const useAppStore = create<AppState>((set, get) => ({
         n.token === token ? { ...n, revealed: true } : n,
       ),
     })),
+
+  hydrate: async () => {
+    const [promos, events, feed, matches] = await Promise.all([
+      apiService.fetchPromos(),
+      apiService.fetchEvents(),
+      apiService.fetchFeed(),
+      apiService.fetchMatches(),
+    ]);
+    set({ promos, events, feed, matches });
+  },
 }));

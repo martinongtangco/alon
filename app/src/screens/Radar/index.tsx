@@ -74,7 +74,7 @@ export const RadarScreen = () => {
 
   const handleBuzz = async () => {
     if (!selectedPerson) return;
-    const result = buzz(selectedPerson.token);
+    const result = await buzz();
     setBuzzResult(result);
     if (result === 'sent') {
       await hapticsService.play('buzz_me');
