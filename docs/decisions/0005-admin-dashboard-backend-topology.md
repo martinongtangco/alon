@@ -29,8 +29,8 @@ The [admin-dashboard-recommendations.md](../../ImplementationPlanMd/admin-dashbo
 backend/
 ├── src/
 │   ├── routes/
-│   │   ├── mobile/        ← /api/v1/*           (user JWT)
-│   │   ├── partner/       ← /api/v1/partner/*   (partner JWT)
+│   │   ├── app/           ← /api/*              (device JWT, HS256) ← NOTE: supersedes "mobile/" from this ADR; see ADR 0015
+│   │   ├── partner/       ← /api/v1/partner/*   (partner JWT, deferred — M2+)
 │   │   └── admin/         ← /api/v1/admin/*     (admin JWT, RBAC)
 │   ├── middleware/
 │   │   ├── authUser.ts

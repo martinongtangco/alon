@@ -55,6 +55,16 @@ The BLE service has two responsibilities: **advertising** this device's current 
 - For each device event, emit `rssi: number` to the proximity service
 - The proximity service owns smoothing (rolling average + hysteresis) — the BLE service emits raw RSSI only
 
+### Install
+
+Add to `app/package.json` dependencies (run from the `app/` directory):
+
+```
+"react-native-ble-plx": "^3.4.0"
+```
+
+Then run `npm install` inside `app/`.
+
 ### Module interface (`app/src/services/ble/index.ts`)
 ```ts
 interface BleService {

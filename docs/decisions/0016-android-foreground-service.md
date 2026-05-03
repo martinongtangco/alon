@@ -55,9 +55,9 @@ This is an accepted M1 limitation. Full background haptic delivery is an open qu
 
 `app/app.json` — relative to the repo root. This is the only file that needs to change for ADR 0016.
 
-### What to add
+### Verify this is present
 
-Add a `plugins` array and update the `android` block. The complete `expo` object in `app/app.json` should look like this after the change:
+These entries should already be in `app/app.json`. If they are, ADR 0016 is fully implemented — no changes needed. If any are missing, apply them now. The complete `expo` object should look like this:
 
 ```json
 {

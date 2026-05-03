@@ -68,6 +68,51 @@ COMMIT;
 
 If the audit insert fails, the transaction rolls back. This is not optional — the audit write is transactionally coupled to the mutation. Implemented as a shared `withAudit(tx, entry, fn)` helper that all mutating admin handlers must use. Handlers that skip `withAudit` fail code review.
 
+**`withAudit` TypeScript signature** (`backend/src/audit/index.ts`):
+
+```ts
+import { PoolClient } from 'pg';
+
+export interface AuditEntry {
+  adminId: string;
+  adminRole: 'SUPER_ADMIN' | 'OPS' | 'FINANCE';
+  ipAddress: string;
+  actionType: AuditAction;          // from AuditAction enum — see registry below
+  subjectType?: 'user' | 'business' | 'promo' | 'event' | 'config' | 'admin_user';
+  subjectId?: string;
+  beforeState?: Record<string, unknown>;
+  afterState?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+export async function withAudit(
+  tx: PoolClient,
+  entry: AuditEntry,
+  fn: (tx: PoolClient) => Promise<void>
+): Promise<void> {
+  await fn(tx);
+  await tx.query(
+    `INSERT INTO audit.entries
+       (admin_id, admin_role, ip_address, action_type,
+        subject_type, subject_id, before_state, after_state, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [entry.adminId, entry.adminRole, entry.ipAddress, entry.actionType,
+     entry.subjectType ?? null, entry.subjectId ?? null,
+     entry.beforeState ? JSON.stringify(entry.beforeState) : null,
+     entry.afterState  ? JSON.stringify(entry.afterState)  : null,
+     entry.metadata    ? JSON.stringify(entry.metadata)    : null]
+  );
+}
+
+// For read-only PII access (no transaction):
+export async function logPiiAccess(
+  auditWriter: PoolClient,
+  entry: AuditEntry
+): Promise<void> {
+  await auditWriter.query(/* same INSERT */);
+}
+```
+
 Read-only PII access (e.g. admin views a user profile, admin searches by email) is logged outside a transaction — a best-effort `INSERT` via `audit_writer`. These are not transactional because there is no accompanying mutation to roll back, but they are still mandatory and must not be swallowed on error.
 
 ### Retention

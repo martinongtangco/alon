@@ -31,3 +31,52 @@ A device must cross a threshold by at least 5 dBm — measured on the smoothed a
 - RSSI thresholds (-90/-70/-55 dBm) are initial estimates. Calibration on real Android hardware is required before M2.
 - Hysteresis guard of ±5 dBm means the effective transition zone is 10 dBm wide. At typical BLE signal decay rates (~20 dBm per decade of distance), this corresponds to roughly 1–2 metres of physical distance — acceptable for the 3-band model.
 - Scan interval directly affects smoothing latency. A 1-second scan interval with a 5-reading window gives ~5 seconds of smoothing lag. This must be balanced against battery targets (3–6% / hr) set in the spec.
+
+## Implementation
+
+**File:** `app/src/services/proximity/index.ts`
+
+The proximity service subscribes to raw RSSI readings from the BLE service and applies the smoothing algorithm. The BLE service never applies smoothing — it emits raw values only.
+
+**Interface:**
+
+```ts
+export type ProximityBand = 'out-of-range' | 'far' | 'near' | 'very-near';
+
+export interface ProximityService {
+  start(onRssi: (cb: (rssi: number) => void) => () => void): void;
+  stop(): void;
+  onBandChange(cb: (band: ProximityBand) => void): () => void;
+}
+```
+
+**Algorithm:**
+
+```ts
+const WINDOW = 5;
+const THRESHOLDS = { nearFar: -70, veryNearNear: -55 };
+const HYSTERESIS = 5;  // dBm guard either side of each threshold
+const STALE_MS = 5000; // no reading in 5s → out-of-range
+
+// Rolling average
+const readings: number[] = [];
+function addReading(rssi: number): number {
+  readings.push(rssi);
+  if (readings.length > WINDOW) readings.shift();
+  return readings.reduce((a, b) => a + b, 0) / readings.length;
+}
+
+// Band from smoothed RSSI (no hysteresis — raw mapping)
+function bandFor(avg: number): ProximityBand {
+  if (avg < -90) return 'out-of-range';
+  if (avg < THRESHOLDS.nearFar) return 'far';
+  if (avg < THRESHOLDS.veryNearNear) return 'near';
+  return 'very-near';
+}
+
+// Hysteresis check: only change band if smoothed avg has crossed threshold by ±HYSTERESIS
+// e.g. far→near requires avg ≤ (nearFar - HYSTERESIS) = -75 dBm
+// e.g. near→far requires avg ≥ (nearFar + HYSTERESIS) = -65 dBm
+```
+
+The service emits `onBandChange` only when the band actually changes after applying hysteresis. Multiple RSSI readings at the same band do not re-fire the callback.

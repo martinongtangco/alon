@@ -75,6 +75,32 @@ The stub schema stored `active_promo_count` and `mrr_contribution` as columns on
 
 A `tier` column (`hot / warm / cold`) is added to document how quickly each config value takes effect — aligns with the resolved open question in `admin-dashboard-spec.md §Open Questions #5`.
 
+**Table schema:**
+
+```sql
+CREATE TABLE admin.platform_config (
+  key         VARCHAR(255) PRIMARY KEY,
+  value       JSONB        NOT NULL,
+  tier        TEXT         NOT NULL CHECK (tier IN ('hot', 'warm', 'cold')),
+  description TEXT         NOT NULL DEFAULT ''
+);
+```
+
+- `key` — config name (e.g. `'BUZZ_COOLDOWN'`, `'HAPTIC_INTENSITY'`)
+- `value` — stored as JSONB to support numbers, strings, booleans, and arrays without separate columns
+- `tier` — how quickly the value propagates: `hot` = live (app reads on next request), `warm` = next app launch, `cold` = requires a deploy
+- `description` — human-readable label shown in the admin dashboard Platform Config page
+
+Seed example (migration file):
+
+```sql
+INSERT INTO admin.platform_config (key, value, tier, description)
+VALUES
+  ('BUZZ_COOLDOWN',    '120',  'hot',  'Seconds between allowed buzzes per device'),
+  ('MAX_RADAR_RANGE',  '300',  'warm', 'Maximum detection range in metres')
+ON CONFLICT (key) DO NOTHING;
+```
+
 ---
 
 ## Alternatives considered

@@ -30,7 +30,14 @@ Two candidates were identified: **Railway** and **Fly.io**.
 - Custom domain via Railway dashboard when needed.
 - Cost: $5/month Hobby plan covers the M1 lab test.
 
-The mobile app's `EXPO_PUBLIC_API_BASE_URL` is set to the Railway deployment URL in the app's `.env`.
+The mobile app's `EXPO_PUBLIC_API_BASE_URL` is set to the Railway deployment URL in `app/.env` (relative to repo root). This file is gitignored — never commit it.
+
+Create `app/.env`:
+```
+EXPO_PUBLIC_API_BASE_URL=https://<your-service-name>.up.railway.app
+```
+
+Replace `<your-service-name>` with the Railway service name shown in your Railway project dashboard. The URL has no trailing slash.
 
 ## Alternatives considered
 

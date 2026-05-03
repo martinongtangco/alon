@@ -12,11 +12,29 @@
     },
     "android": {
       "package": "me.vibr8.app",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_SCAN",
+        "BLUETOOTH_ADVERTISE",
+        "BLUETOOTH_CONNECT"
+      ]
     },
     "splash": {
       "backgroundColor": "#f5f0e8"
     },
-    "assetBundlePatterns": ["**/*"]
+    "assetBundlePatterns": ["**/*"],
+    "plugins": [
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["peripheral", "central"],
+          "bluetoothAlwaysPermission": "Allow vibr8.me to use Bluetooth to detect nearby vibes"
+        }
+      ]
+    ]
   }
 }
+

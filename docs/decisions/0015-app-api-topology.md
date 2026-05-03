@@ -44,6 +44,11 @@ routes/admin/     ← /api/v1/admin/*    (admin JWT, RS256 + RBAC)
 
 `"too-far"` is never returned by the server. Proximity is a client-side BLE concern; the server has no knowledge of physical distance.
 
+**Response field disambiguation for `/api/register`:**
+- `token` — the proximity token (UUID v4) to advertise over BLE in the GATT manufacturer data. Store and use as the advertisement payload. Expires at `expiresAt` (Unix ms epoch).
+- `authToken` — the HS256 JWT. Pass as `Authorization: Bearer <authToken>` on all device-authenticated requests (`/api/token/rotate`, `/api/buzz`, `/api/matches`).
+- `expiresAt` — Unix timestamp (ms) when the proximity token expires. The 15-minute rotation timer starts from this value.
+
 ### Redis key contracts (M1)
 
 | Key | Value | TTL | ADR |
