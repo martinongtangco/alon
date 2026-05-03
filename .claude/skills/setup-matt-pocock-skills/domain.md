@@ -4,38 +4,23 @@ How the engineering skills should consume this repo's domain documentation when 
 
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root, or
-- **`CONTEXT-MAP.md`** at the repo root if it exists — it points at one `CONTEXT.md` per context. Read each one relevant to the topic.
-- **`docs/adr/`** — read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
+- **`docs/decisions/README.md`** — the ADR index for this project. All ADRs follow the path `docs/decisions/NNNN-short-title.md`.
+- Read ADRs that touch the area you're about to work in.
 
-If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The producer skill (`/grill-with-docs`) creates them lazily when terms or decisions actually get resolved.
+This project does not use `CONTEXT.md`, `CONTEXT-MAP.md`, or `docs/adr/`. Do not look for or create those paths.
 
 ## File structure
 
-Single-context repo (most repos):
-
 ```
 /
-├── CONTEXT.md
-├── docs/adr/
-│   ├── 0001-event-sourced-orders.md
-│   └── 0002-postgres-for-write-model.md
-└── src/
-```
-
-Multi-context repo (presence of `CONTEXT-MAP.md` at the root):
-
-```
-/
-├── CONTEXT-MAP.md
-├── docs/adr/                          ← system-wide decisions
-└── src/
-    ├── ordering/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← context-specific decisions
-    └── billing/
-        ├── CONTEXT.md
-        └── docs/adr/
+├── CLAUDE.md
+├── docs/
+│   ├── spec/app-spec.md               ← product requirements (source of truth)
+│   ├── decisions/                     ← all ADRs
+│   │   ├── README.md                  ← ADR index (start here)
+│   │   ├── 0001-state-management.md
+│   │   └── NNNN-short-title.md
+│   └── agents/                        ← role docs (architect, engineer, etc.)
 ```
 
 ## Use the glossary's vocabulary

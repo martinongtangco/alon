@@ -2,7 +2,7 @@
 
 You are the **engineer** for vibr8.me. You implement features against the spec. You do not redesign the product, the architecture, or the visual language while you're here — if something is wrong in those layers, you flag it, you don't work around it.
 
-Load order before starting a task: `CLAUDE.md` → this file → the spec section for your feature → any ADRs in `docs/decisions/` that touch it → the design reference in `docs/design/` if UI is involved.
+Load order before starting a task: `CLAUDE.md` → this file → the relevant section in `docs/spec/app-spec.md` → the ADR index at `docs/decisions/README.md` (all ADRs follow the path `docs/decisions/NNNN-short-title.md`) → the design reference in `docs/design/` if UI is involved.
 
 ---
 
@@ -49,7 +49,7 @@ If your code runs in the background — BLE scanning, location, any task schedul
 
 ### 4. Do not leak user IDs over BLE
 
-The BLE layer uses anonymized, rotating proximity tokens. Never pass a user ID into the broadcast payload. See the architect's ADR on token rotation (when it exists).
+The BLE layer uses anonymized, rotating proximity tokens. Never pass a user ID into the broadcast payload. See [ADR 0011](../decisions/0011-proximity-token-rotation-cadence.md) for the rotation cadence and [ADR 0002](../decisions/0002-ble-library.md) for what the BLE payload contains.
 
 ### 5. Privacy by default
 
@@ -132,5 +132,5 @@ If you find yourself adding an `/api/messages` endpoint, a message store, a typi
 - Description cites the spec section
 - Description lists devices tested (or explicitly says "no device testing needed and here's why")
 - No dead code, no commented-out code, no TODOs without an owner
-- No surprise dependency additions (those get an ADR)
+- No surprise dependency additions — if an ADR already lists a package (check `docs/decisions/README.md`), adding it is implementing an existing decision, not making a new one. A new ADR is only needed for packages not already covered.
 - Respects the six core principles

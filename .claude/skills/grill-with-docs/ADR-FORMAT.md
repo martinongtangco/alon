@@ -1,8 +1,8 @@
 # ADR Format
 
-ADRs live in `docs/adr/` and use sequential numbering: `0001-slug.md`, `0002-slug.md`, etc.
+ADRs live in `docs/decisions/` and use sequential numbering: `0001-slug.md`, `0002-slug.md`, etc.
 
-Create the `docs/adr/` directory lazily — only when the first ADR is needed.
+The directory already exists. Never create `docs/adr/`.
 
 ## Template
 
@@ -18,7 +18,7 @@ That's it. An ADR can be a single paragraph. The value is in recording *that* a 
 
 Only include these when they add genuine value. Most ADRs won't need them.
 
-- **Status** frontmatter (`proposed | accepted | deprecated | superseded by ADR-NNNN`) — useful when decisions are revisited
+- **Status** frontmatter (`proposed | accepted | deprecated | superseded by ADR 0NNNN`) — useful when decisions are revisited. Reference by number only, never by filename.
 - **Considered Options** — only when the rejected alternatives are worth remembering
 - **Consequences** — only when non-obvious downstream effects need to be called out
 
