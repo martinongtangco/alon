@@ -27,15 +27,16 @@ If a feature request conflicts with any of these, flag it before building.
 
 ---
 
-## Tech stack (planned)
+## Tech stack
 
 - **Mobile**: React Native (iOS + Android), TypeScript
-- **Proximity**: BLE (primary), low-power GPS + geofencing (secondary)
-- **Haptics**: `CoreHaptics` (iOS), `VibrationEffect` (Android)
-- **State**: TBD — see [docs/architecture/overview.md](docs/architecture/overview.md)
-- **Backend**: TBD — profile store, Vibe matching engine, promo CMS, event ingestion
+- **Proximity**: `react-native-ble-plx` (BLE primary — [ADR 0002](docs/decisions/0002-ble-library.md)), low-power GPS + geofencing (secondary, M2)
+- **Haptics**: `expo-haptics` (cross-platform wrapper over `CoreHaptics` / `VibrationEffect`)
+- **State**: Zustand ([ADR 0001](docs/decisions/0001-state-management.md))
+- **Backend**: Node/Express + Redis ([ADR 0003](docs/decisions/0003-backend-framework.md), [ADR 0014](docs/decisions/0014-redis-first-token-store.md))
+- **Deployment**: Railway ([ADR 0017](docs/decisions/0017-deployment-platform.md))
 
-Nothing is implemented yet. This repo is currently a scaffold and documentation foundation.
+All architectural decisions are recorded in `docs/decisions/`. **An accepted ADR is a build instruction — implementing code that follows an accepted ADR does not require a new ADR.** Only write a new ADR when making a new architectural decision not already covered.
 
 ---
 
