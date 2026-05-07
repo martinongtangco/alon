@@ -1,10 +1,7 @@
 import { Router, Request, Response } from 'express';
+import { DEFAULTS } from '../../config';
 
 export const appConfigRouter = Router();
-
-export const DEFAULTS = {
-  BUZZ_COOLDOWN: 120,
-};
 
 // GET /api/config
 // Returns platform config values consumed by the mobile app.
