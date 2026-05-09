@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiService } from './api';
+import { bleService } from './ble';
 
 const DEVICE_ID_KEY = 'deviceId';
 const AUTH_TOKEN_KEY = 'authToken';
@@ -64,6 +65,8 @@ export async function bootstrapDevice(): Promise<void> {
       const result = await apiService.rotateToken();
       await AsyncStorage.setItem(PROXIMITY_TOKEN_KEY, result.token);
       await AsyncStorage.setItem(PROXIMITY_TOKEN_EXPIRES_AT_KEY, String(result.expiresAt));
+      // Notify BLE service to re-advertise the new token
+      await bleService.updateToken(result.token);
       console.log('[bootstrap] proximity token rotated, expiresAt:', result.expiresAt);
     } catch (err) {
       console.warn('[bootstrap] rotateToken failed', err);
@@ -80,3 +83,5 @@ export function stopRotationTimer(): void {
     rotationIntervalId = null;
   }
 }
+
+

@@ -1,17 +1,14 @@
 import { BleManager, BleError, Device } from 'react-native-ble-plx';
+import BLEAdvertiser from 'react-native-ble-advertiser';
+
+import { BleService } from './types';
 import { NearbyPerson } from '../../types';
 import { getCurrentToken } from '../token';
 
 const SERVICE_UUID = 'f7a5c2-9d4e-11ef-b864-0242ac120002';
+const MANUFACTURER_ID = 0x4c00;
 
-export interface BleService {
-  start(): Promise<void>;
-  stop(): void;
-  onRssiReading(cb: (rssi: number) => void): () => void;
-  subscribe(cb: (nearby: NearbyPerson[]) => void): () => void;
-}
-
-const encodeToken = (token: string): Uint8Array => {
+const tokenToBytes = (token: string): Uint8Array => {
   const hex = token.replace(/-/g, '');
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i++) {
@@ -36,11 +33,16 @@ class BleServiceImpl implements BleService {
     // @ts-ignore – Android only
     await this.manager.enable();
 
-    const token = await getCurrentToken();
-    const data = encodeToken(token);
-    // @ts-ignore – peripheral advertising requires react-native-ble-advertiser
-    await this.manager.startAdvertising(SERVICE_UUID, data);
-
+    // Start BLE peripheral advertising
+      const token = await getCurrentToken();
+      await BLEAdvertiser.setCompanyId(MANUFACTURER_ID);
+      await BLEAdvertiser.broadcast(SERVICE_UUID, tokenToBytes(token), {
+        advertiseMode: BLEAdvertiser.ADVERTISE_MODE_LOW_LATENCY,
+        txPowerLevel: BLEAdvertiser.ADVERTISE_TX_POWER_MEDIUM,
+        connectable: false,
+        includeDeviceName: false,
+        includeTxPowerLevel: false,
+      });
     try {
       // @ts-ignore – Android only
       await this.manager.startForegroundService();
@@ -68,18 +70,30 @@ class BleServiceImpl implements BleService {
         });
         const nearby = Array.from(this.nearbyDevices.values());
         this.nearbyCallbacks.forEach(cb => cb(nearby));
-      }
+      },
     );
   }
 
   stop(): void {
     this.scanSubscription?.remove();
     this.manager?.stopDeviceScan();
-    // @ts-ignore – peripheral advertising requires react-native-ble-advertiser
-    this.manager?.stopAdvertising();
+
+    // Stop BLE peripheral advertising
+      BLEAdvertiser.stopBroadcast().catch(() => {});
     this.manager?.destroy();
     this.manager = null;
     this.nearbyDevices.clear();
+  }
+
+  async updateToken(token: string): Promise<void> {
+    await BLEAdvertiser.stopBroadcast();
+    await BLEAdvertiser.broadcast(SERVICE_UUID, tokenToBytes(token), {
+      advertiseMode: BLEAdvertiser.ADVERTISE_MODE_LOW_LATENCY,
+      txPowerLevel: BLEAdvertiser.ADVERTISE_TX_POWER_MEDIUM,
+      connectable: false,
+      includeDeviceName: false,
+      includeTxPowerLevel: false,
+    });
   }
 
   onRssiReading(cb: (rssi: number) => void): () => void {
@@ -92,6 +106,7 @@ class BleServiceImpl implements BleService {
     return () => this.nearbyCallbacks.delete(cb);
   }
 }
+
 export const bleService = new BleServiceImpl();
 
 
