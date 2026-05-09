@@ -6,6 +6,17 @@ One file per architectural decision. Owned by the architect; read by everyone.
 
 See `.claude/skills/grill-with-docs/ADR-FORMAT.md` for the canonical format. Status values: `proposed | accepted | deprecated | superseded by ADR 0NNNN` (number only — never use filenames or `ADR-NNNN`).
 
+## Quality bar for Accepted ADRs
+
+An ADR is not ready to accept until an engineer can implement it without a single blocker or ambiguous decision. Before accepting, verify:
+
+- **File locations** — every file to create or modify is named explicitly (no "update the BLE service")
+- **Interface changes** — if a public interface changes, the new signature is written out in full
+- **Wiring** — if two services must coordinate, the call direction is specified (who calls who, when)
+- **Platform splits** — if platform-specific code is required, the file naming convention is stated (`.android.ts` / `.ios.ts`, not `Platform.OS` checks in business logic)
+- **Install step** — any new package is listed with its exact version
+- **Ambiguity test** — read the Decision section cold and ask: could a reasonable engineer make two different choices? If yes, add a sentence resolving it
+
 ## Naming
 
 `NNNN-short-title.md` — NNNN is a zero-padded sequence number (0001, 0002, ...).
@@ -31,6 +42,7 @@ See `.claude/skills/grill-with-docs/ADR-FORMAT.md` for the canonical format. Sta
 | [0015](0015-app-api-topology.md) | App-Facing API Topology and Device Authentication (M1) | Accepted |
 | [0016](0016-android-foreground-service.md) | Android Foreground Service Strategy | Accepted |
 | [0017](0017-deployment-platform.md) | Deployment Platform — Railway (M1) | Accepted |
+| [0018](0018-ble-peripheral-advertising-android.md) | BLE Peripheral Advertising Library for Android | Accepted |
 
 ## Open decisions awaiting an ADR
 
