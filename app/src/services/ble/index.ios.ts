@@ -1,6 +1,8 @@
 import { BleManager, BleError, Device } from 'react-native-ble-plx';
+
 import { BleService } from './types';
 import { NearbyPerson } from '../../types';
+
 const SERVICE_UUID = 'f7a5c2-9d4e-11ef-b864-0242ac120002';
 
 function rssiToDistance(rssi: number): number {
@@ -16,8 +18,9 @@ class BleServiceImpl implements BleService {
 
   async start(): Promise<void> {
     this.manager = new BleManager();
+
     // iOS peripheral advertising deferred to M2 (CBPeripheralManager)
-      console.warn('[BleService] peripheral advertising is not supported on iOS (deferred to M2)');
+    console.warn('[BleService] peripheral advertising is not supported on iOS (deferred to M2)');
 
     this.scanSubscription = this.manager.startDeviceScan(
       [SERVICE_UUID],
@@ -55,8 +58,8 @@ class BleServiceImpl implements BleService {
 
   async updateToken(_token: string): Promise<void> {
     // iOS peripheral advertising deferred to M2
-      console.warn('[BleService] updateToken is not supported on iOS (deferred to M2)');
-    }
+    console.warn('[BleService] updateToken is not supported on iOS (deferred to M2)');
+  }
 
   onRssiReading(cb: (rssi: number) => void): () => void {
     this.rssiCallbacks.add(cb);
@@ -70,4 +73,3 @@ class BleServiceImpl implements BleService {
 }
 
 export const bleService = new BleServiceImpl();
-

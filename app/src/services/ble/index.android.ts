@@ -34,15 +34,16 @@ class BleServiceImpl implements BleService {
     await this.manager.enable();
 
     // Start BLE peripheral advertising
-      const token = await getCurrentToken();
-      await BLEAdvertiser.setCompanyId(MANUFACTURER_ID);
-      await BLEAdvertiser.broadcast(SERVICE_UUID, tokenToBytes(token), {
-        advertiseMode: BLEAdvertiser.ADVERTISE_MODE_LOW_LATENCY,
-        txPowerLevel: BLEAdvertiser.ADVERTISE_TX_POWER_MEDIUM,
-        connectable: false,
-        includeDeviceName: false,
-        includeTxPowerLevel: false,
-      });
+    const token = await getCurrentToken();
+    await BLEAdvertiser.setCompanyId(MANUFACTURER_ID);
+    await BLEAdvertiser.broadcast(SERVICE_UUID, tokenToBytes(token), {
+      advertiseMode: BLEAdvertiser.ADVERTISE_MODE_LOW_LATENCY,
+      txPowerLevel: BLEAdvertiser.ADVERTISE_TX_POWER_MEDIUM,
+      connectable: false,
+      includeDeviceName: false,
+      includeTxPowerLevel: false,
+    });
+
     try {
       // @ts-ignore – Android only
       await this.manager.startForegroundService();
@@ -79,7 +80,8 @@ class BleServiceImpl implements BleService {
     this.manager?.stopDeviceScan();
 
     // Stop BLE peripheral advertising
-      BLEAdvertiser.stopBroadcast().catch(() => {});
+    BLEAdvertiser.stopBroadcast().catch(() => {});
+
     this.manager?.destroy();
     this.manager = null;
     this.nearbyDevices.clear();
@@ -108,5 +110,3 @@ class BleServiceImpl implements BleService {
 }
 
 export const bleService = new BleServiceImpl();
-
-
