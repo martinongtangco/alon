@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
-import { ShieldAlert, AlertTriangle, Eye, ArrowUpCircle, CheckCircle, XCircle } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { ShieldAlert, Eye, ArrowUpCircle, CheckCircle, XCircle } from 'lucide-react';
 
 export const Flags = () => {
-  const { role } = useAuth();
   const queryClient = useQueryClient();
   
   const [page, setPage] = useState(1);

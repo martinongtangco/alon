@@ -116,12 +116,23 @@ export const useAppStore = create<AppState>((set) => ({
     })),
 
   hydrate: async () => {
+    const safeFetch = async <T,>(
+      fn: () => Promise<T>,
+      fallback: T,
+    ): Promise<T> => {
+      try {
+        return await fn();
+      } catch {
+        return fallback;
+      }
+    };
     const [promos, events, feed, matches] = await Promise.all([
-      apiService.fetchPromos(),
-      apiService.fetchEvents(),
-      apiService.fetchFeed(),
-      apiService.fetchMatches(),
+      safeFetch(() => apiService.fetchPromos(), []),
+      safeFetch(() => apiService.fetchEvents(), []),
+      safeFetch(() => apiService.fetchFeed(), []),
+      safeFetch(() => apiService.fetchMatches(), []),
     ]);
     set({ promos, events, feed, matches });
   },
 }));
+

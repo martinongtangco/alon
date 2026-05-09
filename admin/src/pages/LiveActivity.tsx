@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getAccessToken } from '../lib/api';
-import { Activity, Users, Radio, Zap, Server, ShieldAlert } from 'lucide-react';
+import { Activity, Users, Radio, Zap, Server } from 'lucide-react';
 
 interface ActivityData {
   metrics: {

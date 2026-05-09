@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
 import { Search, Store, ShieldAlert, CheckCircle, XCircle, AlertTriangle, Eye, RotateCcw } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-
 export const Businesses = () => {
-  const { role } = useAuth();
   const queryClient = useQueryClient();
   
   const [page, setPage] = useState(1);
@@ -18,7 +15,7 @@ export const Businesses = () => {
   const [modalPlan, setModalPlan] = useState('');
   const [viewBiz, setViewBiz] = useState<any>(null);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['businesses', page, search, statusFilter, planFilter],
     queryFn: () => {
       const params = new URLSearchParams({ page: page.toString(), limit: '15' });

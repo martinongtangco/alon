@@ -76,7 +76,7 @@ export const apiService = {
   },
 
   async fetchEvents(): Promise<MapEvent[]> {
-    const res = await fetch `${BASE_URL}/events`;
+    const res = await fetch(`${BASE_URL}/events`);
     return (await checked(res)).json();
   },
 
