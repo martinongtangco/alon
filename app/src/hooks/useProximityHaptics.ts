@@ -20,6 +20,17 @@ export function useProximityHaptics(ghostMode: boolean): void {
 
       if (sameband && inCooldown) return;
 
+      // Enforce ascending-only: skip if we're already at a higher band
+      const bandOrder: Record<ProximityBand, number> = {
+        'out-of-range': 0,
+        'far': 1,
+        'near': 2,
+        'very-near': 3,
+      };
+      if (lastFiredBand.current !== null && bandOrder[band] < bandOrder[lastFiredBand.current]) {
+        return;
+      }
+
       const pattern = band === 'very-near'
         ? 'strong_buzz'
         : band === 'near'

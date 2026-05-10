@@ -5,7 +5,7 @@ import { BleService } from './types';
 import { NearbyPerson } from '../../types';
 import { getCurrentToken } from '../token';
 
-const SERVICE_UUID = 'f7a5c2-9d4e-11ef-b864-0242ac120002';
+const SERVICE_UUID = 'f7a5c2d9-9d4e-11ef-b864-0242ac120002';
 const MANUFACTURER_ID = 0x4c00;
 
 const tokenToBytes = (token: string): Uint8Array => {
@@ -46,7 +46,11 @@ class BleServiceImpl implements BleService {
 
     try {
       // @ts-ignore – Android only
-      await this.manager.startForegroundService();
+      this.manager.startForegroundService(
+        'ic_notification',
+        'vibr8.me is active',
+        'detecting nearby vibes',
+      );
     } catch (_) {}
 
     this.scanSubscription = this.manager.startDeviceScan(

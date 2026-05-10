@@ -51,8 +51,9 @@ export const RadarScreen = () => {
       return;
     }
 
-    bleService.start();
-    proximityService.start(bleService.onRssiReading.bind(bleService));
+    bleService.start().then(() => {
+      proximityService.start(bleService.onRssiReading.bind(bleService));
+    });
 
     const unsubBle = bleService.subscribe((people) => setNearby(people));
     const unsubBand = proximityService.onBandChange((band: ProximityBand) => {

@@ -1,7 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProfile, NearbyPerson, MapPromo, MapEvent, FeedItem, BuzzMatch } from '../../types';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
+const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api';
+
+export interface PlatformConfig {
+  BUZZ_COOLDOWN: number;
+}
 
 async function authHeaders(): Promise<Record<string, string>> {
   const token = await AsyncStorage.getItem('authToken');
@@ -87,6 +91,11 @@ export const apiService = {
 
   async fetchMatches(): Promise<BuzzMatch[]> {
     const res = await fetch(`${BASE_URL}/matches`, { headers: await authHeaders() });
+    return (await checked(res)).json();
+  },
+
+  async fetchConfig(): Promise<PlatformConfig> {
+    const res = await fetch(`${BASE_URL}/config`);
     return (await checked(res)).json();
   },
 };

@@ -3,7 +3,7 @@ import { BleManager, BleError, Device } from 'react-native-ble-plx';
 import { BleService } from './types';
 import { NearbyPerson } from '../../types';
 
-const SERVICE_UUID = 'f7a5c2-9d4e-11ef-b864-0242ac120002';
+const SERVICE_UUID = 'f7a5c2d9-9d4e-11ef-b864-0242ac120002';
 
 function rssiToDistance(rssi: number): number {
   return Math.pow(10, (-59 - rssi) / 20);
