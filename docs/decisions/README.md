@@ -45,6 +45,8 @@ An ADR is not ready to accept until an engineer can implement it without a singl
 | [0018](0018-ble-peripheral-advertising-android.md) | BLE Peripheral Advertising Library for Android | Accepted |
 | [0019](0019-profile-state-persistence.md) | Profile and State Persistence (Zustand persist + AsyncStorage) | Accepted |
 | [0020](0020-haptic-proximity-loop.md) | Haptic Proximity Loop Wiring (useProximityHaptics hook) | Accepted |
+| [0021](0021-android-runtime-permissions.md) | Android Runtime Permissions for BLE | Accepted |
+| [0022](0022-ble-start-sequence-android.md) | BLE Android Start Sequence Corrections | Accepted |
 
 ## Open decisions awaiting an ADR
 
