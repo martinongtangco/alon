@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -14,6 +14,7 @@ import { useAppStore } from '../../state/store';
 import { ALL_MODES, ALL_VIBES, Mode, Vibe } from '../../types';
 import { colors, radius, space } from '../../theme';
 import { serifFamily } from '../../theme/typography';
+import { requestBlePermissions } from '../../utils/permissions';
 
 const STEPS = ['intro', 'name', 'vibes', 'mode', 'permissions'] as const;
 type Step = (typeof STEPS)[number];
@@ -25,6 +26,13 @@ export const OnboardingScreen = () => {
   const [bio, setBio] = useState('');
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [mode, setMode] = useState<Mode>('networking');
+  const [permissionsGranted, setPermissionsGranted] = useState(true);
+
+  useEffect(() => {
+    if (step === 'permissions') {
+      requestBlePermissions().then(setPermissionsGranted);
+    }
+  }, [stepIndex]);
 
   const step: Step = STEPS[stepIndex];
   const initials = useMemo(() => {
@@ -178,13 +186,22 @@ export const OnboardingScreen = () => {
             <View style={styles.section}>
               <Text style={styles.h1}>one more thing</Text>
               <Text style={styles.p}>
-                vibr8 needs bluetooth and approximate location to feel who's
-                near. battery target: 3–6% per hour, comparable to spotify.
+                vibr8 needs bluetooth to detect nearby vibes. on android 12+, you'll
+                see a system permission dialog — tap "allow" for each.
               </Text>
               <Text style={styles.p}>
-                this prototype uses mocked data — no real bluetooth or location
-                is requested yet.
+                why location? android requires it for bluetooth scanning. vibr8 never
+                uses your location for anything else.
               </Text>
+              <Text style={styles.p}>
+                battery target: 3–6% per hour, comparable to spotify.
+              </Text>
+              {!permissionsGranted && (
+                <Text style={styles.hint}>
+                  Bluetooth permission was denied. you can continue — ghost mode
+                  will be on until you grant it in settings.
+                </Text>
+              )}
             </View>
           )}
         </View>
