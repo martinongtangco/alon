@@ -24,7 +24,17 @@ Only include these when they add genuine value. Most ADRs won't need them.
 
 ## Numbering
 
-Scan `docs/adr/` for the highest existing number and increment by one.
+Scan `docs/decisions/` for the highest existing number and increment by one.
+
+## Implementation branch and PR
+
+When an accepted ADR is implemented, the work goes on a dedicated branch and pull request — never directly to `main`. Branch naming:
+
+```
+<modelname>/<adr-NNNN-short-description>
+```
+
+`<modelname>` is the implementing model lowercased with special characters removed (e.g. `claudesonnet46`, `gemini25pro`). The slug matches the ADR filename. One ADR = one branch = one PR. See `docs/agents/engineer.md` for full details and examples.
 
 ## When to offer an ADR
 

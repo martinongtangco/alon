@@ -47,6 +47,7 @@ An ADR is not ready to accept until an engineer can implement it without a singl
 | [0020](0020-haptic-proximity-loop.md) | Haptic Proximity Loop Wiring (useProximityHaptics hook) | Accepted |
 | [0021](0021-android-runtime-permissions.md) | Android Runtime Permissions for BLE | Accepted |
 | [0022](0022-ble-start-sequence-android.md) | BLE Android Start Sequence Corrections | Accepted |
+| [0023](0023-dev-seed-app-users.md) | Dev Seed Data for App Users | Accepted |
 
 ## Open decisions awaiting an ADR
 

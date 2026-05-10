@@ -110,7 +110,25 @@ If you find yourself adding an `/api/messages` endpoint, a message store, a typi
 3. **Check the design reference.** For UI, `docs/design/visual-language.md` and the reference HTMLs in `docs/design/` are the source of truth.
 4. **Build the smallest thing that works.** A bug fix doesn't need surrounding cleanup. A new feature doesn't need a helper library. Three similar lines is better than a premature abstraction.
 5. **Test on real hardware** (see hard rule #2).
-6. **Write the PR.** One feature per PR. Link the spec section. State what you tested.
+6. **Branch and PR.** Every ADR implementation ships on its own branch and pull request — never directly to `main`. See branch naming below.
+
+## Branch naming for ADR implementations
+
+```
+<modelname>/<adr-NNNN-short-description>
+```
+
+- `<modelname>` — the model doing the implementation, lowercased, special characters removed (e.g. `claude-sonnet-4-6` → `claudesonnet46`, `gemini-2-5-pro` → `gemini25pro`)
+- `<adr-NNNN-short-description>` — the ADR number and a 2–5 word slug matching the ADR filename
+
+Examples:
+```
+claudesonnet46/adr-0020-haptic-proximity-loop
+gemini25pro/adr-0016-android-foreground-service
+claudesonnet46/adr-0022-ble-start-sequence-android
+```
+
+One ADR = one branch = one PR. Do not bundle multiple ADRs into a single PR unless they are explicitly linked in the ADR text.
 
 ---
 
