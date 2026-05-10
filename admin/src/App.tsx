@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
-import { Activity, Users, ShieldAlert, Store, Tag, Calendar, DollarSign, Settings, Server, LogOut, Radio, BookOpen } from 'lucide-react';
+import { Activity, Users, ShieldAlert, Store, Tag, Calendar, DollarSign, Settings, Server, LogOut, Radio, BookOpen, UserCog } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './pages/Login';
 import { LiveActivity } from './pages/LiveActivity';
@@ -14,6 +14,7 @@ import { Revenue } from './pages/Revenue';
 import { SystemLogs } from './pages/SystemLogs';
 import { AuditLog } from './pages/AuditLog';
 import { PlatformConfig } from './pages/PlatformConfig';
+import { AdminUsers } from './pages/AdminUsers';
 import { apiFetch, getAccessToken } from './lib/api';
 
 const queryClient = new QueryClient();
@@ -67,6 +68,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               <div className="pt-4 mt-4 border-t border-gray-800"></div>
               <Link to="/audit" className={navItemClass('/audit')}><BookOpen size={18} /><span>Audit Log</span></Link>
               <Link to="/config" className={navItemClass('/config')}><Settings size={18} /><span>Platform Config</span></Link>
+              <Link to="/admin-users" className={navItemClass('/admin-users')}><UserCog size={18} /><span>Admin Accounts</span></Link>
             </>
           )}
         </nav>
@@ -191,6 +193,7 @@ function App() {
             <Route path="/logs" element={<ProtectedRoute><DashboardLayout><SystemLogs /></DashboardLayout></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute><DashboardLayout><AuditLog /></DashboardLayout></ProtectedRoute>} />
             <Route path="/config" element={<ProtectedRoute><DashboardLayout><PlatformConfig /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/admin-users" element={<ProtectedRoute><DashboardLayout><AdminUsers /></DashboardLayout></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>

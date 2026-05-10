@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authRouter } from './auth';
+import { adminsRouter } from './admins';
 import { sseRouter } from './sse';
 import { usersRouter } from './users';
 import { businessesRouter } from './businesses';
@@ -14,6 +15,7 @@ import { auditRouter } from './audit';
 export const adminRouter = Router();
 
 adminRouter.use('/auth', authRouter);
+adminRouter.use('/admins', adminsRouter);
 adminRouter.use('/sse', sseRouter);
 adminRouter.use('/users', usersRouter);
 adminRouter.use('/businesses', businessesRouter);
