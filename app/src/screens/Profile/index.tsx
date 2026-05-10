@@ -103,7 +103,7 @@ export const ProfileScreen = () => {
 
         <Section title="battery">
           <Text style={styles.rowSub}>
-            vibr8 used 2% in the last hour (mock telemetry)
+            Alon used 2% in the last hour (mock telemetry)
           </Text>
         </Section>
       </ScrollView>

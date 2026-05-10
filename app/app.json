@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "vibr8.me",
-    "slug": "vibr8me",
+    "name": "Alon",
+    "slug": "alon",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "me.vibr8.app"
+      "bundleIdentifier": "app.alon.app"
     },
     "android": {
-      "package": "me.vibr8.app",
+      "package": "app.alon.app",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "BLUETOOTH",
@@ -31,7 +31,7 @@
         {
           "isBackgroundEnabled": true,
           "modes": ["peripheral", "central"],
-          "bluetoothAlwaysPermission": "Allow vibr8.me to use Bluetooth to detect nearby vibes"
+          "bluetoothAlwaysPermission": "Allow Alon to use Bluetooth to detect nearby vibes"
         }
       ]
     ]

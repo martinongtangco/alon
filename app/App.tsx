@@ -25,7 +25,7 @@ export default function App() {
             marginTop: 40,
           }}
         >
-          vibr8.me
+          Alon
         </Text>
       </View>
     );

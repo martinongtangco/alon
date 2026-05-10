@@ -72,7 +72,7 @@ export const VisualizerScreen = () => {
       </View>
 
       <View style={styles.wordmark} pointerEvents="none">
-        <Text style={styles.wordmarkText}>vibr8.me</Text>
+        <Text style={styles.wordmarkText}>Alon</Text>
       </View>
     </Pressable>
   );

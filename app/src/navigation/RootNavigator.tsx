@@ -49,7 +49,7 @@ const MainTabs = () => (
       name="Radar"
       component={RadarScreen}
       options={{
-        title: 'vibr8.me',
+        title: 'Alon',
         tabBarIcon: ({ focused }) => <TabIcon glyph="◎" focused={focused} />,
       }}
     />

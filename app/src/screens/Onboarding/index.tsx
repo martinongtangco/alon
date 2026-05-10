@@ -69,7 +69,7 @@ export const OnboardingScreen = () => {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.brand}>vibr8.me</Text>
+        <Text style={styles.brand}>Alon</Text>
         <Text style={styles.tagline}>feel who's near</Text>
 
         <StepDots count={STEPS.length} current={stepIndex} />
@@ -79,7 +79,7 @@ export const OnboardingScreen = () => {
             <View style={styles.section}>
               <Text style={styles.h1}>set it. forget it. feel it.</Text>
               <Text style={styles.p}>
-                vibr8 runs in your pocket. when someone compatible comes near,
+                Alon runs in your pocket. when someone compatible comes near,
                 your phone buzzes. no chat, no scrolling — just go say hi.
               </Text>
             </View>
@@ -186,11 +186,11 @@ export const OnboardingScreen = () => {
             <View style={styles.section}>
               <Text style={styles.h1}>one more thing</Text>
               <Text style={styles.p}>
-                vibr8 needs bluetooth to detect nearby vibes. on android 12+, you'll
+                Alon needs bluetooth to detect nearby vibes. on android 12+, you'll
                 see a system permission dialog — tap "allow" for each.
               </Text>
               <Text style={styles.p}>
-                why location? android requires it for bluetooth scanning. vibr8 never
+                why location? android requires it for bluetooth scanning. Alon never
                 uses your location for anything else.
               </Text>
               <Text style={styles.p}>

@@ -140,7 +140,7 @@ export const useAppStore = create<AppState>()(
       },
     }),
     {
-      name: 'vibr8-app-state',
+      name: 'alon-app-state',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         onboarded: state.onboarded,

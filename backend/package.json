@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "vibr8.me backend — Node/Express + Redis (see ADR 0003, ADR 0014)",
+  "description": "Alon backend — Node/Express + Redis (see ADR 0003, ADR 0014)",
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",

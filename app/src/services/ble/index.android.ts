@@ -48,7 +48,7 @@ class BleServiceImpl implements BleService {
       // @ts-ignore – Android only
       this.manager.startForegroundService(
         'ic_notification',
-        'vibr8.me is active',
+        'Alon is active',
         'detecting nearby vibes',
       );
     } catch (_) {}
