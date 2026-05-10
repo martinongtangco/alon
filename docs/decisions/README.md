@@ -43,6 +43,8 @@ An ADR is not ready to accept until an engineer can implement it without a singl
 | [0016](0016-android-foreground-service.md) | Android Foreground Service Strategy | Accepted |
 | [0017](0017-deployment-platform.md) | Deployment Platform — Railway (M1) | Accepted |
 | [0018](0018-ble-peripheral-advertising-android.md) | BLE Peripheral Advertising Library for Android | Accepted |
+| [0019](0019-profile-state-persistence.md) | Profile and State Persistence (Zustand persist + AsyncStorage) | Accepted |
+| [0020](0020-haptic-proximity-loop.md) | Haptic Proximity Loop Wiring (useProximityHaptics hook) | Accepted |
 
 ## Open decisions awaiting an ADR
 
