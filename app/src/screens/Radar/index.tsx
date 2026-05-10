@@ -15,8 +15,7 @@ import { VibeSignal } from '../../components/VibeSignal';
 import { useAppStore } from '../../state/store';
 import { colors, space } from '../../theme';
 import { bleService } from '../../services/ble';
-import { hapticsService } from '../../services/haptics';
-import { proximityService } from '../../services/proximity';
+import { proximityService, ProximityBand, bandToSignalLevel } from '../../services/proximity';
 import { RadarMap } from './RadarMap';
 import { VibeCard } from './VibeCard';
 import { RootStackParamList } from '../../navigation/types';
@@ -44,16 +43,23 @@ export const RadarScreen = () => {
   useEffect(() => {
     if (profile.ghostMode) {
       bleService.stop();
+      proximityService.stop();
       return;
     }
+
     bleService.start();
-    const unsub = bleService.subscribe((people) => {
-      setNearby(people);
-      setSignalLevel(proximityService.signalLevelFor(people));
+    proximityService.start(bleService.onRssiReading.bind(bleService));
+
+    const unsubBle = bleService.subscribe((people) => setNearby(people));
+    const unsubBand = proximityService.onBandChange((band: ProximityBand) => {
+      setSignalLevel(bandToSignalLevel(band));
     });
+
     return () => {
-      unsub();
+      unsubBle();
+      unsubBand();
       bleService.stop();
+      proximityService.stop();
     };
   }, [profile.ghostMode, setNearby, setSignalLevel]);
 
