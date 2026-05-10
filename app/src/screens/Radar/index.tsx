@@ -16,6 +16,8 @@ import { useAppStore } from '../../state/store';
 import { colors, space } from '../../theme';
 import { bleService } from '../../services/ble';
 import { proximityService, ProximityBand, bandToSignalLevel } from '../../services/proximity';
+import { useProximityHaptics } from '../../hooks/useProximityHaptics';
+import { hapticsService } from '../../services/haptics';
 import { RadarMap } from './RadarMap';
 import { VibeCard } from './VibeCard';
 import { RootStackParamList } from '../../navigation/types';
@@ -39,6 +41,8 @@ export const RadarScreen = () => {
   const [buzzResult, setBuzzResult] = useState<
     'sent' | 'rate-limited' | 'too-far' | null
   >(null);
+
+  useProximityHaptics(profile.ghostMode);
 
   useEffect(() => {
     if (profile.ghostMode) {
@@ -83,7 +87,7 @@ export const RadarScreen = () => {
     const result = await buzz();
     setBuzzResult(result);
     if (result === 'sent') {
-      await hapticsService.play('buzz_me');
+      hapticsService.play('buzz_me');
       setTimeout(() => navigation.navigate('Visualizer'), 350);
     }
   };

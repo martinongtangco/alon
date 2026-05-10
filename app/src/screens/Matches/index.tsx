@@ -4,9 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components/Button';
 import { Pill } from '../../components/Pill';
 import { useAppStore } from '../../state/store';
-import { hapticsService } from '../../services/haptics';
 import { colors, space } from '../../theme';
 import { BuzzMatch } from '../../types';
+import { hapticsService } from '../../services/haptics';
 
 const MatchRow = ({
   match,

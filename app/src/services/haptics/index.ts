@@ -35,9 +35,4 @@ function wait(ms: number) {
 
 export const hapticsService = {
   play,
-  patternForDistance(distanceMeters: number): HapticPattern {
-    if (distanceMeters <= 20) return 'strong_buzz';
-    if (distanceMeters <= 100) return 'steady_rhythm';
-    return 'faint_pulse';
-  },
 };
