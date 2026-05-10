@@ -1,10 +1,10 @@
-# vibr8.me — Admin Dashboard Specification
+# Alon — Admin Dashboard Specification
 
 ## Overview
 
-The **Admin Dashboard** is the internal backend management web application for the vibr8.me operations and engineering team. It is the single control plane for the entire platform — user management, partner oversight, content moderation, revenue tracking, system health monitoring, and platform configuration.
+The **Admin Dashboard** is the internal backend management web application for the Alon operations and engineering team. It is the single control plane for the entire platform — user management, partner oversight, content moderation, revenue tracking, system health monitoring, and platform configuration.
 
-It is not accessible to end users or partner businesses. Access is restricted to vibr8.me staff with assigned admin roles.
+It is not accessible to end users or partner businesses. Access is restricted to Alon staff with assigned admin roles.
 
 > If the Business Portal is the partner's cockpit, the Admin Dashboard is the control tower.
 
@@ -24,7 +24,7 @@ Role-based access control (RBAC) is a v1 requirement — not a post-launch addit
 
 ## Authentication
 
-- Separate login from the Business Portal — admin.vibr8.me (or equivalent internal URL)
+- Separate login from the Business Portal — admin.Alon (or equivalent internal URL)
 - Email + password with mandatory 2FA (TOTP)
 - Session timeout after 30 minutes of inactivity
 - All admin actions are logged to an audit trail (who did what, when)
@@ -34,7 +34,7 @@ Role-based access control (RBAC) is a v1 requirement — not a post-launch addit
 ## Navigation Structure
 
 ```
-vibr8.me Admin Dashboard
+Alon Admin Dashboard
 ├── Overview               Platform-wide stats, system status bar, pending actions
 ├── Live Activity          Real-time session counts, event log, mode distribution
 ├── Users                  Full user table — search, filter, view, moderate
@@ -120,13 +120,13 @@ Full user management. The primary tool for the moderation and ops team.
 - Internal user ID (anonymized token shown, not raw PII unless admin has PII access role)
 - Current mode (Networking / Chill / Dating / Explorer)
 - Active Vibes
-- Plan (Free / vibr8 Pro)
+- Plan (Free / Alon Pro)
 - Status (Active / Ghost / Flagged / Suspended / Banned)
 - Last active timestamp
 - Platform (iOS / Android)
 - Actions
 
-**Filters:** All / vibr8 Pro / Ghost Mode / Flagged / Banned / iOS / Android
+**Filters:** All / Alon Pro / Ghost Mode / Flagged / Banned / iOS / Android
 
 **Search:** By display name, internal user ID, or email (email search restricted to Super Admin role).
 
@@ -270,7 +270,7 @@ Financial overview for the ops and finance team. Read-only — no billing action
 **Metric cards:**
 - MRR total
 - Partner subscription revenue (broken down by plan)
-- vibr8 Pro (user subscriptions) revenue
+- Alon Pro (user subscriptions) revenue
 - Event boost revenue (one-time charges)
 - Brand activation revenue
 
@@ -357,7 +357,7 @@ A warning banner is shown at the top of this page at all times: *Changes here af
 | Dating Mode | Enable dating-specific discovery mode |
 | Community Event Submissions | Non-partner users can submit events |
 | Brand Activation Campaigns | Enterprise geo-fenced brand campaigns |
-| vibr8 Pro Subscriptions | User-facing Pro tier purchases |
+| Alon Pro Subscriptions | User-facing Pro tier purchases |
 
 All config changes are logged to the audit trail with the admin's identity and a before/after diff.
 
@@ -366,7 +366,7 @@ All config changes are logged to the audit trail with the admin's identity and a
 ## Design Principles
 
 - **Function over form — but still legible.** This is an internal tool. It prioritizes information density over polish, but it should not look like it was built in an afternoon.
-- **Dark-mode only.** Consistent with the vibr8.me brand and easier on ops staff during late-night incident response.
+- **Dark-mode only.** Consistent with the Alon brand and easier on ops staff during late-night incident response.
 - **Destructive actions are hard to trigger accidentally.** Ban, Kill, Suspend all require a second confirmation step. Nothing irreversible happens on a single click.
 - **Every action leaves a trace.** The audit log captures who did what. No stealth edits.
 - **Status is always visible.** The system status bar is persistent — an ops person should never have to navigate anywhere to know if something is down.
@@ -441,4 +441,4 @@ Hot-tier settings cover all settings listed in §Platform Config. The warning ba
 ---
 
 *Last updated: 2026-04-25 — Open questions resolved; ADRs 0004–0009 drafted*
-*Reference implementation: `vibr8me_admin_dashboard.html`*
+*Reference implementation: `alon_admin_dashboard.html`*

@@ -1,4 +1,4 @@
-# vibr8.me — Claude Code Foundation
+# Alon — Claude Code Foundation
 
 This file is the top-level context any Claude Code (or other LLM) agent loads before touching this repo. Read this first. Then open the role doc that matches the work you've been asked to do.
 
@@ -6,7 +6,7 @@ This file is the top-level context any Claude Code (or other LLM) agent loads be
 
 ## What this project is
 
-**vibr8.me** is a native mobile app for passive, proximity-based social discovery. The phone vibrates in escalating patterns as compatible users get physically close — a "social radar built into your pocket." No in-app chat. Ever.
+**Alon** is a native mobile app for passive, proximity-based social discovery. The phone vibrates in escalating patterns as compatible users get physically close — a "social radar built into your pocket." No in-app chat. Ever.
 
 Tagline: *Feel who's near.*
 
@@ -45,7 +45,7 @@ All architectural decisions are recorded in `docs/decisions/`. **An accepted ADR
 ## Repository layout
 
 ```
-vibr8me/
+alon/
 ├── CLAUDE.md                      ← you are here
 ├── README.md                      project readme for humans
 ├── docs/

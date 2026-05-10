@@ -5,7 +5,7 @@ Date: 2026-04-19
 Accepted: 2026-05-03
 
 ## Context
-The vibr8.me app requires a Bluetooth Low Energy (BLE) library that supports both scanning and advertising capabilities on both iOS and Android platforms. The spec mandates that BLE is the primary proximity tool, with strict battery efficiency requirements.
+The Alon app requires a Bluetooth Low Energy (BLE) library that supports both scanning and advertising capabilities on both iOS and Android platforms. The spec mandates that BLE is the primary proximity tool, with strict battery efficiency requirements.
 
 Key constraints:
 - Must support both scanning and advertising 
@@ -41,10 +41,10 @@ This library meets our core requirements for both platforms while being well-mai
 ## Implementation Notes
 
 ### M1 scope
-The BLE service has two responsibilities: **advertising** this device's current proximity token, and **scanning** for nearby vibr8.me devices to generate RSSI readings for the proximity layer. No connection establishment is required — all proximity detection is passive and connectionless.
+The BLE service has two responsibilities: **advertising** this device's current proximity token, and **scanning** for nearby Alon devices to generate RSSI readings for the proximity layer. No connection establishment is required — all proximity detection is passive and connectionless.
 
 ### Advertising
-- Advertise a GATT service using the fixed vibr8.me app identifier UUID: `f7a5c2-9d4e-11ef-b864-0242ac120002`
+- Advertise a GATT service using the fixed Alon app identifier UUID: `f7a5c2-9d4e-11ef-b864-0242ac120002`
 - Include the current proximity token (UUID v4) as manufacturer data in the advertisement payload
 - On token rotation (15-min timer per [ADR 0011](0011-proximity-token-rotation-cadence.md)), call `POST /api/token/rotate` ([ADR 0015](0015-app-api-topology.md)) and update the manufacturer data to the new token — the old token remains valid in Redis for the 30-second grace window
 - On Android, advertising runs inside the foreground service — see [ADR 0016](0016-android-foreground-service.md)

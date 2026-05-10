@@ -34,7 +34,7 @@ The engineer agent (Gemini) blocked on five issues. All are now resolved:
 ## Repo structure to create
 
 ```
-vibr8me/
+alon/
 ├── admin/                         ← NEW: admin dashboard SPA
 │   ├── src/
 │   │   ├── components/            shared UI (tables, badges, dialogs)

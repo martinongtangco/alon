@@ -1,6 +1,6 @@
 ---
 name: adr
-description: Create a new Architecture Decision Record for vibr8.me. Scaffolds the file, auto-numbers it, and updates the index. Use when recording an architectural decision, technology choice, or resolving an open question from docs/agents/architect.md.
+description: Create a new Architecture Decision Record for Alon. Scaffolds the file, auto-numbers it, and updates the index. Use when recording an architectural decision, technology choice, or resolving an open question from docs/agents/architect.md.
 ---
 
 ## Process

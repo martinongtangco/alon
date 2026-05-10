@@ -1,4 +1,4 @@
-# vibr8.me — Spec Index
+# Alon — Spec Index
 
 Three product surfaces, three specs. Read the one that matches your task.
 
@@ -10,14 +10,14 @@ Three product surfaces, three specs. Read the one that matches your task.
 |---|---|---|
 | **Mobile App** | The consumer-facing React Native app (iOS + Android) | [`app-spec.md`](app-spec.md) |
 | **Business Portal** | Self-serve web app for partner businesses | [`business-portal-spec.md`](business-portal-spec.md) |
-| **Admin Dashboard** | Internal backend management tool for vibr8.me staff | [`admin-dashboard-spec.md`](admin-dashboard-spec.md) |
+| **Admin Dashboard** | Internal backend management tool for Alon staff | [`admin-dashboard-spec.md`](admin-dashboard-spec.md) |
 
 ---
 
 ## How they relate
 
 ```
-                      vibr8.me Platform
+                      Alon Platform
                             │
           ┌─────────────────┼─────────────────┐
           │                 │                 │
@@ -34,7 +34,7 @@ Three product surfaces, three specs. Read the one that matches your task.
 
 - The **mobile app** is what end users interact with. It surfaces promos and events created by partners.
 - The **Business Portal** is where partners configure their presence — promos, events, profile, billing.
-- The **Admin Dashboard** is where the vibr8.me team manages all three surfaces — approving partners, moderating content, monitoring platform health, and configuring live behavior.
+- The **Admin Dashboard** is where the Alon team manages all three surfaces — approving partners, moderating content, monitoring platform health, and configuring live behavior.
 
 ---
 

@@ -1,4 +1,4 @@
-# app/ — vibr8.me mobile client
+# app/ — Alon mobile client
 
 React Native (Expo) prototype, TypeScript. **All services are mocked** — no real BLE, no real backend yet.
 

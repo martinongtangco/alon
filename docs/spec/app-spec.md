@@ -1,8 +1,8 @@
-# vibr8.me — App Specification
+# Alon — App Specification
 
 ## Overview
 
-**vibr8.me** is a native mobile app redefining social discovery through passive, proximity-based interaction. Unlike traditional social media that demands constant attention, vibr8.me runs silently in the background — your phone vibrates at different intensities as other users get closer, nudging you to look up and connect in real life. No awkward cold approaches. No staring at your screen. Just a subtle buzz that says *someone interesting is nearby.*
+**Alon** is a native mobile app redefining social discovery through passive, proximity-based interaction. Unlike traditional social media that demands constant attention, Alon runs silently in the background — your phone vibrates at different intensities as other users get closer, nudging you to look up and connect in real life. No awkward cold approaches. No staring at your screen. Just a subtle buzz that says *someone interesting is nearby.*
 
 Think Pokémon GO, but the goal is real human connection — not a screen.
 
@@ -94,7 +94,7 @@ Four tabs:
 - Distinct vibration pattern differentiates a Buzz Me from the passive proximity buzz so users always know what they're feeling
 - Rate-limited to prevent spam (max 3 buzzes per person per day)
 
-> **On naming:** "Poke" is strongly associated with Facebook's registered feature. "Buzz Me" is used throughout as the vibr8.me-native term — it's on-brand with the haptics-first identity and avoids any IP conflict.
+> **On naming:** "Poke" is strongly associated with Facebook's registered feature. "Buzz Me" is used throughout as the Alon-native term — it's on-brand with the haptics-first identity and avoids any IP conflict.
 
 ### 5. The Visualizer
 A full-screen generative art display — the app's "say hi" mode and concert/party feature. Activated by shaking or waving the phone, or by long-pressing the Buzz Me button.
@@ -108,7 +108,7 @@ A full-screen generative art display — the app's "say hi" mode and concert/par
   - **Fracture** — lightning crack bursts that explode more intensely with fast movement
   - **Aurora** — layered wave bands that ripple and distort with motion
 - Modes auto-cycle every ~6 seconds, or tap to skip to the next
-- Color palette matches the vibr8.me earth tone identity: amber, teal, rust, brown, olive
+- Color palette matches the Alon earth tone identity: amber, teal, rust, brown, olive
 
 **Use cases:**
 - **Buzz greeting** — when you Buzz Me someone nearby, both phones can open the Visualizer as a mutual "hey, that's me" signal. No words needed
@@ -117,7 +117,7 @@ A full-screen generative art display — the app's "say hi" mode and concert/par
 
 **Design principles:**
 - Dark canvas (`#1a1208`) so it pops in any lighting, including direct sunlight and dark venues
-- No UI chrome while active — pure full-screen visual. The vibr8.me wordmark appears subtly at the bottom
+- No UI chrome while active — pure full-screen visual. The Alon wordmark appears subtly at the bottom
 - Tap anywhere to cycle modes; shake to intensify
 - Battery-conscious: Visualizer is an active foreground feature only — it never runs in the background
 
@@ -147,7 +147,7 @@ A full-screen generative art display — the app's "say hi" mode and concert/par
    └── Set profile: name, photo (optional), bio, Vibes, current mode
 
 2. App runs in background
-   └── BLE / GPS detects nearby vibr8 users
+   └── BLE / GPS detects nearby Alon users
 
 3. Phone vibrates
    └── Intensity = distance + compatibility
@@ -199,7 +199,7 @@ A full-screen generative art display — the app's "say hi" mode and concert/par
 | Stream | Model |
 |---|---|
 | **Establishment Partnerships** | Monthly fee for promo broadcast access |
-| **vibr8 Pro** | Subscription — custom vibration patterns, extended Vibe slots, activity boosts |
+| **Alon Pro** | Subscription — custom vibration patterns, extended Vibe slots, activity boosts |
 | **Event Promotions** | Pay-to-feature local events in the activity feed |
 | **Brand Activations** | Geo-fenced campaigns for brands at events/venues |
 
@@ -215,7 +215,7 @@ A full-screen generative art display — the app's "say hi" mode and concert/par
 
 ## Brand Identity
 
-- **Name**: vibr8.me — playful, phonetic, memorable
+- **Name**: Alon — playful, phonetic, memorable
 - **Tagline**: *Feel who's near.*
 - **Tone**: Confident, warm, slightly edgy — not corporate. Feels like a product made by people who go outside.
 - **Visual direction**: Minimal UI, bold haptic-inspired motion design, dark-mode first
@@ -239,7 +239,7 @@ A full-screen generative art display — the app's "say hi" mode and concert/par
 
 ## Battery Efficiency Strategy
 
-Battery life is a first-class concern. vibr8.me runs in the background continuously — it must feel invisible to the user's battery, not like a drain. Target: **3–6% battery per hour** in active background mode (comparable to Spotify or WhatsApp, not Pokémon GO).
+Battery life is a first-class concern. Alon runs in the background continuously — it must feel invisible to the user's battery, not like a drain. Target: **3–6% battery per hour** in active background mode (comparable to Spotify or WhatsApp, not Pokémon GO).
 
 ### Detection layers — tiered by power cost
 
@@ -253,7 +253,7 @@ Battery life is a first-class concern. vibr8.me runs in the background continuou
 
 **BLE is the primary proximity tool.** For short-range detection — the moments that matter most — BLE scanning should do all the work. It uses a fraction of what GPS costs and runs on the phone's dedicated coprocessor, leaving the main CPU free.
 
-**Never use continuous high-accuracy GPS.** Standard continuous GPS (what mapping and Pokémon GO use) burns 15–20% battery per hour on its own. vibr8.me should use:
+**Never use continuous high-accuracy GPS.** Standard continuous GPS (what mapping and Pokémon GO use) burns 15–20% battery per hour on its own. Alon should use:
 - iOS: `CLLocationManager` with `significantLocationChange` mode + region monitoring (geofencing)
 - Android: `FusedLocationProviderClient` with `PRIORITY_BALANCED_POWER_ACCURACY` or `PRIORITY_LOW_POWER`
 
@@ -267,7 +267,7 @@ Battery life is a first-class concern. vibr8.me runs in the background continuou
 
 ### User-facing transparency
 
-- Show a battery usage indicator in Settings ("vibr8 used X% in the last 24h")
+- Show a battery usage indicator in Settings ("Alon used X% in the last 24h")
 - Offer a **Low Power Mode** in-app that reduces BLE scan frequency and disables city-level feed refresh
 - Clearly communicate in onboarding what background permissions are used and why
 

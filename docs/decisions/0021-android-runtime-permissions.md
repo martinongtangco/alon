@@ -77,10 +77,10 @@ Rationale: blocking onboarding on a permission denial is hostile UX and reduces 
 Replace the placeholder copy in `app/src/screens/Onboarding/index.tsx` (permissions step):
 
 ```
-vibr8 needs bluetooth to detect nearby vibes. on android 12+, you'll
+Alon needs bluetooth to detect nearby vibes. on android 12+, you'll
 see a system permission dialog — tap "allow" for each.
 
-why location? android requires it for bluetooth scanning. vibr8 never
+why location? android requires it for bluetooth scanning. Alon never
 uses your location for anything else.
 
 battery target: 3–6% per hour, comparable to spotify.

@@ -36,7 +36,7 @@ export const useAppStore = create<AppState>()(
       // ... existing store definition unchanged ...
     }),
     {
-      name: 'vibr8-app-state',
+      name: 'Alon-app-state',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         onboarded: state.onboarded,
@@ -51,7 +51,7 @@ export const useAppStore = create<AppState>()(
 
 ### Storage key
 
-`vibr8-app-state` — plain string, no namespacing needed for M1. If multiple stores are added in M2, prefix with the store name.
+`Alon-app-state` — plain string, no namespacing needed for M1. If multiple stores are added in M2, prefix with the store name.
 
 ### No migration needed for M1
 

@@ -14,7 +14,7 @@ For the M1 lab test ([ADR 0012](0012-milestone-1-product-scope.md)), both device
 Constraints:
 - Android only for M1. iOS peripheral mode (CoreBluetooth `CBPeripheralManager`) is deferred to M2.
 - Must run inside the foreground service established by [ADR 0016](0016-android-foreground-service.md).
-- Advertisement payload must include the vibr8.me service UUID (`f7a5c2-9d4e-11ef-b864-0242ac120002`) so scanning devices can filter on it, plus the current proximity token as manufacturer data.
+- Advertisement payload must include the Alon service UUID (`f7a5c2-9d4e-11ef-b864-0242ac120002`) so scanning devices can filter on it, plus the current proximity token as manufacturer data.
 - Must update the advertised payload when the token rotates without a full BLE restart.
 - Battery target: 3–6% / hr total (spec §Battery Efficiency Strategy). Advertising alone contributes ~1% / hr on modern chipsets.
 

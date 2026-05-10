@@ -1,6 +1,6 @@
 ---
 name: audit-action
-description: Add a new AuditAction to vibr8.me and wire it through every layer it touches. Use when adding a new auditable admin operation — new moderation action, new config change type, new auth event, etc.
+description: Add a new AuditAction to Alon and wire it through every layer it touches. Use when adding a new auditable admin operation — new moderation action, new config change type, new auth event, etc.
 ---
 
 Takes the action name as an argument (e.g. `/audit-action PROMO_FEATURE`). Convention: `SUBJECT_VERB` in SCREAMING_SNAKE_CASE. If omitted, ask before proceeding.

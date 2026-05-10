@@ -84,7 +84,7 @@ Do not mix registers. The Radar screen is not dark. The Visualizer is not cream.
 
 | Role | Family | Weight | Size | Letter-spacing |
 |---|---|---|---|---|
-| Wordmark ("vibr8.me") | Georgia / serif | regular, italic | 13–16px | 0.12em |
+| Wordmark ("Alon") | Georgia / serif | regular, italic | 13–16px | 0.12em |
 | UI labels (uppercase) | -apple-system / sans | 600 | 9–11px | 0.08–0.14em |
 | UI body | -apple-system / sans | 400–500 | 11–13px | normal |
 | Stat numbers | -apple-system / sans | 700 | 16–18px | normal |

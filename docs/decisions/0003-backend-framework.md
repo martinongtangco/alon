@@ -5,7 +5,7 @@ Date: 2026-04-19
 Accepted: 2026-05-03
 
 ## Context
-The vibr8.me backend needs to support a minimal surface area as specified in the spec. The backend should:
+The Alon backend needs to support a minimal surface area as specified in the spec. The backend should:
 - Store user profiles and Vibe information  
 - Handle Vibe matching algorithm
 - Manage anonymized proximity tokens

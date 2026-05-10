@@ -1,12 +1,12 @@
-# vibr8.me — Business Portal Specification
+# Alon — Business Portal Specification
 
 ## Overview
 
-The **Business Portal** is the self-serve web application for partner establishments — bars, cafes, gyms, co-working spaces, and any business participating in vibr8.me's proximity promo and event ecosystem. It is the primary interface through which partners configure their broadcast presence, manage offers, track performance, and handle billing.
+The **Business Portal** is the self-serve web application for partner establishments — bars, cafes, gyms, co-working spaces, and any business participating in Alon's proximity promo and event ecosystem. It is the primary interface through which partners configure their broadcast presence, manage offers, track performance, and handle billing.
 
 It is entirely separate from the consumer mobile app and from the internal Admin Dashboard. Partners never interact with the admin panel; admins never use the Business Portal to manage individual accounts on a partner's behalf.
 
-> The portal's job is to make a bar owner feel in control of their vibr8.me footprint in under 10 minutes — without needing a sales call or an engineer.
+> The portal's job is to make a bar owner feel in control of their Alon footprint in under 10 minutes — without needing a sales call or an engineer.
 
 ---
 
@@ -20,7 +20,7 @@ It is entirely separate from the consumer mobile app and from the internal Admin
 
 ## Authentication & Onboarding
 
-- Partners register via a public signup page (linked from the vibr8.me marketing site)
+- Partners register via a public signup page (linked from the Alon marketing site)
 - Registration collects: business name, category, address, contact name, contact email, plan selection
 - New accounts enter **Pending Review** status — activation requires admin approval in the Admin Dashboard
 - On approval, the partner receives a confirmation email and gains full portal access
@@ -42,7 +42,7 @@ Step 5 — Verify           Identity/business verification (TBD — see Open Que
 ## Navigation Structure
 
 ```
-vibr8.me Business Portal
+Alon Business Portal
 ├── Dashboard              Overview stats, live promo status, recent redemptions
 ├── Analytics              Deeper metrics — impressions, conversions, peak hours
 ├── Promos                 Create, edit, pause, and delete proximity offers
@@ -94,7 +94,7 @@ Expanded metrics for partners who want to go deeper. Available on all plans.
 
 ### 3. Promos
 
-The core content management tool for partners. A promo is a proximity-triggered offer that appears as a notification to vibr8.me users when they enter the broadcast radius.
+The core content management tool for partners. A promo is a proximity-triggered offer that appears as a notification to Alon users when they enter the broadcast radius.
 
 **Promo list view:**
 - Tab filters: All / Active / Drafts / Expired
@@ -131,7 +131,7 @@ The core content management tool for partners. A promo is a proximity-triggered 
 
 ### 4. Events
 
-Partners can list events in the vibr8.me Nearby Activities Feed. Events reach users whose Vibe profiles overlap with the event's tags, within the city/area.
+Partners can list events in the Alon Nearby Activities Feed. Events reach users whose Vibe profiles overlap with the event's tags, within the city/area.
 
 **Event list view:**
 - Tabs: Upcoming / Live Now / Past
@@ -157,7 +157,7 @@ Partners can list events in the vibr8.me Nearby Activities Feed. Events reach us
 
 ### 5. Business Profile
 
-The identity and configuration layer for the partner's vibr8.me presence.
+The identity and configuration layer for the partner's Alon presence.
 
 **Identity section:**
 - Business logo (optional)
@@ -221,9 +221,9 @@ The identity and configuration layer for the partner's vibr8.me presence.
 
 ## Design Principles
 
-- **Dark-mode only.** Matches the vibr8.me brand — amber (`#F5A623`) on near-black. No light mode in v1.
+- **Dark-mode only.** Matches the Alon brand — amber (`#F5A623`) on near-black. No light mode in v1.
 - **No marketing speak.** Every label is a plain description of what the thing does. Partners are busy.
-- **Confidence at a glance.** The dashboard should make a partner feel good about their vibr8.me investment within seconds of opening it.
+- **Confidence at a glance.** The dashboard should make a partner feel good about their Alon investment within seconds of opening it.
 - **Non-intrusive data.** User PII is never shown to partners — not names, not photos, not exact locations. Only aggregate metrics and approximate distances.
 
 ---
@@ -244,7 +244,7 @@ The identity and configuration layer for the partner's vibr8.me presence.
 - Multi-user accounts (e.g. agency managing multiple businesses) — planned for v2
 - Real-time map preview of broadcast zone with live user density
 - A/B testing tools for promo copy
-- Direct messaging between partner and vibr8 team through the portal
+- Direct messaging between partner and Alon team through the portal
 - Recurring event templates
 - Custom Vibe tag creation
 
@@ -261,4 +261,4 @@ The identity and configuration layer for the partner's vibr8.me presence.
 ---
 
 *Last updated: April 2026 — Initial draft, based on Business Portal v1 prototype*
-*Reference implementation: `vibr8me_business_portal.html`*
+*Reference implementation: `alon_business_portal.html`*

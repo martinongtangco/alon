@@ -34,7 +34,7 @@ Per spec open question resolution (see [admin-dashboard-spec.md](../spec/admin-d
 JWT claims:
 ```json
 {
-  "iss": "vibr8me-admin",
+  "iss": "alon-admin",
   "sub": "<admin_user_id>",
   "role": "SUPER_ADMIN" | "OPS" | "FINANCE",
   "iat": ...,

@@ -5,7 +5,7 @@ Date: 2026-04-25
 
 ## Context
 
-The Admin Dashboard is a web application — separate from the React Native mobile app and from the Business Portal — used by vibr8.me ops, moderation, finance, and engineering staff. Per [docs/spec/admin-dashboard-spec.md](../spec/admin-dashboard-spec.md):
+The Admin Dashboard is a web application — separate from the React Native mobile app and from the Business Portal — used by Alon ops, moderation, finance, and engineering staff. Per [docs/spec/admin-dashboard-spec.md](../spec/admin-dashboard-spec.md):
 
 - Web app, no native (line 378)
 - Desktop-primary; tablet-readable but not mobile-optimized (line 379)

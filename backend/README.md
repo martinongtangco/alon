@@ -1,4 +1,4 @@
-# backend/ — vibr8.me server
+# backend/ — Alon server
 
 **Not yet scaffolded.** Framework + hosting will be chosen in an ADR before implementation starts.
 

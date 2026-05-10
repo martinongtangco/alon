@@ -5,7 +5,7 @@ Date: 2026-04-19
 Accepted: 2026-05-03
 
 ## Context
-The vibr8.me app requires a state management solution that fits the spec's passive/ambient model. The app needs to manage:
+The Alon app requires a state management solution that fits the spec's passive/ambient model. The app needs to manage:
 - User profile and settings
 - Proximity events and compatibility scores  
 - Active connections and notifications

@@ -1,6 +1,6 @@
 ---
 name: admin-route
-description: Scaffold a new admin API resource for vibr8.me with all required patterns pre-wired. Use when adding a new admin endpoint — moderation resource, reporting surface, config namespace, etc.
+description: Scaffold a new admin API resource for Alon with all required patterns pre-wired. Use when adding a new admin endpoint — moderation resource, reporting surface, config namespace, etc.
 ---
 
 Takes the resource name as an argument (e.g. `/admin-route promos`). If omitted, ask before proceeding.

@@ -22,8 +22,8 @@ This requires BLE scanning and advertising to continue while the app is not in t
 ### M1 (lab test — controlled hardware)
 
 - Implement an Android foreground service via `react-native-ble-plx`'s `startForegroundService()`.
-- Notification: minimal — title "vibr8.me is active", body "detecting nearby vibes", no interaction required.
-- Require test hardware to have **battery optimization disabled** for the app before the test. Path: `Settings → Apps → vibr8.me → Battery → Unrestricted`.
+- Notification: minimal — title "Alon is active", body "detecting nearby vibes", no interaction required.
+- Require test hardware to have **battery optimization disabled** for the app before the test. Path: `Settings → Apps → Alon → Battery → Unrestricted`.
 - Accept: on stock Android (Pixel or AOSP-based) this is sufficient to pass M1.
 - Do not attempt to handle OEM-specific restrictions in M1 code. The lab test uses controlled hardware.
 
@@ -62,18 +62,18 @@ These entries should already be in `app/app.json`. If they are, ADR 0016 is full
 ```json
 {
   "expo": {
-    "name": "vibr8.me",
-    "slug": "vibr8me",
+    "name": "Alon",
+    "slug": "alon",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "me.vibr8.app"
+      "bundleIdentifier": "me.Alon.app"
     },
     "android": {
-      "package": "me.vibr8.app",
+      "package": "me.Alon.app",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "BLUETOOTH",
@@ -93,7 +93,7 @@ These entries should already be in `app/app.json`. If they are, ADR 0016 is full
         {
           "isBackgroundEnabled": true,
           "modes": ["peripheral", "central"],
-          "bluetoothAlwaysPermission": "Allow vibr8.me to use Bluetooth to detect nearby vibes"
+          "bluetoothAlwaysPermission": "Allow Alon to use Bluetooth to detect nearby vibes"
         }
       ]
     ]

@@ -44,7 +44,7 @@ This UUID is the same value with the missing two hex digits (`d9`) restored in t
 try {
   this.manager.startForegroundService(
     'ic_notification',      // drawable resource name in the Android project
-    'vibr8.me is active',   // notification title
+    'Alon is active',   // notification title
     'detecting nearby vibes', // notification body
   );
 } catch (_) {

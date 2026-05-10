@@ -78,7 +78,7 @@ What the backend is NOT:
 
 ### Passive proximity detection
 1. App is backgrounded, BLE service is scanning + advertising anonymized token
-2. Another vibr8 user comes within range → BLE event
+2. Another Alon user comes within range → BLE event
 3. Proximity service asks backend: "is this token compatible with me?" (using cached compat scores where possible)
 4. Haptics service fires the appropriate pattern based on distance + compat
 5. Radar UI is **not** updated in the background — it refreshes when the user opens the app
