@@ -1,4 +1,4 @@
--- vibr8.me Database Setup Script
+-- Alon Database Setup Script
 -- Authoritative DDL for all schemas: app, admin, audit
 -- Requires PostgreSQL 16+ and PostGIS extension
 -- See: docs/decisions/0010-app-schema-data-model.md

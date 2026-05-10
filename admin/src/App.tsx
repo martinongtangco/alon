@@ -47,7 +47,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="p-6 border-b border-gray-800">
           <div className="flex items-center space-x-2">
             <ShieldAlert className="text-blue-500 w-6 h-6" />
-            <h1 className="text-xl font-bold tracking-wider text-white">vibr8.me</h1>
+            <h1 className="text-xl font-bold tracking-wider text-white">Alon</h1>
           </div>
           <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest">Admin Control</p>
         </div>

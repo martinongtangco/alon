@@ -5,7 +5,7 @@ import { ShieldAlert } from 'lucide-react';
 export const Login = () => {
   const { loginStep, loginCredentials, loginTotp } = useAuth();
   
-  const [email, setEmail] = useState('admin@vibr8.me');
+  const [email, setEmail] = useState('admin@alon.app');
   const [password, setPassword] = useState('password123');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -49,7 +49,7 @@ export const Login = () => {
           <div className="mx-auto w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4 border border-blue-500/30">
             <ShieldAlert className="w-6 h-6 text-blue-400" />
           </div>
-          <h1 className="text-2xl font-bold tracking-wider text-white">vibr8.me</h1>
+          <h1 className="text-2xl font-bold tracking-wider text-white">Alon</h1>
           <p className="text-sm text-gray-400 mt-1 uppercase tracking-widest font-semibold">System Access</p>
         </div>
 

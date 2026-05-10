@@ -21,10 +21,10 @@ async function seed() {
       INSERT INTO admin.users (email, password_hash, role, totp_enabled, status)
       VALUES ($1, $2, $3, $4, $5)
       ON CONFLICT (email) DO NOTHING
-    `, ['admin@vibr8.me', hash, 'SUPER_ADMIN', false, 'Active']);
+    `, ['admin@alon.app', hash, 'SUPER_ADMIN', false, 'Active']);
 
     console.log('✅ Database seeded successfully!');
-    console.log('👉 Test Login: admin@vibr8.me / password123');
+    console.log('👉 Test Login: admin@alon.app / password123');
   } catch (err) {
     console.error('❌ Seeding failed:', err);
   } finally {
