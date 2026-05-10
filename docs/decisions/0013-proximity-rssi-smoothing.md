@@ -80,3 +80,69 @@ function bandFor(avg: number): ProximityBand {
 ```
 
 The service emits `onBandChange` only when the band actually changes after applying hysteresis. Multiple RSSI readings at the same band do not re-fire the callback.
+
+### Stale timer
+
+When no RSSI reading arrives within `STALE_MS`, the band resets to `out-of-range` and `onBandChange` fires. Implemented with a rolling `setTimeout`:
+
+```ts
+let staleTimer: ReturnType<typeof setTimeout> | null = null;
+
+function resetStaleTimer(onStale: () => void) {
+  if (staleTimer) clearTimeout(staleTimer);
+  staleTimer = setTimeout(onStale, STALE_MS);
+}
+```
+
+Call `resetStaleTimer` on every `addReading()`. On stale: clear the readings buffer, set band to `out-of-range`, emit `onBandChange`.
+
+### Coexistence with existing `signalLevelFor`
+
+The existing `proximityService.signalLevelFor(nearby: NearbyPerson[])` is used by `RadarScreen` to drive the `VibeSignal` UI meter. It must be replaced — the new service owns both band detection and signal level derivation.
+
+Add a `bandToSignalLevel` helper to `proximity/index.ts`:
+
+```ts
+export function bandToSignalLevel(band: ProximityBand): SignalLevel {
+  switch (band) {
+    case 'very-near': return 5;
+    case 'near':      return 3;
+    case 'far':       return 1;
+    default:          return 0;
+  }
+}
+```
+
+`RadarScreen` calls `setSignalLevel(bandToSignalLevel(band))` inside its `onBandChange` subscriber. The old `signalLevelFor` export is deleted.
+
+### Wiring in `RadarScreen`
+
+`app/src/screens/Radar/index.tsx` owns the BLE + proximity lifecycle. The existing `useEffect` expands to:
+
+```ts
+useEffect(() => {
+  if (profile.ghostMode) {
+    bleService.stop();
+    proximityService.stop();
+    return;
+  }
+
+  bleService.start();
+  proximityService.start(bleService.onRssiReading.bind(bleService));
+
+  const unsubBle = bleService.subscribe((people) => setNearby(people));
+  const unsubBand = proximityService.onBandChange((band) => {
+    setSignalLevel(bandToSignalLevel(band));
+    // haptic wiring is handled by useProximityHaptics hook — see ADR 0020
+  });
+
+  return () => {
+    unsubBle();
+    unsubBand();
+    bleService.stop();
+    proximityService.stop();
+  };
+}, [profile.ghostMode, setNearby, setSignalLevel]);
+```
+
+`proximityService` is a singleton exported from `app/src/services/proximity/index.ts`, same pattern as `bleService` and `hapticsService`. No changes to the store or any other caller.
