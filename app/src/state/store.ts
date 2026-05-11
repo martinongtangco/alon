@@ -23,6 +23,7 @@ interface AppState {
   events: MapEvent[];
   matches: BuzzMatch[];
   feed: FeedItem[];
+  peerVibes: string[] | null;
 
   signalLevel: SignalLevel;
 
@@ -58,6 +59,7 @@ export const useAppStore = create<AppState>()(
       events: [],
       matches: [],
       feed: [],
+      peerVibes: null,
 
       signalLevel: 3,
 
@@ -94,6 +96,8 @@ export const useAppStore = create<AppState>()(
       setSignalLevel: (signalLevel) => set({ signalLevel }),
 
       setNearby: (nearby) => set({ nearby }),
+
+      setPeerVibes: (peerVibes: string[] | null) => set({ peerVibes }),
 
       buzz: async () => {
         try {

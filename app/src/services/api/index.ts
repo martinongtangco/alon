@@ -5,6 +5,11 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/
 
 export interface PlatformConfig {
   BUZZ_COOLDOWN: number;
+  COMPATIBILITY_THRESHOLD: number;
+}
+
+export interface VibeResponse {
+  vibes: string[];
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -96,6 +101,15 @@ export const apiService = {
 
   async fetchConfig(): Promise<PlatformConfig> {
     const res = await fetch(`${BASE_URL}/config`);
+    return (await checked(res)).json();
+  },
+
+  async fetchVibes(token: string, userToken?: string): Promise<VibeResponse> {
+    const url = userToken
+      ? `${BASE_URL}/users/${token}/vibes?user_token=${encodeURIComponent(userToken)}`
+      : `${BASE_URL}/users/${token}/vibes`;
+    const res = await fetch(url);
+    if (!res.ok) return { vibes: [] };
     return (await checked(res)).json();
   },
 };

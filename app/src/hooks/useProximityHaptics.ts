@@ -1,8 +1,31 @@
 import { useEffect, useRef } from 'react';
-import { proximityService, ProximityBand } from '../services/proximity';
+import { proximityService, ProximityBand, compatibilityScore, isCompatible } from '../services/proximity';
 import { hapticsService } from '../services/haptics';
+import { useAppStore } from '../state/store';
 
 const HAPTIC_COOLDOWN_MS = 8000;
+
+/**
+ * Map proximity band + compatibility to haptic pattern.
+ * ADR 0024: compatible peers get stronger haptic feedback.
+ */
+function patternForBand(band: ProximityBand, compatible: boolean): string {
+  if (compatible) {
+    // Escalate: one level stronger when compatible
+    switch (band) {
+      case 'very-near': return 'strong_buzz';
+      case 'near': return 'strong_buzz';
+      case 'far': return 'steady_rhythm';
+      default: return 'faint_pulse';
+    }
+  }
+  switch (band) {
+    case 'very-near': return 'strong_buzz';
+    case 'near': return 'steady_rhythm';
+    case 'far': return 'faint_pulse';
+    default: return 'none';
+  }
+}
 
 export function useProximityHaptics(ghostMode: boolean): void {
   const lastFiredBand = useRef<ProximityBand | null>(null);
@@ -31,11 +54,15 @@ export function useProximityHaptics(ghostMode: boolean): void {
         return;
       }
 
-      const pattern = band === 'very-near'
-        ? 'strong_buzz'
-        : band === 'near'
-        ? 'steady_rhythm'
-        : 'faint_pulse';
+      // ADR 0024: check compatibility against peer vibes from cache
+      const me = useAppStore.getState().profile;
+      const peerVibes = useAppStore.getState().peerVibes;
+      const compatible = peerVibes && me.vibes.length > 0
+        ? isCompatible(me.vibes, peerVibes)
+        : false;
+
+      const pattern = patternForBand(band, compatible);
+      if (pattern === 'none') return;
 
       hapticsService.play(pattern).catch(() => {});
       lastFiredBand.current = band;

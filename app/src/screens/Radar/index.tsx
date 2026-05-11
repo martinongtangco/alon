@@ -13,6 +13,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Pill } from '../../components/Pill';
 import { VibeSignal } from '../../components/VibeSignal';
 import { useAppStore } from '../../state/store';
+import { usePeerCache } from '../../state/peerCache';
 import { colors, space } from '../../theme';
 import { bleService } from '../../services/ble';
 import { proximityService, ProximityBand, bandToSignalLevel } from '../../services/proximity';
@@ -43,6 +44,17 @@ export const RadarScreen = () => {
   >(null);
 
   useProximityHaptics(profile.ghostMode);
+
+  // ADR 0024: Fetch compatibility vibes for nearby peers on proximity update
+  useEffect(() => {
+    if (profile.ghostMode || nearby.length === 0) return;
+    const me = profile.token;
+    nearby.forEach(async (person) => {
+      if (person.token !== me) {
+        await usePeerCache.getState().getVibes(person.token, me);
+      }
+    });
+  }, [nearby, profile.ghostMode, profile.token]);
 
   useEffect(() => {
     if (profile.ghostMode) {

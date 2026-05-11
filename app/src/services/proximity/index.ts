@@ -1,6 +1,35 @@
 import { SignalLevel } from '../../types';
+import { platformConfigService } from '../platformConfig';
+import { apiService } from '../api';
 
 export type ProximityBand = 'out-of-range' | 'far' | 'near' | 'very-near';
+
+/**
+ * Compute compatibility score between two vibe sets using Jaccard similarity.
+ * ADR 0024: score = |intersection| / |union|
+ */
+export function compatibilityScore(a: string[], b: string[]): number {
+  if (a.length === 0 || b.length === 0) return 0;
+
+  const setA = new Set(a);
+  const setB = new Set(b);
+
+  let intersection = 0;
+  for (const v of setA) {
+    if (setB.has(v)) intersection++;
+  }
+
+  const union = setA.size + setB.size - intersection;
+  return intersection / union;
+}
+
+/**
+ * Check if two users meet the compatibility threshold.
+ */
+export function isCompatible(a: string[], b: string[]): boolean {
+  const threshold = platformConfigService.get().COMPATIBILITY_THRESHOLD ?? 0.5;
+  return compatibilityScore(a, b) >= threshold;
+}
 
 const WINDOW = 5;
 const THRESHOLDS = { nearFar: -70, veryNearNear: -55 };

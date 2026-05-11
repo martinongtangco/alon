@@ -48,13 +48,15 @@ An ADR is not ready to accept until an engineer can implement it without a singl
 | [0021](0021-android-runtime-permissions.md) | Android Runtime Permissions for BLE | Accepted |
 | [0022](0022-ble-start-sequence-android.md) | BLE Android Start Sequence Corrections | Accepted |
 | [0023](0023-dev-seed-app-users.md) | Dev Seed Data for App Users | Accepted |
+| [0024](0024-vibe-matching-engine-topology.md) | Vibe Matching Engine Topology (inline client-side scoring) | Accepted |
+| [0025](0025-mutual-reveal-flow-and-data-model.md) | Mutual Reveal Flow and Data Model | Accepted |
+| [0026](0026-offline-radar-behaviour.md) | Offline Radar Behaviour | Accepted |
+| [0027](0027-push-notification-provider-and-delivery.md) | Push Notification Provider and Delivery Strategy (Expo Notifications) | Accepted |
+| [0028](0028-ios-port-platform-split-strategy.md) | iOS Port — Platform Split Strategy | Accepted |
+| [0029](0029-event-ingestion-pipeline-shape.md) | Event Ingestion Pipeline Shape (inline writes, M2) | Accepted |
+| [0030](0030-age-verification-and-safety-moderation.md) | Age Verification and Safety Moderation | Accepted |
+| [0031](0031-server-enforced-ghost-mode.md) | Server-Enforced Ghost Mode | Accepted |
 
 ## Open decisions awaiting an ADR
 
-Deferred — none blocking M1:
-
-- Matching engine topology (inline / service / batch) — M2
-- Offline radar behaviour — M2
-- Event ingestion pipeline shape — M2
-- Age verification / safety moderation — M2+ (pre-launch)
-- Server-enforced Ghost Mode — M3
+None.
