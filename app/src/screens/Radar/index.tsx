@@ -34,6 +34,7 @@ export const RadarScreen = () => {
   const setNearby = useAppStore((s) => s.setNearby);
   const setSignalLevel = useAppStore((s) => s.setSignalLevel);
   const buzz = useAppStore((s) => s.buzz);
+  const sendReveal = useAppStore((s) => s.sendReveal);
   const signalLevel = useAppStore((s) => s.signalLevel);
 
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
@@ -41,6 +42,9 @@ export const RadarScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [buzzResult, setBuzzResult] = useState<
     'sent' | 'rate-limited' | 'too-far' | null
+  >(null);
+  const [revealResult, setRevealResult] = useState<
+    'pending' | 'mutual' | 'error' | null
   >(null);
 
   useProximityHaptics(profile.ghostMode);
@@ -105,11 +109,22 @@ export const RadarScreen = () => {
     }
   };
 
+  const handleReveal = async () => {
+    if (!selectedPerson) return;
+    const result = await sendReveal(selectedPerson.token);
+    setRevealResult(result);
+    if (result === 'mutual') {
+      hapticsService.play('buzz_me');
+      setTimeout(() => navigation.navigate('Visualizer'), 350);
+    }
+  };
+
   const dismiss = () => {
     setSelectedToken(null);
     setSelectedPromo(null);
     setSelectedEvent(null);
     setBuzzResult(null);
+    setRevealResult(null);
   };
 
   const screenWidth = Dimensions.get('window').width;
@@ -176,8 +191,10 @@ export const RadarScreen = () => {
           <VibeCard
             person={selectedPerson}
             onBuzz={handleBuzz}
+            onReveal={handleReveal}
             onClose={dismiss}
             buzzResult={buzzResult}
+            revealResult={revealResult}
           />
         )}
 

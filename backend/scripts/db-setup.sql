@@ -260,6 +260,28 @@ CREATE TABLE app.reveal_events (
     CONSTRAINT chk_no_self_reveal CHECK (initiator_id <> recipient_id)
 );
 
+-- Mutual reveal state machine — ADR 0025
+-- Tracks PENDING → MUTUAL transitions for mutual-reveal flow
+CREATE TABLE app.reveals (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    initiator_id    UUID NOT NULL REFERENCES app.users(id),
+    recipient_id    UUID NOT NULL REFERENCES app.users(id),
+    status          VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+                    CHECK (status IN ('PENDING', 'MUTUAL')),
+    mutual_at       TIMESTAMP WITH TIME ZONE,
+    expires_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW() + INTERVAL '24 hours',
+    created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    removed_by      UUID REFERENCES app.users(id),
+    removed_at      TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT chk_no_self_reveal CHECK (initiator_id <> recipient_id)
+);
+
+-- Index: look up all reveals for a user
+CREATE INDEX idx_reveals_user ON app.reveals(initiator_id, recipient_id);
+CREATE INDEX idx_reveals_expires ON app.reveals(expires_at) WHERE status = 'PENDING';
+-- Index: efficiently filter out soft-deleted rows in GET /matches
+CREATE INDEX idx_reveals_active ON app.reveals(initiator_id, recipient_id) WHERE removed_by IS NULL;
+
 -- ============================================================
 -- INDEXES (app schema)
 -- ============================================================

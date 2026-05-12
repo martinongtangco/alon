@@ -8,6 +8,7 @@ import {
   MapPromo,
   Mode,
   NearbyPerson,
+  RevealMatch,
   SignalLevel,
   UserProfile,
   Vibe,
@@ -24,6 +25,7 @@ interface AppState {
   matches: BuzzMatch[];
   feed: FeedItem[];
   peerVibes: string[] | null;
+  revealMatches: RevealMatch[];
 
   signalLevel: SignalLevel;
 
@@ -37,6 +39,9 @@ interface AppState {
   buzzBack: (matchId: string) => void;
   reveal: (token: string) => void;
   hydrate: () => Promise<void>;
+  fetchRevealMatches: () => Promise<void>;
+  sendReveal: (token: string) => Promise<'pending' | 'mutual' | 'error'>;
+  removeReveal: (matchId: string) => void;
 }
 
 const defaultProfile: UserProfile = {
@@ -60,6 +65,7 @@ export const useAppStore = create<AppState>()(
       matches: [],
       feed: [],
       peerVibes: null,
+      revealMatches: [],
 
       signalLevel: 3,
 
@@ -141,6 +147,37 @@ export const useAppStore = create<AppState>()(
           safeFetch(() => apiService.fetchMatches(), []),
         ]);
         set({ promos, events, feed, matches });
+      },
+
+      fetchRevealMatches: async () => {
+        try {
+          const revealMatches = await apiService.fetchRevealMatches();
+          set({ revealMatches });
+        } catch {
+          // silently fail
+        }
+      },
+
+      sendReveal: async (token: string) => {
+        try {
+          const result = await apiService.sendReveal(token);
+          if (result.status === 'mutual') {
+            // Refresh matches immediately
+            await apiService.fetchRevealMatches().then((matches) => {
+              set({ revealMatches: matches });
+            });
+          }
+          return result.status as 'pending' | 'mutual';
+        } catch {
+          return 'error';
+        }
+      },
+
+      removeReveal: (matchId: string) => {
+        set((s) => ({
+          revealMatches: s.revealMatches.filter((m) => m.id !== matchId),
+        }));
+        apiService.removeReveal(matchId).catch(() => {});
       },
     }),
     {

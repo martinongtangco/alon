@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserProfile, NearbyPerson, MapPromo, MapEvent, FeedItem, BuzzMatch } from '../../types';
+import { UserProfile, NearbyPerson, MapPromo, MapEvent, FeedItem, BuzzMatch, RevealMatch } from '../../types';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api';
 
@@ -111,6 +111,33 @@ export const apiService = {
     const res = await fetch(url);
     if (!res.ok) return { vibes: [] };
     return (await checked(res)).json();
+  },
+
+  // Mutual Reveal methods
+  async sendReveal(recipientToken: string): Promise<{ status: string; id: string }> {
+    const headers = { ...await authHeaders(), 'Content-Type': 'application/json' };
+    const res = await fetch(`${BASE_URL}/reveals`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ recipient_token: recipientToken }),
+    });
+    return (await checked(res)).json();
+  },
+
+  async fetchMatches(): Promise<BuzzMatch[]> {
+    const res = await fetch(`${BASE_URL}/matches`, { headers: await authHeaders() });
+    return (await checked(res)).json();
+  },
+
+  async fetchRevealMatches(): Promise<RevealMatch[]> {
+    const res = await fetch(`${BASE_URL}/reveals/matches`, { headers: await authHeaders() });
+    if (!res.ok) return [];
+    return (await checked(res)).json();
+  },
+
+  async removeReveal(matchId: string): Promise<void> {
+    const headers = { ...await authHeaders() };
+    await checked(await fetch(`${BASE_URL}/reveals/${matchId}`, { method: 'DELETE', headers }));
   },
 };
 

@@ -80,3 +80,18 @@ export interface FeedItem {
 }
 
 export type SignalLevel = 0 | 1 | 2 | 3 | 4 | 5;
+
+// Mutual Reveal types
+export type RevealStatus = 'PENDING' | 'MUTUAL' | 'EXPIRED';
+
+export interface RevealMatch {
+  id: string;
+  name: string;
+  initials: string;
+  photo_url: string | null;
+  vibes: Vibe[];
+  mutual_at: string;
+  role: 'self' | 'other';
+  isRevealed: boolean;
+  revealPending: boolean;
+}
