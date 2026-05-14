@@ -15,12 +15,14 @@ import { VibeSignal } from '../../components/VibeSignal';
 import { useAppStore } from '../../state/store';
 import { colors, space } from '../../theme';
 import { bleService } from '../../services/ble';
-import { proximityService, ProximityBand, bandToSignalLevel } from '../../services/proximity';
+import { proximityService, ProximityBand, bandToSignalLevel, compatibilityScore, isCompatible } from '../../services/proximity';
 import { useProximityHaptics } from '../../hooks/useProximityHaptics';
 import { hapticsService } from '../../services/haptics';
 import { RadarMap } from './RadarMap';
 import { VibeCard } from './VibeCard';
 import { RootStackParamList } from '../../navigation/types';
+import { apiService } from '../../services/api';
+import { peerCacheStore, PeerCacheEntry } from '../../state/peerCache';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -41,8 +43,10 @@ export const RadarScreen = () => {
   const [buzzResult, setBuzzResult] = useState<
     'sent' | 'rate-limited' | 'too-far' | null
   >(null);
+  const [compatibilityScoreValue, setCompatibilityScoreValue] = useState<number | null>(null);
+  const [compatible, setCompatible] = useState<boolean | null>(null);
 
-  useProximityHaptics(profile.ghostMode);
+  useProximityHaptics(profile.ghostMode, compatible ?? true);
 
   useEffect(() => {
     if (profile.ghostMode) {
@@ -72,6 +76,43 @@ export const RadarScreen = () => {
     () => nearby.find((n) => n.token === selectedToken) ?? null,
     [nearby, selectedToken],
   );
+
+  // Compute compatibility when a person is selected
+  useEffect(() => {
+    if (!selectedPerson || !profile.vibes || profile.vibes.length === 0) {
+      setCompatibilityScoreValue(null);
+      setCompatible(null);
+      return;
+    }
+
+    const cached = peerCacheStore.getEntry(selectedPerson.token);
+    if (cached && Date.now() - new Date(cached.updated_at).getTime() < 300_000) {
+      setCompatibilityScoreValue(cached.score);
+      setCompatible(cached.compatible);
+      return;
+    }
+
+    apiService.fetchVibes(selectedPerson.token).then((res) => {
+      const vibes = res.vibes ?? [];
+      const score = compatibilityScore(profile.vibes, vibes);
+      const isCompat = isCompatible(profile.vibes, vibes);
+      setCompatibilityScoreValue(score);
+      setCompatible(isCompat);
+
+      peerCacheStore.setEntries([
+        {
+          token: selectedPerson.token,
+          vibes,
+          score,
+          compatible: isCompat,
+          updated_at: new Date().toISOString(),
+        },
+      ]);
+    }).catch(() => {
+      setCompatibilityScoreValue(null);
+      setCompatible(null);
+    });
+  }, [selectedPerson, profile.vibes]);
 
   const selectedPromoData = useMemo(
     () => promos.find((p) => p.id === selectedPromo) ?? null,
@@ -166,6 +207,8 @@ export const RadarScreen = () => {
             onBuzz={handleBuzz}
             onClose={dismiss}
             buzzResult={buzzResult}
+            compatibilityScore={compatibilityScoreValue}
+            compatible={compatible}
           />
         )}
 

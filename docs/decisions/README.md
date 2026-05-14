@@ -48,13 +48,13 @@ An ADR is not ready to accept until an engineer can implement it without a singl
 | [0021](0021-android-runtime-permissions.md) | Android Runtime Permissions for BLE | Accepted |
 | [0022](0022-ble-start-sequence-android.md) | BLE Android Start Sequence Corrections | Accepted |
 | [0023](0023-dev-seed-app-users.md) | Dev Seed Data for App Users | Accepted |
+| [0024](0024-matching-engine-topology.md) | Matching Engine Topology (inline for M1/M2) | Accepted |
+| [0025](0025-offline-radar-behaviour.md) | Offline Radar Behaviour (four-state state machine + cache) | Accepted |
 
 ## Open decisions awaiting an ADR
 
 Deferred — none blocking M1:
 
-- Matching engine topology (inline / service / batch) — M2
-- Offline radar behaviour — M2
 - Event ingestion pipeline shape — M2
 - Age verification / safety moderation — M2+ (pre-launch)
 - Server-enforced Ghost Mode — M3

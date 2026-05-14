@@ -1,4 +1,5 @@
 import { SignalLevel } from '../../types';
+import { platformConfigService } from '../platformConfig';
 
 export type ProximityBand = 'out-of-range' | 'far' | 'near' | 'very-near';
 
@@ -135,3 +136,34 @@ class ProximityServiceImpl implements ProximityServiceInternal {
 }
 
 export const proximityService = new ProximityServiceImpl();
+
+/**
+ * Compute compatibility score between two vibe profiles.
+ * Returns a number in [0, 1].
+ *
+ * Formula: Jaccard similarity = |intersection| / |union|
+ *
+ * Simple, symmetric, monotonic in shared vibes.
+ */
+export function compatibilityScore(a: string[], b: string[]): number {
+  if (a.length === 0 || b.length === 0) return 0;
+
+  const setA = new Set(a);
+  const setB = new Set(b);
+
+  let intersection = 0;
+  for (const v of setA) {
+    if (setB.has(v)) intersection++;
+  }
+
+  const union = setA.size + setB.size - intersection;
+  return intersection / union;
+}
+
+/**
+ * Check if two users meet the compatibility threshold.
+ */
+export function isCompatible(a: string[], b: string[]): boolean {
+  const threshold = platformConfigService.get('COMPATIBILITY_THRESHOLD');
+  return compatibilityScore(a, b) >= threshold;
+}

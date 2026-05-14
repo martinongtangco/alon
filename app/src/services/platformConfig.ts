@@ -2,6 +2,7 @@ import { PlatformConfig } from './api';
 
 const DEFAULTS: PlatformConfig = {
   BUZZ_COOLDOWN: 120,
+  COMPATIBILITY_THRESHOLD: 0.5,
 };
 
 class PlatformConfigService {
@@ -17,6 +18,10 @@ class PlatformConfigService {
 
   getBuzzCooldown(): number {
     return this.config.BUZZ_COOLDOWN;
+  }
+
+  getCompatibilityThreshold(): number {
+    return this.config.COMPATIBILITY_THRESHOLD;
   }
 }
 

@@ -4,7 +4,7 @@ import { hapticsService } from '../services/haptics';
 
 const HAPTIC_COOLDOWN_MS = 8000;
 
-export function useProximityHaptics(ghostMode: boolean): void {
+export function useProximityHaptics(ghostMode: boolean, compatible: boolean = true): void {
   const lastFiredBand = useRef<ProximityBand | null>(null);
   const cooldownUntil = useRef<number>(0);
 
@@ -13,6 +13,7 @@ export function useProximityHaptics(ghostMode: boolean): void {
 
     const unsub = proximityService.onBandChange((band) => {
       if (band === 'out-of-range') return;
+      if (!compatible) return;
 
       const now = Date.now();
       const sameband = band === lastFiredBand.current;
