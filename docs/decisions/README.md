@@ -1,27 +1,7 @@
 # Architecture Decision Records
 
-One file per architectural decision. Owned by the architect; read by everyone.
-
-## Format
-
-See `.claude/skills/grill-with-docs/ADR-FORMAT.md` for the canonical format. Status values: `proposed | accepted | deprecated | superseded by ADR 0NNNN` (number only — never use filenames or `ADR-NNNN`).
-
-## Quality bar for Accepted ADRs
-
-An ADR is not ready to accept until an engineer can implement it without a single blocker or ambiguous decision. Before accepting, verify:
-
-- **File locations** — every file to create or modify is named explicitly (no "update the BLE service")
-- **Interface changes** — if a public interface changes, the new signature is written out in full
-- **Wiring** — if two services must coordinate, the call direction is specified (who calls who, when)
-- **Platform splits** — if platform-specific code is required, the file naming convention is stated (`.android.ts` / `.ios.ts`, not `Platform.OS` checks in business logic)
-- **Install step** — any new package is listed with its exact version
-- **Ambiguity test** — read the Decision section cold and ask: could a reasonable engineer make two different choices? If yes, add a sentence resolving it
-
-## Naming
-
-`NNNN-short-title.md` — NNNN is a zero-padded sequence number (0001, 0002, ...).
-
-## Index
+One file per architectural decision. All 36 ADRs are Accepted.
+Format and quality bar: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 | ADR | Title | Status |
 |---|---|---|
@@ -50,11 +30,14 @@ An ADR is not ready to accept until an engineer can implement it without a singl
 | [0023](0023-dev-seed-app-users.md) | Dev Seed Data for App Users | Accepted |
 | [0024](0024-matching-engine-topology.md) | Matching Engine Topology (inline for M1/M2) | Accepted |
 | [0025](0025-offline-radar-behaviour.md) | Offline Radar Behaviour (four-state state machine + cache) | Accepted |
-
-## Open decisions awaiting an ADR
-
-Deferred — none blocking M1:
-
-- Event ingestion pipeline shape — M2
-- Age verification / safety moderation — M2+ (pre-launch)
-- Server-enforced Ghost Mode — M3
+| [0026](0026-app-launch-gate-and-bootstrap.md) | App Launch Gate and Bootstrap Sequence | Accepted |
+| [0027](0027-radar-blob-position-model.md) | Radar Blob Position Model (BLE-Only Bearing Derivation) | Accepted |
+| [0028](0028-m2-vibe-matching-engine.md) | M2 — Vibe Matching Engine (Inline Jaccard Scoring) | Accepted |
+| [0029](0029-m2-mutual-reveal-flow.md) | M2 — Mutual Reveal Flow | Accepted |
+| [0030](0030-m2-ios-platform-extension.md) | M2 — iOS Platform Extension | Accepted |
+| [0031](0031-m2-push-notifications.md) | M2 — Push Notification Strategy | Accepted |
+| [0032](0032-m2-user-account-model.md) | M2 — User Account Model (Device → User Identity) | Accepted |
+| [0033](0033-offline-radar-behaviour.md) | Offline Radar Behaviour — Supplement to ADR 0025 | Accepted |
+| [0034](0034-event-ingestion-pipeline.md) | Event Ingestion Pipeline (Admin CMS, M2) | Accepted |
+| [0035](0035-age-verification-strategy.md) | Age Verification Strategy | Accepted |
+| [0036](0036-m3-server-enforced-ghost-mode.md) | M3 — Server-Enforced Ghost Mode | Accepted |

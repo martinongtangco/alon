@@ -10,8 +10,6 @@ interface VibeCardProps {
   onBuzz: () => void;
   onClose: () => void;
   buzzResult?: 'sent' | 'rate-limited' | 'too-far' | null;
-  compatibilityScore?: number | null;
-  compatible?: boolean | null;
 }
 
 export const VibeCard = ({
@@ -19,8 +17,6 @@ export const VibeCard = ({
   onBuzz,
   onClose,
   buzzResult,
-  compatibilityScore: score,
-  compatible,
 }: VibeCardProps) => {
   const tooFar = person.distanceMeters > 100;
 
@@ -35,7 +31,7 @@ export const VibeCard = ({
             {Math.round(person.distanceMeters)}m away
           </Text>
           <Text style={styles.compat}>
-            {compatible === true ? 'vibe match' : compatible === false ? 'no vibe match' : `${Math.round((score ?? person.compatibility) * 100)}% vibe match`}
+            {Math.round(person.compatibility * 100)}% vibe match
           </Text>
         </View>
       </View>
