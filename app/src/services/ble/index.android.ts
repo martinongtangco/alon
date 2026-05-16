@@ -95,7 +95,7 @@ class BleServiceImpl implements BleService {
     this.manager?.stopDeviceScan();
 
     // Stop BLE peripheral advertising
-    BLEAdvertiser.stopBroadcast().catch(() => {});
+    BLEAdvertiser?.stopBroadcast().catch(() => {});
 
     this.manager?.destroy();
     this.manager = null;
@@ -103,6 +103,7 @@ class BleServiceImpl implements BleService {
   }
 
   async updateToken(token: string): Promise<void> {
+    if (!BLEAdvertiser) return;
     await BLEAdvertiser.stopBroadcast();
     await BLEAdvertiser.broadcast(SERVICE_UUID, tokenToBytes(token), {
       advertiseMode: BLEAdvertiser.ADVERTISE_MODE_LOW_LATENCY,
