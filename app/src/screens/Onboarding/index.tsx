@@ -16,7 +16,6 @@ import { colors, radius, space } from '../../theme';
 import { serifFamily } from '../../theme/typography';
 import { requestBlePermissions } from '../../utils/permissions';
 import { apiService } from '../../services/api';
-import { useAppStore } from '../../state/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STEPS = ['intro', 'name', 'vibes', 'mode', 'permissions', 'phone'] as const;
