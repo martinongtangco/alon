@@ -1,0 +1,108 @@
+import { Router, Request, Response } from 'express';
+import { authDevice } from '../../middleware/authDevice';
+import { redis } from '../../redis';
+import { pool } from '../../db';
+
+export const nearbyRouter = Router();
+
+nearbyRouter.use(authDevice);
+
+// GET /api/nearby
+// Vibe Matching Engine (ADR 0028): computes Jaccard similarity between the
+// authenticated device's vibes and nearby peers resolved from BLE scan tokens.
+//
+// Request body: { tokens: string[] }   // proximity tokens from current BLE scan
+// Response: Array<{
+//   token: string,
+//   compatibility: number,             // Jaccard score 0–1
+//   distanceBand: 'very-near' | 'near' | 'far'
+// }>
+nearbyRouter.get('/', async (req: Request, res: Response) => {
+  const featureFlag = process.env.FEATURE_VIBE_MATCHING;
+  const enabled = featureFlag === 'true' || featureFlag === '1';
+
+  // Parse token list from query or body
+  const tokens: string[] = (req.body?.tokens as string[]) ?? (req.query.tokens as string[]) ?? [];
+
+  if (!Array.isArray(tokens) || tokens.length === 0) {
+    return res.json([]);
+  }
+
+  // --- Feature flag off: return stub ---
+  if (!enabled) {
+    const stub = tokens.map((token) => ({
+      token,
+      compatibility: 0.5,
+      distanceBand: 'far' as const,
+    }));
+    return res.json(stub);
+  }
+
+  // --- Feature flag on: compute real scores ---
+
+  // 1. Resolve tokens via Redis → deviceId
+  const deviceIds: string[] = [];
+  const tokenOrder: Map<string, number> = new Map();
+  let idx = 0;
+  for (const token of tokens) {
+    const deviceId = await redis.get(`token:${token}`);
+    if (deviceId) {
+      deviceIds.push(deviceId);
+      tokenOrder.set(token, idx);
+    }
+    idx++;
+  }
+
+  // 2. Fetch vibes for all resolved device IDs in a single query
+  const vibeMap = new Map<string, string[]>();
+  if (deviceIds.length > 0) {
+    try {
+      const result = await pool.query(
+        'SELECT id, vibes FROM "app.users" WHERE id = ANY($1)',
+        [deviceIds]
+      );
+      for (const row of result.rows) {
+        vibeMap.set(row.id, (row.vibes as string[]) ?? []);
+      }
+    } catch {
+      // Postgres failure: fall back to 0.5 for all peers (safe default)
+      const fallback = tokens.map((token) => ({
+        token,
+        compatibility: 0.5,
+        distanceBand: 'far' as const,
+      }));
+      return res.json(fallback);
+    }
+  }
+
+  // 3. Get the requesting device's vibes
+  const deviceId = req.deviceId!;
+  const requesterVibes = vibeMap.get(deviceId) ?? [];
+
+  // 4. Compute Jaccard similarity for each peer
+  const jaccard = (a: string[], b: string[]): number => {
+    if (a.length === 0 && b.length === 0) return 0;
+    const union = new Set([...a, ...b]).size;
+    if (union === 0) return 0;
+    const intersection = a.filter((v) => b.includes(v)).length;
+    return intersection / union;
+  };
+
+  const distanceBand = (token: string): 'very-near' | 'near' | 'far' => {
+    // distanceBand is derived from RSSI signal strength (computed by the app
+    // and stored in the token metadata). For now, default to 'far' since the
+    // token→deviceId resolution does not include RSSI data. The app merges
+    // its own proximity data with the compatibility score.
+    return 'far';
+  };
+
+  const results = tokens.map((token) => ({
+    token,
+    compatibility: vibeMap.size > 0
+      ? jaccard(requesterVibes, vibeMap.get(deviceIds[tokenOrder.get(token) ?? -1] ?? '') ?? [])
+      : 0,
+    distanceBand: distanceBand(token),
+  }));
+
+  return res.json(results);
+});
