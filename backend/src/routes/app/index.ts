@@ -4,7 +4,6 @@ import { tokenRouter } from './token';
 import { appConfigRouter } from './config';
 import { buzzRouter } from './buzz';
 import { matchesRouter } from './matches';
-import { vibesRouter } from './vibes';
 
 export const appRouter = Router();
 
@@ -17,4 +16,3 @@ appRouter.use('/token', tokenRouter);
 appRouter.use('/config', appConfigRouter);
 appRouter.use('/buzz', buzzRouter);
 appRouter.use('/matches', matchesRouter);
-appRouter.use('/users/:token/vibes', vibesRouter);

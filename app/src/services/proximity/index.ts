@@ -1,7 +1,25 @@
 import { SignalLevel } from '../../types';
-import { platformConfigService } from '../platformConfig';
 
 export type ProximityBand = 'out-of-range' | 'far' | 'near' | 'very-near';
+
+// ADR 0025: derive a stable bearing (0–359°) from the first 8 hex chars of a
+// proximity token. Same token always yields the same bearing — no jitter between
+// band transitions or across RSSI readings.
+export function tokenToBearing(token: string): number {
+  const hex = token.replace(/-/g, '').slice(0, 8);
+  const hi = parseInt(hex.slice(0, 4), 16);
+  const lo = parseInt(hex.slice(4, 8), 16);
+  return ((hi ^ lo) % 360 + 360) % 360;
+}
+
+// ADR 0025: representative distanceMeters per band. Placed at each ring's
+// midpoint so blobs land inside the correct visual ring (50m / 100m / 250m).
+export const BAND_DISTANCE: Record<ProximityBand, number> = {
+  'very-near': 10,
+  'near':      50,
+  'far':       175,
+  'out-of-range': 0,
+};
 
 const WINDOW = 5;
 const THRESHOLDS = { nearFar: -70, veryNearNear: -55 };
@@ -136,34 +154,3 @@ class ProximityServiceImpl implements ProximityServiceInternal {
 }
 
 export const proximityService = new ProximityServiceImpl();
-
-/**
- * Compute compatibility score between two vibe profiles.
- * Returns a number in [0, 1].
- *
- * Formula: Jaccard similarity = |intersection| / |union|
- *
- * Simple, symmetric, monotonic in shared vibes.
- */
-export function compatibilityScore(a: string[], b: string[]): number {
-  if (a.length === 0 || b.length === 0) return 0;
-
-  const setA = new Set(a);
-  const setB = new Set(b);
-
-  let intersection = 0;
-  for (const v of setA) {
-    if (setB.has(v)) intersection++;
-  }
-
-  const union = setA.size + setB.size - intersection;
-  return intersection / union;
-}
-
-/**
- * Check if two users meet the compatibility threshold.
- */
-export function isCompatible(a: string[], b: string[]): boolean {
-  const threshold = platformConfigService.get('COMPATIBILITY_THRESHOLD');
-  return compatibilityScore(a, b) >= threshold;
-}

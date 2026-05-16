@@ -1,10 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProfile, NearbyPerson, MapPromo, MapEvent, FeedItem, BuzzMatch } from '../../types';
 
-export interface VibeResponse {
-  vibes: string[];
-}
-
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api';
 
 export interface PlatformConfig {
@@ -100,15 +96,6 @@ export const apiService = {
 
   async fetchConfig(): Promise<PlatformConfig> {
     const res = await fetch(`${BASE_URL}/config`);
-    return (await checked(res)).json();
-  },
-
-  async fetchVibes(token: string): Promise<VibeResponse> {
-    const res = await fetch(`${BASE_URL}/users/${token}/vibes`);
-    if (!res.ok) {
-      if (res.status === 404) return { vibes: [] };
-      throw new Error(`${res.status} ${res.statusText}`);
-    }
     return (await checked(res)).json();
   },
 };

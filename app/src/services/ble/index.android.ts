@@ -4,6 +4,7 @@ import BLEAdvertiser from 'react-native-ble-advertiser';
 import { BleService } from './types';
 import { NearbyPerson } from '../../types';
 import { getCurrentToken } from '../token';
+import { tokenToBearing, BAND_DISTANCE } from '../proximity';
 
 const SERVICE_UUID = 'f7a5c2d9-9d4e-11ef-b864-0242ac120002';
 const MANUFACTURER_ID = 0x4c00;
@@ -61,14 +62,24 @@ class BleServiceImpl implements BleService {
         const rssi = device.rssi ?? 0;
         this.rssiCallbacks.forEach(cb => cb(rssi));
 
-        const distanceMeters = rssiToDistance(rssi);
+        const rssiDistance = rssiToDistance(rssi);
         const existing = this.nearbyDevices.get(device.id);
+        // ADR 0025: bearing is derived once from the token and cached — never
+        // recomputed on subsequent RSSI readings so the dot does not jump.
+        const bearingDeg = existing?.bearingDeg ?? tokenToBearing(device.id);
+        // ADR 0025: clamp distanceMeters to the nearest band midpoint to
+        // prevent jitter from noisy RSSI; preserve the cached value until the
+        // ProximityService signals a band change (belt-and-suspenders for M1).
+        const distanceMeters = existing?.distanceMeters
+          ?? (rssiDistance < 3 ? BAND_DISTANCE['very-near']
+            : rssiDistance < 10 ? BAND_DISTANCE['near']
+            : BAND_DISTANCE['far']);
         this.nearbyDevices.set(device.id, {
           token: device.id,
           initials: existing?.initials ?? '??',
           vibes: existing?.vibes ?? [],
           distanceMeters,
-          bearingDeg: existing?.bearingDeg ?? 0,
+          bearingDeg,
           compatibility: existing?.compatibility ?? 0,
           revealed: existing?.revealed ?? false,
           icebreaker: existing?.icebreaker ?? '',

@@ -1,4 +1,3 @@
 export const DEFAULTS = {
   BUZZ_COOLDOWN: 120,
-  COMPATIBILITY_THRESHOLD: 0.5,
 };
