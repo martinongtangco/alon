@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiService } from './api';
 import { bleService } from './ble';
 import { platformConfigService } from './platformConfig';
+import * as Notifications from 'expo-notifications';
 
 const DEVICE_ID_KEY = 'deviceId';
 const AUTH_TOKEN_KEY = 'authToken';
@@ -54,12 +55,24 @@ export async function bootstrapDevice(): Promise<void> {
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, result.authToken);
     await AsyncStorage.setItem(PROXIMITY_TOKEN_KEY, result.token);
     await AsyncStorage.setItem(PROXIMITY_TOKEN_EXPIRES_AT_KEY, String(result.expiresAt));
+
+    // 3. Request notification permissions and register push token
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status === 'granted') {
+        const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync();
+        await apiService.registerPushToken(expoPushToken);
+        console.log('[bootstrap] push token registered:', expoPushToken);
+      }
+    } catch (pushErr) {
+      console.warn('[bootstrap] push token registration failed', pushErr);
+    }
   } catch (err) {
     console.warn('[bootstrap] registerDevice failed — app will use mocked data', err);
     // Do not throw — app degrades gracefully
   }
 
-  // 3. Fetch platform config from backend
+  // 4. Fetch platform config from backend
   try {
     const config = await apiService.fetchConfig();
     platformConfigService.set(config);
@@ -67,7 +80,7 @@ export async function bootstrapDevice(): Promise<void> {
     console.warn('[bootstrap] fetchConfig failed — using defaults', err);
   }
 
-  // 4. Start rotation timer
+  // 5. Start rotation timer
   stopRotationTimer(); // safety: clear any previous interval
   rotationIntervalId = setInterval(async () => {
     try {

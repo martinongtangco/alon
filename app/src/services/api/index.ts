@@ -63,9 +63,13 @@ export const apiService = {
     return (await checked(res)).json();
   },
 
-  async sendBuzz(): Promise<'sent' | 'rate-limited'> {
+  async sendBuzz(targetToken?: string): Promise<'sent' | 'rate-limited'> {
     const headers = { ...await authHeaders(), 'Content-Type': 'application/json' };
-    const res = await fetch(`${BASE_URL}/buzz`, { method: 'POST', headers });
+    const res = await fetch(`${BASE_URL}/buzz`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(targetToken ? { targetToken } : {}),
+    });
     return (await checked(res)).json();
   },
 
@@ -109,6 +113,34 @@ export const apiService = {
 
   async fetchConfig(): Promise<PlatformConfig> {
     const res = await fetch(`${BASE_URL}/config`);
+    return (await checked(res)).json();
+  },
+
+  async registerPushToken(token: string): Promise<void> {
+    const headers = { ...await authHeaders(), 'Content-Type': 'application/json' };
+    await checked(await fetch(`${BASE_URL}/push-token`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ token }),
+    }));
+  },
+
+  // ADR 0032: Phone OTP auth
+  async requestOtp(phone: string): Promise<{ ok: boolean }> {
+    const res = await fetch(`${BASE_URL}/auth/request-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone }),
+    });
+    return (await checked(res)).json();
+  },
+
+  async verifyOtp(phone: string, code: string, deviceId?: string): Promise<{ userToken: string; expiresAt: number }> {
+    const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, code, deviceId }),
+    });
     return (await checked(res)).json();
   },
 };

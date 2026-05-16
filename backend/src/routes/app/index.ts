@@ -6,6 +6,8 @@ import { buzzRouter } from './buzz';
 import { matchesRouter } from './matches';
 import { nearbyRouter } from './nearby';
 import { revealRouter } from './reveal';
+import { pushTokenRouter } from './push-token';
+import { authRouter } from './auth';
 
 export const appRouter = Router();
 
@@ -20,3 +22,5 @@ appRouter.use('/buzz', buzzRouter);
 appRouter.use('/matches', matchesRouter);
 appRouter.use('/nearby', nearbyRouter);
 appRouter.use('/reveal', revealRouter);
+appRouter.use('/push-token', pushTokenRouter);
+appRouter.use('/auth', authRouter);

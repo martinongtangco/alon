@@ -40,7 +40,7 @@ interface AppState {
   toggleGhostMode: () => void;
   setSignalLevel: (level: SignalLevel) => void;
   setNearby: (nearby: NearbyPerson[]) => void;
-  buzz: () => Promise<'sent' | 'rate-limited' | 'too-far'>;
+  buzz: (targetToken?: string) => Promise<'sent' | 'rate-limited' | 'too-far'>;
   buzzBack: (matchId: string) => void;
   reveal: (token: string) => Promise<'pending' | 'matched'>;
   fetchMatches: () => Promise<void>;
@@ -104,9 +104,9 @@ export const useAppStore = create<AppState>()(
 
       setNearby: (nearby) => set({ nearby }),
 
-      buzz: async () => {
+      buzz: async (targetToken?: string) => {
         try {
-          return await apiService.sendBuzz();
+          return await apiService.sendBuzz(targetToken);
         } catch {
           return 'too-far';
         }

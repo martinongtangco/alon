@@ -8,6 +8,7 @@ declare global {
         role: string;
       };
       deviceId?: string;
+      userId?: string;
     }
   }
 }

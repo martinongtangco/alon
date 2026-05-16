@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../../state/store';
@@ -10,6 +10,7 @@ export const ProfileScreen = () => {
   const setMode = useAppStore((s) => s.setMode);
   const toggleVibe = useAppStore((s) => s.toggleVibe);
   const toggleGhost = useAppStore((s) => s.toggleGhostMode);
+  const [showPhoneBanner, setShowPhoneBanner] = useState(true);
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -106,6 +107,20 @@ export const ProfileScreen = () => {
             Alon used 2% in the last hour (mock telemetry)
           </Text>
         </Section>
+
+        {showPhoneBanner && (
+          <View style={styles.phoneBanner}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.phoneBannerTitle}>add your phone</Text>
+              <Text style={styles.phoneBannerSub}>
+                link your phone number for persistent account recovery.
+              </Text>
+            </View>
+            <Pressable onPress={() => setShowPhoneBanner(false)} style={styles.phoneBannerDismiss}>
+              <Text style={styles.phoneBannerDismissText}>✕</Text>
+            </Pressable>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -173,5 +188,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
     letterSpacing: 0.4,
+  },
+  phoneBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.amber100,
+    padding: space.s3,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.amber300,
+    gap: space.s2,
+  },
+  phoneBannerTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.amber900,
+  },
+  phoneBannerSub: {
+    fontSize: 11,
+    color: colors.amber800,
+    marginTop: 2,
+  },
+  phoneBannerDismiss: {
+    padding: space.s1,
+  },
+  phoneBannerDismissText: {
+    fontSize: 14,
+    color: colors.amber700,
   },
 });

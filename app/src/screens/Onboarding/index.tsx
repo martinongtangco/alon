@@ -15,18 +15,27 @@ import { ALL_MODES, ALL_VIBES, Mode, Vibe } from '../../types';
 import { colors, radius, space } from '../../theme';
 import { serifFamily } from '../../theme/typography';
 import { requestBlePermissions } from '../../utils/permissions';
+import { apiService } from '../../services/api';
+import { useAppStore } from '../../state/store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STEPS = ['intro', 'name', 'vibes', 'mode', 'permissions'] as const;
+const STEPS = ['intro', 'name', 'vibes', 'mode', 'permissions', 'phone'] as const;
 type Step = (typeof STEPS)[number];
 
 export const OnboardingScreen = () => {
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
+  const deviceId = useAppStore((s) => s.profile.id);
   const [stepIndex, setStepIndex] = useState(0);
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [mode, setMode] = useState<Mode>('networking');
   const [permissionsGranted, setPermissionsGranted] = useState(true);
+  const [phone, setPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [phoneStep, setPhoneStep] = useState<'input' | 'verify'>('input');
+  const [phoneError, setPhoneError] = useState('');
+  const [phoneLoading, setPhoneLoading] = useState(false);
 
   useEffect(() => {
     if (step === 'permissions') {
@@ -46,10 +55,51 @@ export const OnboardingScreen = () => {
   const canAdvance = (() => {
     if (step === 'name') return name.trim().length > 0;
     if (step === 'vibes') return vibes.length >= 1;
+    if (step === 'phone') return phoneStep === 'verify' && otpCode.trim().length === 6;
     return true;
   })();
 
-  const advance = () => {
+  const advance = async () => {
+    if (step === 'phone') {
+      // In phone verify sub-step, verify the OTP
+      if (phoneStep === 'verify') {
+        setPhoneLoading(true);
+        setPhoneError('');
+        try {
+          const { userToken, expiresAt } = await apiService.verifyOtp(phone, otpCode.trim(), deviceId);
+          await AsyncStorage.setItem('userToken', userToken);
+          await AsyncStorage.setItem('userTokenExpiresAt', String(expiresAt));
+          completeOnboarding({
+            name: name.trim() || 'You',
+            initials,
+            bio: bio.trim() || undefined,
+            vibes,
+            mode,
+            ghostMode: false,
+          });
+        } catch {
+          setPhoneError('Invalid code. Please try again.');
+        } finally {
+          setPhoneLoading(false);
+        }
+        return;
+      }
+      // Otherwise request OTP
+      if (stepIndex < STEPS.length - 1) {
+        setPhoneStep('verify');
+        setOtpCode('');
+        setPhoneLoading(true);
+        setPhoneError('');
+        try {
+          await apiService.requestOtp(phone);
+        } catch {
+          setPhoneError('Failed to send code. Check your connection.');
+        } finally {
+          setPhoneLoading(false);
+        }
+      }
+      return;
+    }
     if (stepIndex < STEPS.length - 1) {
       setStepIndex(stepIndex + 1);
     } else {
@@ -64,7 +114,27 @@ export const OnboardingScreen = () => {
     }
   };
 
-  const back = () => stepIndex > 0 && setStepIndex(stepIndex - 1);
+  const back = () => {
+    if (step === 'phone' && phoneStep === 'verify') {
+      setPhoneStep('input');
+      setOtpCode('');
+      setPhoneError('');
+      return;
+    }
+    stepIndex > 0 && setStepIndex(stepIndex - 1);
+  };
+
+  const resendOtp = async () => {
+    setPhoneLoading(true);
+    setPhoneError('');
+    try {
+      await apiService.requestOtp(phone);
+    } catch {
+      setPhoneError('Failed to resend code.');
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -204,6 +274,55 @@ export const OnboardingScreen = () => {
               )}
             </View>
           )}
+
+          {step === 'phone' && (
+            <View style={styles.section}>
+              <Text style={styles.h1}>verify your phone</Text>
+              {phoneStep === 'input' ? (
+                <>
+                  <Text style={styles.p}>
+                    we'll send a code to verify your number. this helps us create your
+                    persistent account.
+                  </Text>
+                  <TextInput
+                    value={phone}
+                    onChangeText={setPhone}
+                    placeholder="+63XXXXXXXXXX"
+                    placeholderTextColor={colors.textDim}
+                    style={styles.input}
+                    keyboardType="phone-pad"
+                    autoFocus
+                  />
+                  <Text style={styles.hint}>
+                    enter your phone number in E.164 format (e.g., +63XXXXXXXXXX)
+                  </Text>
+                  {phoneError ? <Text style={styles.error}>{phoneError}</Text> : null}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.p}>
+                    we sent a 6-digit code to {phone}
+                  </Text>
+                  <TextInput
+                    value={otpCode}
+                    onChangeText={setOtpCode}
+                    placeholder="------"
+                    placeholderTextColor={colors.textDim}
+                    style={styles.otpInput}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    autoFocus
+                  />
+                  {phoneError ? <Text style={styles.error}>{phoneError}</Text> : null}
+                  <Pressable onPress={resendOtp} style={styles.resend}>
+                    <Text style={styles.resendText}>
+                      {phoneLoading ? 'resending...' : 'resend code'}
+                    </Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          )}
         </View>
 
         <View style={styles.actions}>
@@ -213,10 +332,10 @@ export const OnboardingScreen = () => {
             <View style={{ width: 80 }} />
           )}
           <Button
-            label={step === 'permissions' ? "let's go" : 'next'}
+            label={step === 'permissions' ? "let's go" : step === 'phone' && phoneStep === 'verify' ? 'verify' : 'next'}
             tone="primary"
             onPress={advance}
-            disabled={!canAdvance}
+            disabled={!canAdvance || phoneLoading}
           />
         </View>
       </ScrollView>
@@ -314,5 +433,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: space.s4,
+  },
+  error: {
+    fontSize: 11,
+    color: colors.red500,
+  },
+  otpInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderWarm,
+    borderRadius: 12,
+    paddingHorizontal: space.s4,
+    paddingVertical: space.s3,
+    fontSize: 24,
+    color: colors.textPrimary,
+    backgroundColor: colors.bgWarmAlt,
+    letterSpacing: 12,
+    textAlign: 'center',
+  },
+  resend: {
+    alignSelf: 'flex-start',
+    marginTop: space.s2,
+  },
+  resendText: {
+    fontSize: 11,
+    color: colors.teal600,
+    fontWeight: '600',
   },
 });

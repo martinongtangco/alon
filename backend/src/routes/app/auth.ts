@@ -1,0 +1,183 @@
+import { Router, Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
+import { pool } from '../../db';
+
+export const authRouter = Router();
+
+// POST /api/auth/request-otp
+// Requests a one-time password via Twilio Verify.
+authRouter.post('/request-otp', async (req: Request, res: Response) => {
+  const { phone } = req.body;
+  if (!phone || typeof phone !== 'string') {
+    return res.status(400).json({ error: 'phone required' });
+  }
+
+  // Validate E.164 format: starts with + followed by 7-15 digits
+  if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
+    return res.status(400).json({ error: 'phone must be in E.164 format (e.g., +63XXXXXXXXXX)' });
+  }
+
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+
+  if (!accountSid || !verifyServiceSid) {
+    return res.status(503).json({ error: 'SMS service not configured' });
+  }
+
+  try {
+    const response = await fetch(`https://verify.twilio.com/v2/Services/${verifyServiceSid}/Verifications`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(`${accountSid}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64')}`,
+      },
+      body: new URLSearchParams({
+        To: phone,
+        Channel: 'sms',
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      return res.status(response.status).json({ error: 'Failed to send OTP', details: body });
+    }
+
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send OTP' });
+  }
+});
+
+// POST /api/auth/verify-otp
+// Verifies the OTP code and issues a user JWT.
+authRouter.post('/verify-otp', async (req: Request, res: Response) => {
+  const { phone, code } = req.body;
+  if (!phone || typeof phone !== 'string' || !code || typeof code !== 'string') {
+    return res.status(400).json({ error: 'phone and code required' });
+  }
+
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+
+  if (!accountSid || !verifyServiceSid) {
+    return res.status(503).json({ error: 'SMS service not configured' });
+  }
+
+  // Verify the OTP code via Twilio Verify API
+  try {
+    const response = await fetch(`https://verify.twilio.com/v2/Services/${verifyServiceSid}/VerificationChecks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(`${accountSid}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64')}`,
+      },
+      body: new URLSearchParams({
+        To: phone,
+        Code: code,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      return res.status(response.status).json({ error: 'Verification check failed', details: body });
+    }
+
+    const verifyResult = await response.json();
+
+    if (verifyResult.status !== 'approved') {
+      return res.status(401).json({ error: 'Invalid or expired code' });
+    }
+
+    // Link phone to user account
+    const secret = process.env.USER_JWT_SECRET ?? 'dev-user-secret';
+    const userId = uuidv4();
+
+    // Check if phone already exists in app.users
+    const existing = await pool.query(
+      'SELECT id FROM app.users WHERE phone = $1',
+      [phone],
+    );
+
+    if (existing.rows.length > 0) {
+      // Returning user — update phone_verified
+      const existingUserId = existing.rows[0].id;
+
+      await pool.query(
+        `UPDATE app.users SET phone = $1, phone_verified = TRUE
+         WHERE id = $2`,
+        [phone, existingUserId],
+      );
+
+      // Issue user JWT for existing user
+      const userToken = jwt.sign(
+        { sub: existingUserId, type: 'user' },
+        secret,
+        { expiresIn: '90d' },
+      );
+
+      const expiresAt = Date.now() + 90 * 24 * 60 * 60 * 1000; // 90 days in ms
+      res.json({ userToken, expiresAt });
+      return;
+    }
+
+    // New user — create new row with device_id
+    // The device_id is passed in the request body from the register flow
+    const { deviceId } = req.body as { deviceId?: string };
+
+    if (deviceId) {
+      // Check if this device already has a user row (id = deviceId)
+      const deviceUser = await pool.query(
+        'SELECT id FROM app.users WHERE id = $1',
+        [deviceId],
+      );
+
+      if (deviceUser.rows.length > 0) {
+        // Device already has a user row — update it
+        const existingUserId = deviceUser.rows[0].id;
+
+        await pool.query(
+          `UPDATE app.users SET phone = $1, phone_verified = TRUE
+           WHERE id = $2`,
+          [phone, existingUserId],
+        );
+
+        const userToken = jwt.sign(
+          { sub: existingUserId, type: 'user' },
+          secret,
+          { expiresIn: '90d' },
+        );
+
+        const expiresAt = Date.now() + 90 * 24 * 60 * 60 * 1000;
+        res.json({ userToken, expiresAt });
+        return;
+      }
+
+      // New device, new user — create row (id = deviceId)
+      await pool.query(
+        `INSERT INTO app.users (id, phone, phone_verified)
+         VALUES ($1, $2, TRUE)`,
+        [userId, phone],
+      );
+    } else {
+      // No deviceId — create user without device linkage
+      await pool.query(
+        `INSERT INTO app.users (id, phone, phone_verified)
+         VALUES ($1, $2, TRUE)`,
+        [userId, phone],
+      );
+    }
+
+    // Issue user JWT
+    const userToken = jwt.sign(
+      { sub: userId, type: 'user' },
+      secret,
+      { expiresIn: '90d' },
+    );
+
+    const expiresAt = Date.now() + 90 * 24 * 60 * 60 * 1000; // 90 days in ms
+    res.json({ userToken, expiresAt });
+  } catch (error) {
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});

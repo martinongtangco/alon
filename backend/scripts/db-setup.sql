@@ -108,11 +108,15 @@ CREATE TABLE app.users (
     vibes           JSONB NOT NULL DEFAULT '[]',
     plan            VARCHAR(20) NOT NULL DEFAULT 'Free'
                     CHECK (plan IN ('Free', 'Pro')),
+    -- Phone (ADR 0032: M2 User Account Model)
+    phone           TEXT UNIQUE,
+    phone_verified  BOOLEAN NOT NULL DEFAULT FALSE,
     -- Moderation status — Ghost is not a status; use ghost_mode boolean instead
     status          VARCHAR(20) NOT NULL DEFAULT 'Active'
                     CHECK (status IN ('Active', 'Flagged', 'Suspended', 'Banned')),
     platform        VARCHAR(10)
                     CHECK (platform IN ('iOS', 'Android')),
+    push_token      TEXT,                   -- ADR 0031: Expo push token (nullable)
     suspended_until TIMESTAMP WITH TIME ZONE,
     banned_at       TIMESTAMP WITH TIME ZONE,
     last_active_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
