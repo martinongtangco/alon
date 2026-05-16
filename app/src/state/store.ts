@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  BuzzMatch,
   FeedItem,
   MapEvent,
   MapPromo,
@@ -14,6 +13,15 @@ import {
 } from '../types';
 import { apiService } from '../services/api';
 
+interface Match {
+  id: string;
+  displayName: string;
+  vibes: string[];
+  mode: string;
+  status: 'pending' | 'mutual';
+  createdAt: number;
+}
+
 interface AppState {
   onboarded: boolean;
   profile: UserProfile;
@@ -21,7 +29,7 @@ interface AppState {
   nearby: NearbyPerson[];
   promos: MapPromo[];
   events: MapEvent[];
-  matches: BuzzMatch[];
+  matches: Match[];
   feed: FeedItem[];
 
   signalLevel: SignalLevel;
@@ -34,7 +42,8 @@ interface AppState {
   setNearby: (nearby: NearbyPerson[]) => void;
   buzz: () => Promise<'sent' | 'rate-limited' | 'too-far'>;
   buzzBack: (matchId: string) => void;
-  reveal: (token: string) => void;
+  reveal: (token: string) => Promise<'pending' | 'matched'>;
+  fetchMatches: () => Promise<void>;
   hydrate: () => Promise<void>;
 }
 
@@ -112,12 +121,28 @@ export const useAppStore = create<AppState>()(
         apiService.buzzBack(matchId).catch(() => {});
       },
 
-      reveal: (token) =>
-        set((s) => ({
-          nearby: s.nearby.map((n) =>
-            n.token === token ? { ...n, revealed: true } : n,
-          ),
-        })),
+      reveal: async (token) => {
+        const result = await apiService.reveal(token);
+        if (result.status === 'matched') {
+          // Refresh matches list to include the new match
+          try {
+            const matches = await apiService.fetchMatches();
+            set({ matches });
+          } catch {
+            // ignore refresh errors
+          }
+        }
+        return result.status;
+      },
+
+      fetchMatches: async () => {
+        try {
+          const matches = await apiService.fetchMatches();
+          set({ matches });
+        } catch {
+          // ignore errors — handled by empty fallback
+        }
+      },
 
       hydrate: async () => {
         const safeFetch = async <T,>(
@@ -130,12 +155,12 @@ export const useAppStore = create<AppState>()(
             return fallback;
           }
         };
-        const [promos, events, feed, matches] = await Promise.all([
+        const [promos, events, feed] = await Promise.all([
           safeFetch(() => apiService.fetchPromos(), []),
           safeFetch(() => apiService.fetchEvents(), []),
           safeFetch(() => apiService.fetchFeed(), []),
-          safeFetch(() => apiService.fetchMatches(), []),
         ]);
+        const matches = await safeFetch(() => apiService.fetchMatches(), []);
         set({ promos, events, feed, matches });
       },
     }),

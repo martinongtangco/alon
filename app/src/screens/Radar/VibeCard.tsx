@@ -8,15 +8,19 @@ import { NearbyPerson } from '../../types';
 interface VibeCardProps {
   person: NearbyPerson;
   onBuzz: () => void;
+  onReveal: () => void;
   onClose: () => void;
   buzzResult?: 'sent' | 'rate-limited' | 'too-far' | null;
+  revealed?: boolean;
 }
 
 export const VibeCard = ({
   person,
   onBuzz,
+  onReveal,
   onClose,
   buzzResult,
+  revealed,
 }: VibeCardProps) => {
   const tooFar = person.distanceMeters > 100;
 
@@ -59,13 +63,18 @@ export const VibeCard = ({
           too far away — get within 100m to buzz
         </Text>
       )}
+      {revealed && (
+        <Text style={[styles.feedback, { color: colors.teal900 }]}>
+          revealed — they'll see you when they reveal back
+        </Text>
+      )}
 
       <View style={styles.actions}>
         <Button label="close" tone="ghost" onPress={onClose} />
         <Button
           label="Buzz Me"
           tone="primary"
-          onPress={onBuzz}
+          onPress={revealed ? onBuzz : onReveal}
           disabled={tooFar}
         />
       </View>

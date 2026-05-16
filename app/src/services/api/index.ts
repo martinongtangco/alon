@@ -89,8 +89,21 @@ export const apiService = {
     return (await checked(res)).json();
   },
 
-  async fetchMatches(): Promise<BuzzMatch[]> {
+  async fetchMatches(): Promise<Array<{
+    id: string;
+    displayName: string;
+    vibes: string[];
+    mode: string;
+    status: 'pending' | 'mutual';
+    createdAt: number;
+  }>> {
     const res = await fetch(`${BASE_URL}/matches`, { headers: await authHeaders() });
+    return (await checked(res)).json();
+  },
+
+  async reveal(token: string): Promise<{ status: 'pending' | 'matched'; matchId?: string; createdAt?: number }> {
+    const headers = { ...await authHeaders(), 'Content-Type': 'application/json' };
+    const res = await fetch(`${BASE_URL}/reveal`, { method: 'POST', headers, body: JSON.stringify({ token }) });
     return (await checked(res)).json();
   },
 

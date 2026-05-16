@@ -5,6 +5,7 @@ import { appConfigRouter } from './config';
 import { buzzRouter } from './buzz';
 import { matchesRouter } from './matches';
 import { nearbyRouter } from './nearby';
+import { revealRouter } from './reveal';
 
 export const appRouter = Router();
 
@@ -18,3 +19,4 @@ appRouter.use('/config', appConfigRouter);
 appRouter.use('/buzz', buzzRouter);
 appRouter.use('/matches', matchesRouter);
 appRouter.use('/nearby', nearbyRouter);
+appRouter.use('/reveal', revealRouter);

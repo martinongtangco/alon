@@ -298,6 +298,18 @@ CREATE INDEX idx_flags_created_at ON app.flags(created_at DESC);
 -- Buzz events — rate limiting lookups
 CREATE INDEX idx_buzz_sender ON app.buzz_events(sender_id, sent_at DESC);
 
+-- Matches (mutual reveal) — ADR 0029
+CREATE TABLE IF NOT EXISTS app.matches (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_a    UUID NOT NULL REFERENCES app.users(id),
+    device_b    UUID NOT NULL REFERENCES app.users(id),
+    status      TEXT NOT NULL DEFAULT 'mutual',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(device_a, device_b)
+);
+
+CREATE INDEX idx_matches_status ON app.matches(status);
+
 -- ============================================================
 -- AUDIT SCHEMA
 -- Append-only partitioned table — see ADR 0009

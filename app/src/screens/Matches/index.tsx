@@ -1,30 +1,31 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components/Button';
 import { Pill } from '../../components/Pill';
 import { useAppStore } from '../../state/store';
 import { colors, space } from '../../theme';
-import { BuzzMatch } from '../../types';
 import { hapticsService } from '../../services/haptics';
+
+const POLL_INTERVAL_MS = 15000;
 
 const MatchRow = ({
   match,
   onBuzzBack,
 }: {
-  match: BuzzMatch;
+  match: { id: string; displayName: string; vibes: string[]; mode: string; status: 'pending' | 'mutual'; createdAt: number };
   onBuzzBack: () => void;
 }) => {
-  const minutesAgo = Math.max(1, Math.round((Date.now() - match.receivedAt) / 60000));
+  const minutesAgo = Math.max(1, Math.round((Date.now() - match.createdAt) / 60000));
+  const initials = match.displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
   return (
     <View style={styles.row}>
       <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{match.initials}</Text>
+        <Text style={styles.avatarText}>{initials}</Text>
       </View>
       <View style={{ flex: 1, gap: 4 }}>
-        <Text style={styles.name}>
-          {match.status === 'mutual' ? match.name ?? match.initials : 'someone nearby'}
-        </Text>
+        <Text style={styles.name}>{match.displayName}</Text>
         <View style={styles.vibeRow}>
           {match.vibes.map((v) => (
             <Pill key={v} label={v} tone="teal" />
@@ -33,7 +34,7 @@ const MatchRow = ({
         <Text style={styles.meta}>
           {match.status === 'mutual'
             ? 'mutual — go say hi'
-            : `buzzed you ${minutesAgo}m ago`}
+            : `revealed ${minutesAgo}m ago`}
         </Text>
       </View>
       {match.status === 'pending' && (
@@ -45,7 +46,25 @@ const MatchRow = ({
 
 export const MatchesScreen = () => {
   const matches = useAppStore((s) => s.matches);
+  const fetchMatches = useAppStore((s) => s.fetchMatches);
   const buzzBack = useAppStore((s) => s.buzzBack);
+  const [polling, setPolling] = useState(false);
+
+  // Poll for new matches every 15 seconds while screen is focused
+  useEffect(() => {
+    setPolling(true);
+    // Initial fetch
+    fetchMatches();
+
+    const interval = setInterval(() => {
+      fetchMatches();
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      setPolling(false);
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -58,7 +77,7 @@ export const MatchesScreen = () => {
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>nothing yet</Text>
             <Text style={styles.emptyBody}>
-              when someone buzzes you, they'll show up here
+              when someone reveals to you, they'll show up here
             </Text>
           </View>
         }
@@ -72,6 +91,11 @@ export const MatchesScreen = () => {
           />
         )}
       />
+      {polling && (
+        <View style={styles.pollingIndicator}>
+          <Text style={styles.pollingText}>polling every 15s</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -111,4 +135,13 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   emptyBody: { fontSize: 12, color: colors.textMuted },
+  pollingIndicator: {
+    alignItems: 'center',
+    paddingVertical: space.s2,
+  },
+  pollingText: {
+    fontSize: 10,
+    color: colors.textMuted,
+    fontStyle: 'italic',
+  },
 });
