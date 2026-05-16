@@ -9,8 +9,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import NetInfo from '@react-native-community/netinfo';
 
 import { Pill } from '../../components/Pill';
+import { OfflineBanner } from '../../components/OfflineBanner';
 import { VibeSignal } from '../../components/VibeSignal';
 import { useAppStore } from '../../state/store';
 import { colors, space } from '../../theme';
@@ -18,6 +20,8 @@ import { bleService } from '../../services/ble';
 import { proximityService, ProximityBand, bandToSignalLevel } from '../../services/proximity';
 import { useProximityHaptics } from '../../hooks/useProximityHaptics';
 import { hapticsService } from '../../services/haptics';
+import { apiService } from '../../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RadarMap } from './RadarMap';
 import { VibeCard } from './VibeCard';
 import { RootStackParamList } from '../../navigation/types';
@@ -44,8 +48,48 @@ export const RadarScreen = () => {
     'sent' | 'rate-limited' | 'too-far' | null
   >(null);
   const [revealed, setRevealed] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
 
   useProximityHaptics(profile.ghostMode);
+
+  // Subscribe to network connectivity state via NetInfo
+  useEffect(() => {
+    const unsub = NetInfo.addEventListener((state) => {
+      const connected = state.isConnected ?? true;
+      setIsConnected(connected);
+    });
+    return unsub;
+  }, []);
+
+  // On mount or reconnect: hydrate store and check token expiry
+  useEffect(() => {
+    if (isConnected) {
+      hydrate();
+      // ADR 0033: If the proximity token is within 2 minutes of expiry,
+      // rotate immediately (rotation timer would have missed a cycle while offline).
+      checkAndRotateTokenIfNearExpiry();
+    }
+  }, [isConnected]);
+
+  const checkAndRotateTokenIfNearExpiry = async () => {
+    try {
+      const expiresAtStr = await AsyncStorage.getItem('proximityTokenExpiresAt');
+      if (expiresAtStr) {
+        const expiresAt = Number(expiresAtStr);
+        const timeUntilExpiry = expiresAt - Date.now();
+        // Rotate if within 2 minutes of expiry
+        if (timeUntilExpiry > 0 && timeUntilExpiry < 2 * 60 * 1000) {
+          const result = await apiService.rotateToken();
+          await AsyncStorage.setItem('proximityToken', result.token);
+          await AsyncStorage.setItem('proximityTokenExpiresAt', String(result.expiresAt));
+          await bleService.updateToken(result.token);
+          console.log('[radar] token rotated on reconnect, expiresAt:', result.expiresAt);
+        }
+      }
+    } catch (err) {
+      console.warn('[radar] token expiry check on reconnect failed', err);
+    }
+  };
 
   useEffect(() => {
     hydrate();
@@ -126,12 +170,14 @@ export const RadarScreen = () => {
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.modeLabel}>mode</Text>
-            <Text style={styles.modeValue}>{profile.mode}</Text>
-          </View>
-          <VibeSignal level={signalLevel} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.modeLabel}>mode</Text>
+          <Text style={styles.modeValue}>{profile.mode}</Text>
         </View>
+        <VibeSignal level={signalLevel} />
+      </View>
+
+      <OfflineBanner isConnected={isConnected} />
 
         {profile.ghostMode ? (
           <View style={[styles.radarPlaceholder, { height: radarSize }]}>
@@ -187,6 +233,7 @@ export const RadarScreen = () => {
             onClose={dismiss}
             buzzResult={buzzResult}
             revealed={revealed}
+            isConnected={isConnected}
           />
         )}
 

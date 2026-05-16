@@ -12,6 +12,7 @@ interface VibeCardProps {
   onClose: () => void;
   buzzResult?: 'sent' | 'rate-limited' | 'too-far' | null;
   revealed?: boolean;
+  isConnected?: boolean;
 }
 
 export const VibeCard = ({
@@ -21,8 +22,10 @@ export const VibeCard = ({
   onClose,
   buzzResult,
   revealed,
+  isConnected = true,
 }: VibeCardProps) => {
   const tooFar = person.distanceMeters > 100;
+  const offline = !isConnected;
 
   return (
     <View style={styles.card}>
@@ -72,10 +75,10 @@ export const VibeCard = ({
       <View style={styles.actions}>
         <Button label="close" tone="ghost" onPress={onClose} />
         <Button
-          label="Buzz Me"
-          tone="primary"
+          label={offline ? 'not connected' : 'Buzz Me'}
+          tone={offline ? 'ghost' : 'primary'}
           onPress={revealed ? onBuzz : onReveal}
-          disabled={tooFar}
+          disabled={tooFar || offline}
         />
       </View>
     </View>
