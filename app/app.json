@@ -8,7 +8,11 @@
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.alon.app"
+      "bundleIdentifier": "app.alon.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["bluetooth-central", "bluetooth-peripheral"],
+        "NSBluetoothAlwaysUsageDescription": "Alon uses Bluetooth to detect nearby users. Your location is never shared."
+      }
     },
     "android": {
       "package": "app.alon.app",

@@ -5,6 +5,30 @@ import { NearbyPerson } from '../../types';
 
 const SERVICE_UUID = 'f7a5c2d9-9d4e-11ef-b864-0242ac120002';
 
+/**
+ * Wait for the BLE manager to reach the PoweredOn state.
+ * iOS will only deliver scan results when the adapter is powered on.
+ */
+function waitForPoweredOn(manager: BleManager): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const subscription = manager.on('StateChange', (state: string) => {
+      if (state === 'PoweredOn') {
+        subscription.remove();
+        resolve();
+      } else if (state === 'PoweredOff' || state === 'Resetting' || state === 'Unauthorized' || state === 'Unsupported') {
+        subscription.remove();
+        reject(new Error(`BLE adapter in state: ${state}`));
+      }
+    });
+
+    // Timeout after 5 seconds — fall back to scanning anyway
+    setTimeout(() => {
+      subscription.remove();
+      resolve();
+    }, 5000);
+  });
+}
+
 function rssiToDistance(rssi: number): number {
   return Math.pow(10, (-59 - rssi) / 20);
 }
@@ -18,6 +42,9 @@ class BleServiceImpl implements BleService {
 
   async start(): Promise<void> {
     this.manager = new BleManager();
+
+    // Wait for powered-on state before scanning (iOS requirement)
+    await waitForPoweredOn(this.manager);
 
     // iOS peripheral advertising deferred to M2 (CBPeripheralManager)
     console.warn('[BleService] peripheral advertising is not supported on iOS (deferred to M2)');
