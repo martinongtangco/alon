@@ -197,6 +197,8 @@ CREATE TABLE app.events (
     -- Timing
     event_date              TIMESTAMP WITH TIME ZONE NOT NULL,
     end_date                TIMESTAMP WITH TIME ZONE,
+    -- Broadcast radius (metres) — used for geofence registration on client (ADR 0034)
+    radius_m                INTEGER,
     -- Classification
     vibe_tags               JSONB NOT NULL DEFAULT '[]',
     estimated_reach         INTEGER,

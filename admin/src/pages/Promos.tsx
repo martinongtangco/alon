@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
-import { Search, AlertTriangle, Eye, PauseCircle, Trash2, Store } from 'lucide-react';
+import { Search, AlertTriangle, Eye, PauseCircle, Trash2, Store, Plus, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Promos = () => {
@@ -11,6 +11,16 @@ export const Promos = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    headline: '',
+    description: '',
+    offer_text: '',
+    broadcast_radius: 500,
+    redemption_limit: 10000,
+    starts_at: '',
+    expires_at: '',
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ['promos', page, search, statusFilter],
@@ -36,6 +46,26 @@ export const Promos = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['promos'] })
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: any) => apiFetch('/promos', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['promos'] });
+      setShowCreateModal(false);
+      setCreateForm({
+        headline: '',
+        description: '',
+        offer_text: '',
+        broadcast_radius: 500,
+        redemption_limit: 10000,
+        starts_at: '',
+        expires_at: '',
+      });
+    },
+  });
+
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
       <div className="flex justify-between items-center mb-8">
@@ -43,6 +73,15 @@ export const Promos = () => {
           <h2 className="text-2xl font-bold text-white tracking-wide">Platform Promos</h2>
           <p className="text-gray-400 text-sm mt-1">Oversight and moderation of all active promos</p>
         </div>
+        {role === 'SUPER_ADMIN' && (
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Promo</span>
+          </button>
+        )}
       </div>
 
       {/* Filters Bar */}
@@ -171,6 +210,123 @@ export const Promos = () => {
         )}
       </div>
 
+      {/* Create Promo Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 w-full max-w-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-white">Create New Promo</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              createMutation.mutate({
+                ...createForm,
+                business_id: null,
+                status: 'Active',
+              });
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Headline</label>
+                  <input
+                    type="text"
+                    required
+                    value={createForm.headline}
+                    onChange={(e) => setCreateForm(f => ({ ...f, headline: e.target.value }))}
+                    className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    placeholder="e.g., 20% off all drinks"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Description</label>
+                  <textarea
+                    required
+                    value={createForm.description}
+                    onChange={(e) => setCreateForm(f => ({ ...f, description: e.target.value }))}
+                    className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    rows={3}
+                    placeholder="Describe the promo details..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Offer Text (push notification)</label>
+                  <input
+                    type="text"
+                    required
+                    value={createForm.offer_text}
+                    onChange={(e) => setCreateForm(f => ({ ...f, offer_text: e.target.value }))}
+                    className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    placeholder="e.g., Tap to claim your discount!"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Radius (m)</label>
+                    <input
+                      type="number"
+                      required
+                      value={createForm.broadcast_radius}
+                      onChange={(e) => setCreateForm(f => ({ ...f, broadcast_radius: Number(e.target.value) }))}
+                      className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Redemption Limit</label>
+                    <input
+                      type="number"
+                      required
+                      value={createForm.redemption_limit}
+                      onChange={(e) => setCreateForm(f => ({ ...f, redemption_limit: Number(e.target.value) }))}
+                      className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Starts At</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={createForm.starts_at}
+                      onChange={(e) => setCreateForm(f => ({ ...f, starts_at: e.target.value }))}
+                      className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Expires At</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={createForm.expires_at}
+                      onChange={(e) => setCreateForm(f => ({ ...f, expires_at: e.target.value }))}
+                      className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {createMutation.isPending ? 'Creating...' : 'Create Promo'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

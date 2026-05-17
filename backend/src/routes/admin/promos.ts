@@ -3,6 +3,7 @@ import { pool } from '../../db';
 import { authAdmin } from '../../middleware/authAdmin';
 import { requireRole, AdminRole } from '../../middleware/rbac';
 import { withAudit, AuditAction, extractAuditContext } from '../../audit';
+import { v4 as uuidv4 } from 'uuid';
 
 export const promosRouter = Router();
 
@@ -40,7 +41,7 @@ promosRouter.get('/', async (req: Request, res: Response) => {
     queryParams.push(limit, offset);
 
     const result = await pool.query(queryStr, queryParams);
-    
+
     let countStr = 'SELECT COUNT(*) FROM app.promos p JOIN app.businesses b ON p.business_id = b.id WHERE 1=1';
     const countParams: any[] = [];
     let countIdx = 1;
@@ -60,6 +61,157 @@ promosRouter.get('/', async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/v1/admin/promos (create)
+promosRouter.post('/', async (req: Request, res: Response) => {
+  const {
+    business_id,
+    headline,
+    description,
+    offer_text,
+    broadcast_radius,
+    starts_at,
+    expires_at,
+    status,
+    location,
+    radius_m,
+  } = req.body;
+  const auditContext = extractAuditContext(req);
+
+  if (!business_id || !headline || !broadcast_radius) {
+    return res.status(400).json({ error: 'business_id, headline, and broadcast_radius are required' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const promoId = uuidv4();
+    const result = await client.query(
+      `INSERT INTO app.promos (
+        id, business_id, headline, description, offer_text, broadcast_radius,
+        starts_at, expires_at, status, location, radius_m
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      [
+        promoId,
+        business_id,
+        headline,
+        description || null,
+        offer_text || null,
+        broadcast_radius,
+        starts_at ? new Date(starts_at) : new Date(),
+        expires_at ? new Date(expires_at) : null,
+        status || 'Pending Approval',
+        location || null,
+        radius_m || null,
+      ]
+    );
+
+    await withAudit(client, auditContext, AuditAction.PROMO_KILL, promoId, null, { status: result.rows[0].status });
+
+    await client.query('COMMIT');
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// PUT /api/v1/admin/promos/:id (update)
+promosRouter.put('/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const {
+    headline,
+    description,
+    offer_text,
+    broadcast_radius,
+    starts_at,
+    expires_at,
+    status,
+    location,
+    radius_m,
+  } = req.body;
+  const auditContext = extractAuditContext(req);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const currentRes = await client.query('SELECT * FROM app.promos WHERE id = $1', [id]);
+    if (currentRes.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Promo not found' });
+    }
+
+    const before = currentRes.rows[0];
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIdx = 1;
+
+    if (headline !== undefined) { updates.push(`headline = $${paramIdx++}`); values.push(headline); }
+    if (description !== undefined) { updates.push(`description = $${paramIdx++}`); values.push(description); }
+    if (offer_text !== undefined) { updates.push(`offer_text = $${paramIdx++}`); values.push(offer_text); }
+    if (broadcast_radius !== undefined) { updates.push(`broadcast_radius = $${paramIdx++}`); values.push(broadcast_radius); }
+    if (starts_at !== undefined) { updates.push(`starts_at = $${paramIdx++}`); values.push(new Date(starts_at)); }
+    if (expires_at !== undefined) { updates.push(`expires_at = $${paramIdx++}`); values.push(expires_at ? new Date(expires_at) : null); }
+    if (status !== undefined) { updates.push(`status = $${paramIdx++}`); values.push(status); }
+    if (location !== undefined) { updates.push(`location = $${paramIdx++}`); values.push(location); }
+    if (radius_m !== undefined) { updates.push(`radius_m = $${paramIdx++}`); values.push(radius_m); }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(id);
+
+    const result = await client.query(
+      `UPDATE app.promos SET ${updates.join(', ')} WHERE id = $${paramIdx} RETURNING *`,
+      values
+    );
+
+    await withAudit(client, auditContext, AuditAction.PROMO_PAUSE, id, before, result.rows[0]);
+
+    await client.query('COMMIT');
+    res.json(result.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
+// POST /api/v1/admin/promos/:id/archive (archive = soft-delete, set status to 'Archived')
+promosRouter.post('/:id/archive', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const auditContext = extractAuditContext(req);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const currentRes = await client.query('SELECT * FROM app.promos WHERE id = $1', [id]);
+    if (currentRes.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Promo not found' });
+    }
+
+    const before = currentRes.rows[0];
+    const result = await client.query(
+      `UPDATE app.promos SET status = 'Archived', updated_at = NOW() WHERE id = $1 RETURNING *`,
+      [id]
+    );
+
+    await withAudit(client, auditContext, AuditAction.PROMO_KILL, id, before, { status: 'Archived' });
+
+    await client.query('COMMIT');
+    res.json(result.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
   }
 });
 

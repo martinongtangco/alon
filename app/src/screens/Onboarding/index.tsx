@@ -23,7 +23,13 @@ type Step = (typeof STEPS)[number];
 
 export const OnboardingScreen = () => {
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
-  const deviceId = useAppStore((s) => s.profile.id);
+  const [deviceId, setDeviceId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    AsyncStorage.getItem('deviceId').then((id) => {
+      if (id) setDeviceId(id);
+    });
+  }, []);
   const [stepIndex, setStepIndex] = useState(0);
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
@@ -54,7 +60,10 @@ export const OnboardingScreen = () => {
   const canAdvance = (() => {
     if (step === 'name') return name.trim().length > 0;
     if (step === 'vibes') return vibes.length >= 1;
-    if (step === 'phone') return phoneStep === 'verify' && otpCode.trim().length === 6;
+    if (step === 'phone') {
+      if (phoneStep === 'input') return /^\+[1-9]\d{6,14}$/.test(phone.trim());
+      return otpCode.trim().length === 6;
+    }
     return true;
   })();
 
@@ -84,18 +93,16 @@ export const OnboardingScreen = () => {
         return;
       }
       // Otherwise request OTP
-      if (stepIndex < STEPS.length - 1) {
-        setPhoneStep('verify');
-        setOtpCode('');
-        setPhoneLoading(true);
-        setPhoneError('');
-        try {
-          await apiService.requestOtp(phone);
-        } catch (err: any) {
-          setPhoneError(`Failed to send code: ${err?.message ?? 'unknown error'}`);
-        } finally {
-          setPhoneLoading(false);
-        }
+      setPhoneStep('verify');
+      setOtpCode('');
+      setPhoneLoading(true);
+      setPhoneError('');
+      try {
+        await apiService.requestOtp(phone);
+      } catch (err: any) {
+        setPhoneError(`Failed to send code: ${err?.message ?? 'unknown error'}`);
+      } finally {
+        setPhoneLoading(false);
       }
       return;
     }

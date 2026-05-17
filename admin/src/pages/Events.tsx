@@ -1,14 +1,28 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
-import { Star, StarOff, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Star, StarOff, CheckCircle, XCircle, AlertTriangle, Plus, X } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Events = () => {
+  const { role } = useAuth();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('All');
   const [rejectModal, setRejectModal] = useState<{ id: string; name: string } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    description: '',
+    event_date: '',
+    end_date: '',
+    address_text: '',
+    radius_m: 500,
+    vibe_tags: '',
+    estimated_reach: 0,
+    is_community: false,
+  });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['events', page, statusFilter],
@@ -36,6 +50,28 @@ export const Events = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: any) => apiFetch('/events', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      setShowCreateModal(false);
+      setCreateForm({
+        name: '',
+        description: '',
+        event_date: '',
+        end_date: '',
+        address_text: '',
+        radius_m: 500,
+        vibe_tags: '',
+        estimated_reach: 0,
+        is_community: false,
+      });
+    },
+  });
+
   const statusColor: Record<string, string> = {
     'Scheduled': 'bg-blue-900/30 text-blue-400',
     'Live': 'bg-green-900/30 text-green-400',
@@ -46,9 +82,20 @@ export const Events = () => {
 
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white tracking-wide">Events</h2>
-        <p className="text-gray-400 text-sm mt-1">Moderate and curate platform events</p>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-2xl font-bold text-white tracking-wide">Events</h2>
+          <p className="text-gray-400 text-sm mt-1">Moderate and curate platform events</p>
+        </div>
+        {role === 'SUPER_ADMIN' && (
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Event</span>
+          </button>
+        )}
       </div>
 
       <div className="flex space-x-2">
@@ -160,6 +207,150 @@ export const Events = () => {
                 {rejectMutation.isPending ? 'Rejecting...' : 'Reject Event'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Event Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-lg w-full shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-white">Create New Event</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              createMutation.mutate({
+                name: createForm.name,
+                description: createForm.description,
+                event_date: createForm.event_date,
+                end_date: createForm.end_date,
+                address_text: createForm.address_text,
+                radius_m: createForm.radius_m,
+                vibe_tags: createForm.vibe_tags ? createForm.vibe_tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
+                estimated_reach: createForm.estimated_reach,
+                is_community: createForm.is_community,
+                status: 'Scheduled',
+              });
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Event Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm(f => ({ ...f, name: e.target.value }))}
+                    className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    placeholder="e.g., Summer Music Festival"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Description</label>
+                  <textarea
+                    required
+                    value={createForm.description}
+                    onChange={(e) => setCreateForm(f => ({ ...f, description: e.target.value }))}
+                    className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    rows={3}
+                    placeholder="Describe the event..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Address</label>
+                  <input
+                    type="text"
+                    value={createForm.address_text}
+                    onChange={(e) => setCreateForm(f => ({ ...f, address_text: e.target.value }))}
+                    className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    placeholder="Event address"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Start Date</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={createForm.event_date}
+                      onChange={(e) => setCreateForm(f => ({ ...f, event_date: e.target.value }))}
+                      className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">End Date</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={createForm.end_date}
+                      onChange={(e) => setCreateForm(f => ({ ...f, end_date: e.target.value }))}
+                      className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Radius (m)</label>
+                    <input
+                      type="number"
+                      required
+                      value={createForm.radius_m}
+                      onChange={(e) => setCreateForm(f => ({ ...f, radius_m: Number(e.target.value) }))}
+                      className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Estimated Reach</label>
+                    <input
+                      type="number"
+                      required
+                      value={createForm.estimated_reach}
+                      onChange={(e) => setCreateForm(f => ({ ...f, estimated_reach: Number(e.target.value) }))}
+                      className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Vibe Tags (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={createForm.vibe_tags}
+                    onChange={(e) => setCreateForm(f => ({ ...f, vibe_tags: e.target.value }))}
+                    className="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                    placeholder="e.g., Music, Food, Outdoor"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is_community"
+                    checked={createForm.is_community}
+                    onChange={(e) => setCreateForm(f => ({ ...f, is_community: e.target.checked }))}
+                    className="rounded border-gray-700 bg-gray-950 text-blue-600 focus:border-blue-500"
+                  />
+                  <label htmlFor="is_community" className="text-sm text-gray-400">Community Event</label>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {createMutation.isPending ? 'Creating...' : 'Create Event'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

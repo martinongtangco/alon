@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { adminRouter } from './routes/admin';
 import { appRouter } from './routes/app';
+import { promosRouter as publicPromosRouter } from './routes/public/promos';
+import { eventsRouter as publicEventsRouter } from './routes/public/events';
 
 dotenv.config();
 
@@ -27,6 +29,8 @@ app.use((req, res, next) => {
 
 app.use('/api', appRouter);
 app.use('/api/v1/admin', adminRouter);
+app.use('/api/promos', publicPromosRouter);
+app.use('/api/events', publicEventsRouter);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });

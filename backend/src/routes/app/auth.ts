@@ -21,6 +21,12 @@ authRouter.post('/request-otp', async (req: Request, res: Response) => {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
+  // DEV: bypass Twilio entirely — any code works in verify-otp
+  if (process.env.BYPASS_OTP === 'true') {
+    console.log(`[request-otp] BYPASS_OTP active — pretend SMS sent to ${phone}, accept code 000000`);
+    return res.json({ ok: true });
+  }
+
   if (!accountSid || !verifyServiceSid) {
     return res.status(503).json({ error: 'SMS service not configured' });
   }
@@ -60,12 +66,22 @@ authRouter.post('/verify-otp', async (req: Request, res: Response) => {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
-  if (!accountSid || !verifyServiceSid) {
+  // DEV: bypass — accept code "000000" without hitting Twilio
+  const bypass = process.env.BYPASS_OTP === 'true';
+
+  if (!bypass && (!accountSid || !verifyServiceSid)) {
     return res.status(503).json({ error: 'SMS service not configured' });
   }
 
   // Verify the OTP code via Twilio Verify API
   try {
+    if (bypass) {
+      console.log(`[verify-otp] BYPASS_OTP active — accepting any code for ${phone}`);
+      if (code !== '000000') {
+        return res.status(401).json({ error: 'Invalid code (dev bypass: use 000000)' });
+      }
+      // Skip directly to user linkage with a synthetic "approved" result
+    } else {
     const response = await fetch(`https://verify.twilio.com/v2/Services/${verifyServiceSid}/VerificationCheck`, {
       method: 'POST',
       headers: {
@@ -90,6 +106,7 @@ authRouter.post('/verify-otp', async (req: Request, res: Response) => {
       console.log('[verify-otp] not approved, status:', verifyResult.status);
       return res.status(401).json({ error: 'Invalid or expired code' });
     }
+    } // end else (non-bypass Twilio check)
 
     // Link phone to user account
     const secret = process.env.USER_JWT_SECRET ?? 'dev-user-secret';

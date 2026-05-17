@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -11,13 +11,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { Button } from '../../components/Button';
 import { apiService } from '../../services/api';
-import { useAppStore } from '../../state/store';
 import { colors, radius, space } from '../../theme';
 import { serifFamily } from '../../theme/typography';
 
 export const SignInScreen = ({ route }: any) => {
   const onSignIn: (() => void) | undefined = route?.params?.onSignIn;
-  const deviceId = useAppStore((s) => s.profile.id);
+  const [deviceId, setDeviceId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    AsyncStorage.getItem('deviceId').then((id) => {
+      if (id) setDeviceId(id);
+    });
+  }, []);
 
   const [phone, setPhone] = useState('');
   const [otpCode, setOtpCode] = useState('');
