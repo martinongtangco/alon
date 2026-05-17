@@ -157,7 +157,7 @@ authRouter.post('/verify-otp', async (req: Request, res: Response) => {
       await pool.query(
         `INSERT INTO app.users (id, phone, phone_verified)
          VALUES ($1, $2, TRUE)`,
-        [userId, phone],
+        [deviceId, phone],
       );
     } else {
       // No deviceId — create user without device linkage
