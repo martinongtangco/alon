@@ -11,10 +11,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { Button } from '../../components/Button';
 import { apiService } from '../../services/api';
+import { useAppStore } from '../../state/store';
 import { colors, radius, space } from '../../theme';
 import { serifFamily } from '../../theme/typography';
 
-export const SignInScreen = ({ onSignIn }: { onSignIn: () => void }) => {
+export const SignInScreen = ({ route }: any) => {
+  const onSignIn: (() => void) | undefined = route?.params?.onSignIn;
+  const deviceId = useAppStore((s) => s.profile.id);
+
   const [phone, setPhone] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [step, setStep] = useState<'input' | 'verify'>('input');
@@ -27,8 +31,8 @@ export const SignInScreen = ({ onSignIn }: { onSignIn: () => void }) => {
     try {
       await apiService.requestOtp(phone);
       setStep('verify');
-    } catch {
-      setError('Failed to send code. Check your connection.');
+    } catch (err: any) {
+      setError(`Failed to send code: ${err?.message ?? 'unknown'}`);
     } finally {
       setLoading(false);
     }
@@ -38,12 +42,12 @@ export const SignInScreen = ({ onSignIn }: { onSignIn: () => void }) => {
     setLoading(true);
     setError('');
     try {
-      const { userToken, expiresAt } = await apiService.verifyOtp(phone, otpCode.trim());
+      const { userToken, expiresAt } = await apiService.verifyOtp(phone, otpCode.trim(), deviceId);
       await AsyncStorage.setItem('userToken', userToken);
       await AsyncStorage.setItem('userTokenExpiresAt', String(expiresAt));
-      onSignIn();
-    } catch {
-      setError('Invalid code. Please try again.');
+      onSignIn?.();
+    } catch (err: any) {
+      setError(`Verify failed: ${err?.message ?? 'unknown'}`);
     } finally {
       setLoading(false);
     }
@@ -54,8 +58,8 @@ export const SignInScreen = ({ onSignIn }: { onSignIn: () => void }) => {
     setError('');
     try {
       await apiService.requestOtp(phone);
-    } catch {
-      setError('Failed to resend code.');
+    } catch (err: any) {
+      setError(`Failed to resend code: ${err?.message ?? 'unknown'}`);
     } finally {
       setLoading(false);
     }

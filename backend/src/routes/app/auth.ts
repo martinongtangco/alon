@@ -66,7 +66,7 @@ authRouter.post('/verify-otp', async (req: Request, res: Response) => {
 
   // Verify the OTP code via Twilio Verify API
   try {
-    const response = await fetch(`https://verify.twilio.com/v2/Services/${verifyServiceSid}/VerificationChecks`, {
+    const response = await fetch(`https://verify.twilio.com/v2/Services/${verifyServiceSid}/VerificationCheck`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -84,8 +84,10 @@ authRouter.post('/verify-otp', async (req: Request, res: Response) => {
     }
 
     const verifyResult = await response.json();
+    console.log('[verify-otp] twilio result:', JSON.stringify(verifyResult));
 
     if (verifyResult.status !== 'approved') {
+      console.log('[verify-otp] not approved, status:', verifyResult.status);
       return res.status(401).json({ error: 'Invalid or expired code' });
     }
 
@@ -98,6 +100,7 @@ authRouter.post('/verify-otp', async (req: Request, res: Response) => {
       'SELECT id FROM app.users WHERE phone = $1',
       [phone],
     );
+    console.log('[verify-otp] existing phone rows:', existing.rows.length);
 
     if (existing.rows.length > 0) {
       // Returning user — update phone_verified
@@ -177,7 +180,8 @@ authRouter.post('/verify-otp', async (req: Request, res: Response) => {
 
     const expiresAt = Date.now() + 90 * 24 * 60 * 60 * 1000; // 90 days in ms
     res.json({ userToken, expiresAt });
-  } catch (error) {
-    res.status(500).json({ error: 'Verification failed' });
+  } catch (error: any) {
+    console.error('[verify-otp] error:', error?.message ?? error);
+    res.status(500).json({ error: 'Verification failed', detail: error?.message });
   }
 });

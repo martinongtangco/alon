@@ -76,8 +76,8 @@ export const OnboardingScreen = () => {
             mode,
             ghostMode: false,
           });
-        } catch {
-          setPhoneError('Invalid code. Please try again.');
+        } catch (err: any) {
+          setPhoneError(`Verify failed: ${err?.message ?? 'unknown'}`);
         } finally {
           setPhoneLoading(false);
         }
@@ -91,8 +91,8 @@ export const OnboardingScreen = () => {
         setPhoneError('');
         try {
           await apiService.requestOtp(phone);
-        } catch {
-          setPhoneError('Failed to send code. Check your connection.');
+        } catch (err: any) {
+          setPhoneError(`Failed to send code: ${err?.message ?? 'unknown error'}`);
         } finally {
           setPhoneLoading(false);
         }
@@ -128,8 +128,8 @@ export const OnboardingScreen = () => {
     setPhoneError('');
     try {
       await apiService.requestOtp(phone);
-    } catch {
-      setPhoneError('Failed to resend code.');
+    } catch (err: any) {
+      setPhoneError(`Failed to resend code: ${err?.message ?? 'unknown error'}`);
     } finally {
       setPhoneLoading(false);
     }

@@ -113,10 +113,12 @@ export const RootNavigator = () => {
       const expiresAt = await AsyncStorage.getItem('userTokenExpiresAt');
       if (token && expiresAt && Date.now() < Number(expiresAt)) {
         // User has a valid token — skip sign-in
+        setShowSignIn(false);
         return;
       }
-      // No valid token — show sign-in
-      setShowSignIn(true);
+      // No valid token — only require sign-in if already onboarded
+      // (new users complete phone verify inside Onboarding itself).
+      setShowSignIn(onboarded);
     };
     checkUserToken();
   }, [onboarded]);

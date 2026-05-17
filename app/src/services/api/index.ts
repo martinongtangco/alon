@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProfile, NearbyPerson, MapPromo, MapEvent, FeedItem, BuzzMatch } from '../../types';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api';
+console.log('[api] BASE_URL =', BASE_URL);
+console.log('[api] EXPO_PUBLIC_API_BASE_URL env =', process.env.EXPO_PUBLIC_API_BASE_URL);
 
 export interface PlatformConfig {
   BUZZ_COOLDOWN: number;
@@ -127,21 +129,47 @@ export const apiService = {
 
   // ADR 0032: Phone OTP auth
   async requestOtp(phone: string): Promise<{ ok: boolean }> {
-    const res = await fetch(`${BASE_URL}/auth/request-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone }),
-    });
-    return (await checked(res)).json();
+    const url = `${BASE_URL}/auth/request-otp`;
+    console.log('[api] POST', url, '{ phone }');
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      console.log('[api] requestOtp response', res.status, res.statusText);
+      if (!res.ok) {
+        const body = await res.text();
+        console.log('[api] requestOtp body:', body);
+        throw new Error(`${res.status} ${res.statusText}: ${body}`);
+      }
+      return await res.json();
+    } catch (err: any) {
+      console.log('[api] requestOtp threw:', err?.message ?? err);
+      throw err;
+    }
   },
 
   async verifyOtp(phone: string, code: string, deviceId?: string): Promise<{ userToken: string; expiresAt: number }> {
-    const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, code, deviceId }),
-    });
-    return (await checked(res)).json();
+    const url = `${BASE_URL}/auth/verify-otp`;
+    console.log('[api] POST', url, '{ phone, code, deviceId }', { phone, code, deviceId });
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, code, deviceId }),
+      });
+      console.log('[api] verifyOtp response', res.status, res.statusText);
+      if (!res.ok) {
+        const body = await res.text();
+        console.log('[api] verifyOtp body:', body);
+        throw new Error(`${res.status} ${res.statusText}: ${body}`);
+      }
+      return await res.json();
+    } catch (err: any) {
+      console.log('[api] verifyOtp threw:', err?.message ?? err);
+      throw err;
+    }
   },
 };
 
