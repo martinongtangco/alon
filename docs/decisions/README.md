@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-One file per architectural decision. All 36 ADRs are Accepted.
+One file per architectural decision. All 44 ADRs are Accepted.
 Format and quality bar: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 | ADR | Title | Status |
@@ -41,3 +41,11 @@ Format and quality bar: [CONTRIBUTING.md](CONTRIBUTING.md)
 | [0034](0034-event-ingestion-pipeline.md) | Event Ingestion Pipeline (Admin CMS, M2) | Accepted |
 | [0035](0035-age-verification-strategy.md) | Age Verification Strategy | Accepted |
 | [0036](0036-m3-server-enforced-ghost-mode.md) | M3 — Server-Enforced Ghost Mode | Accepted |
+| [0037](0037-secret-hygiene-and-env-hardening.md) | Secret Hygiene and Environment Variable Hardening | Accepted |
+| [0038](0038-api-rate-limiting.md) | API Rate Limiting | Accepted |
+| [0039](0039-request-body-validation.md) | Request Body Validation with Zod | Accepted |
+| [0040](0040-http-security-headers-and-cors.md) | HTTP Security Headers and CORS Policy | Accepted |
+| [0041](0041-ghost-mode-reveal-race-fix.md) | Ghost Mode Reveal Race Fence | Accepted |
+| [0042](0042-authentication-hardening.md) | Authentication Hardening | Accepted |
+| [0043](0043-audit-and-rbac-completeness.md) | Audit and RBAC Completeness | Accepted |
+| [0044](0044-dos-surface-hardening.md) | DoS Surface Hardening | Accepted |
