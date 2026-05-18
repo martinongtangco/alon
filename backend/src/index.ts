@@ -2,12 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import { validateEnv } from './config/validateEnv';
 import { adminRouter } from './routes/admin';
 import { appRouter } from './routes/app';
 import { promosRouter as publicPromosRouter } from './routes/public/promos';
 import { eventsRouter as publicEventsRouter } from './routes/public/events';
 
 dotenv.config();
+validateEnv();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

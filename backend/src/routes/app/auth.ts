@@ -21,9 +21,9 @@ authRouter.post('/request-otp', async (req: Request, res: Response) => {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
-  // DEV: bypass Twilio entirely — any code works in verify-otp
-  if (process.env.BYPASS_OTP === 'true') {
-    console.log(`[request-otp] BYPASS_OTP active — pretend SMS sent to ${phone}, accept code 000000`);
+    // DEV: bypass Twilio entirely — any code works in verify-otp
+    if (process.env.BYPASS_OTP === 'true') {
+      console.warn(`[request-otp] BYPASS_OTP active — pretend SMS sent to ${phone}, accept code 000000`);
     return res.json({ ok: true });
   }
 
@@ -75,8 +75,8 @@ authRouter.post('/verify-otp', async (req: Request, res: Response) => {
 
   // Verify the OTP code via Twilio Verify API
   try {
-    if (bypass) {
-      console.log(`[verify-otp] BYPASS_OTP active — accepting any code for ${phone}`);
+      if (bypass) {
+        console.warn(`[verify-otp] BYPASS_OTP active — accepting any code for ${phone}`);
       if (code !== '000000') {
         return res.status(401).json({ error: 'Invalid code (dev bypass: use 000000)' });
       }
