@@ -35,4 +35,9 @@ export function validateEnv(): void {
   if (weak.length && process.env.NODE_ENV === 'production') {
     throw new Error(`[startup] Weak/default secret values detected in production for: ${weak.join(', ')}`);
   }
+
+  // Warn if ADMIN_ORIGIN is not set in production (ADR 0040)
+  if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_ORIGIN) {
+    console.warn('[startup] ADMIN_ORIGIN is not set — CORS will reject all admin dashboard requests in production');
+  }
 }
