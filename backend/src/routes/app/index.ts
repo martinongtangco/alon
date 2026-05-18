@@ -9,8 +9,12 @@ import { revealRouter } from './reveal';
 import { pushTokenRouter } from './push-token';
 import { authRouter } from './auth';
 import { ghostRouter } from './ghost';
+import { appApiLimiter } from '../../middleware/rateLimits';
 
 export const appRouter = Router();
+
+// Apply general rate limiter to all app endpoints not already covered by stricter limiters
+appRouter.use(appApiLimiter);
 
 appRouter.get('/ping', (_req: Request, res: Response) => {
   res.json({ ok: true, mode: 'app' });

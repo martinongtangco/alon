@@ -2,12 +2,13 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { pool } from '../../db';
+import { otpRequestLimiter, otpVerifyLimiter } from '../../middleware/rateLimits';
 
 export const authRouter = Router();
 
 // POST /api/auth/request-otp
 // Requests a one-time password via Twilio Verify.
-authRouter.post('/request-otp', async (req: Request, res: Response) => {
+authRouter.post('/request-otp', otpRequestLimiter, async (req: Request, res: Response) => {
   const { phone } = req.body;
   if (!phone || typeof phone !== 'string') {
     return res.status(400).json({ error: 'phone required' });
@@ -57,7 +58,7 @@ authRouter.post('/request-otp', async (req: Request, res: Response) => {
 
 // POST /api/auth/verify-otp
 // Verifies the OTP code and issues a user JWT.
-authRouter.post('/verify-otp', async (req: Request, res: Response) => {
+authRouter.post('/verify-otp', otpVerifyLimiter, async (req: Request, res: Response) => {
   const { phone, code } = req.body;
   if (!phone || typeof phone !== 'string' || !code || typeof code !== 'string') {
     return res.status(400).json({ error: 'phone and code required' });
