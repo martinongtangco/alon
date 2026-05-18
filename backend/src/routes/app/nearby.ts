@@ -7,6 +7,15 @@ export const nearbyRouter = Router();
 
 nearbyRouter.use(authDevice);
 
+/**
+ * Check if a device is in Ghost Mode (ADR 0036).
+ * Returns true if the ghost:{deviceId} key exists in Redis.
+ */
+async function isGhost(deviceId: string): Promise<boolean> {
+  const result = await redis.get(`ghost:${deviceId}`);
+  return result === '1';
+}
+
 // GET /api/nearby
 // Vibe Matching Engine (ADR 0028): computes Jaccard similarity between the
 // authenticated device's vibes and nearby peers resolved from BLE scan tokens.
@@ -25,6 +34,12 @@ nearbyRouter.get('/', async (req: Request, res: Response) => {
   const tokens: string[] = (req.body?.tokens as string[]) ?? (req.query.tokens as string[]) ?? [];
 
   if (!Array.isArray(tokens) || tokens.length === 0) {
+    return res.json([]);
+  }
+
+  // ADR 0036: if requester is ghosted, return empty array
+  const deviceId = req.deviceId!;
+  if (await isGhost(deviceId)) {
     return res.json([]);
   }
 
@@ -75,8 +90,7 @@ nearbyRouter.get('/', async (req: Request, res: Response) => {
     }
   }
 
-  // 3. Get the requesting device's vibes
-  const deviceId = req.deviceId!;
+  // 3. Get the requesting device's vibes (deviceId already resolved above)
   const requesterVibes = vibeMap.get(deviceId) ?? [];
 
   // 4. Compute Jaccard similarity for each peer

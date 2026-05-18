@@ -17,5 +17,8 @@ tokenRouter.post('/rotate', async (req: Request, res: Response) => {
 
   await redis.set(`token:${proximityToken}`, deviceId, 'EX', 930);
 
+  // ADR 0036: maintain reverse index for ghost mode token revocation
+  await redis.set(`device_token:${deviceId}`, proximityToken, 'EX', 930);
+
   res.json({ token: proximityToken, expiresAt });
 });

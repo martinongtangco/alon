@@ -4,6 +4,7 @@ import { bleService } from './ble';
 import { platformConfigService } from './platformConfig';
 import { isTokenExpired, generateFallbackToken } from './token';
 import * as Notifications from 'expo-notifications';
+import { useAppStore } from '../state/store';
 
 const DEVICE_ID_KEY = 'deviceId';
 const AUTH_TOKEN_KEY = 'authToken';
@@ -83,7 +84,14 @@ export async function bootstrapDevice(): Promise<void> {
     console.warn('[bootstrap] fetchConfig failed — using defaults', err);
   }
 
-  // 6. Start rotation timer
+  // 6. ADR 0036: process any pending ghost mode actions queued while offline
+  try {
+    await useAppStore.getState().processPendingGhostActions();
+  } catch (err) {
+    console.warn('[bootstrap] processPendingGhostActions failed', err);
+  }
+
+  // 7. Start rotation timer
   stopRotationTimer(); // safety: clear any previous interval
   rotationIntervalId = setInterval(async () => {
     try {

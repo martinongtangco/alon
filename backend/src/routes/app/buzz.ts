@@ -57,10 +57,17 @@ async function resolvePushToken(proximityToken: string): Promise<string | null> 
   }
 }
 
+// ADR 0036: check if a device is in Ghost Mode
+async function isGhost(deviceId: string): Promise<boolean> {
+  const result = await redis.get(`ghost:${deviceId}`);
+  return result === '1';
+}
+
 // POST /api/buzz
 // Blind Buzz: records a buzz from this device and enforces the cooldown window.
 // Body: { targetToken?: string }  — BLE proximity token of the target device.
 // If present, a push notification is sent to the target device (ADR 0031).
+// ADR 0036: if the target device is ghosted, return "too-far" instead of "sent".
 buzzRouter.post('/', async (req: Request, res: Response) => {
   const deviceId = req.deviceId!;
   const cooldownKey = `cooldown:${deviceId}`;
@@ -73,6 +80,12 @@ buzzRouter.post('/', async (req: Request, res: Response) => {
   // ADR 0031: notify the target device if a proximity token was supplied
   const { targetToken } = req.body as { targetToken?: string };
   if (targetToken) {
+    // ADR 0036: check if target is ghosted before sending
+    const targetDeviceId = await redis.get(`token:${targetToken}`);
+    if (targetDeviceId && (await isGhost(targetDeviceId))) {
+      return res.json('too-far' as const);
+    }
+
     resolvePushToken(targetToken).then((pushToken) => {
       if (pushToken) {
         sendExpoPush(pushToken, 'someone buzzed you', 'open Alon to see who\'s nearby', { type: 'buzz' });

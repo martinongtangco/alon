@@ -12,6 +12,9 @@ import {
   Vibe,
 } from '../types';
 import { apiService } from '../services/api';
+import { bleService } from '../services/ble';
+
+const GHOST_PENDING_ACTION_KEY = 'ghost_pending_action';
 
 interface Match {
   id: string;
@@ -37,7 +40,7 @@ interface AppState {
   completeOnboarding: (profile: Partial<UserProfile>) => void;
   setMode: (mode: Mode) => void;
   toggleVibe: (vibe: Vibe) => void;
-  toggleGhostMode: () => void;
+  toggleGhostMode: () => Promise<void>;
   setSignalLevel: (level: SignalLevel) => void;
   setNearby: (nearby: NearbyPerson[]) => void;
   buzz: (targetToken?: string) => Promise<'sent' | 'rate-limited' | 'too-far'>;
@@ -45,6 +48,7 @@ interface AppState {
   reveal: (token: string) => Promise<'pending' | 'matched'>;
   fetchMatches: () => Promise<void>;
   hydrate: () => Promise<void>;
+  processPendingGhostActions: () => Promise<void>;
 }
 
 const defaultProfile: UserProfile = {
@@ -90,15 +94,51 @@ export const useAppStore = create<AppState>()(
           return { profile: { ...s.profile, vibes } };
         }),
 
-      toggleGhostMode: () =>
-        set((s) => {
-          const ghostMode = !s.profile.ghostMode;
-          return {
-            profile: { ...s.profile, ghostMode },
-            nearby: ghostMode ? [] : s.nearby,
-            signalLevel: ghostMode ? 0 : s.signalLevel,
-          };
-        }),
+      toggleGhostMode: async () => {
+        const ghostMode = !useAppStore.getState().profile.ghostMode;
+
+        set((s) => ({
+          profile: { ...s.profile, ghostMode },
+          nearby: ghostMode ? [] : s.nearby,
+          signalLevel: ghostMode ? 0 : s.signalLevel,
+        }));
+        try {
+          if (ghostMode) {
+            await apiService.setGhostMode(true);
+            // Clear pending action queue on success
+            await AsyncStorage.removeItem(GHOST_PENDING_ACTION_KEY);
+          } else {
+            const result = await apiService.setGhostMode(false);
+            if (result.token) {
+              await AsyncStorage.setItem('proximity_token', result.token);
+              await (bleService as any).updateToken?.(result.token);
+            }
+            // Clear pending action queue on success
+            await AsyncStorage.removeItem(GHOST_PENDING_ACTION_KEY);
+          }
+        } catch (err) {
+          // Revert optimistic update on failure
+          set((s) => ({
+            profile: { ...s.profile, ghostMode: !ghostMode },
+            nearby: ghostMode ? s.nearby : [],
+            signalLevel: ghostMode ? s.signalLevel : 0,
+          }));
+          console.warn('[ghost] failed to update server ghost state', err);
+
+          // Queue the action for offline processing (ADR 0036)
+          try {
+            const pending = await AsyncStorage.getItem(GHOST_PENDING_ACTION_KEY);
+            if (!pending) {
+              await AsyncStorage.setItem(
+                GHOST_PENDING_ACTION_KEY,
+                JSON.stringify({ active: ghostMode, ts: Date.now() })
+              );
+            }
+          } catch (queueErr) {
+            console.warn('[ghost] failed to queue pending action', queueErr);
+          }
+        }
+      },
 
       setSignalLevel: (signalLevel) => set({ signalLevel }),
 
@@ -162,6 +202,48 @@ export const useAppStore = create<AppState>()(
         ]);
         const matches = await safeFetch(() => apiService.fetchMatches(), []);
         set({ promos, events, feed, matches });
+      },
+
+      processPendingGhostActions: async () => {
+        // ADR 0036: process any pending ghost mode action queued while offline
+        try {
+          const pending = await AsyncStorage.getItem(GHOST_PENDING_ACTION_KEY);
+          if (!pending) return;
+
+          const action: { active: boolean; ts: number } = JSON.parse(pending);
+          // Only process actions less than 24 hours old
+          if (Date.now() - action.ts > 24 * 60 * 60 * 1000) {
+            await AsyncStorage.removeItem(GHOST_PENDING_ACTION_KEY);
+            return;
+          }
+
+          const currentGhostMode = useAppStore.getState().profile.ghostMode;
+
+          if (action.active && !currentGhostMode) {
+            // Device came online while ghost mode was pending — activate it
+            await apiService.setGhostMode(true);
+            set((s) => ({
+              profile: { ...s.profile, ghostMode: true },
+              nearby: [],
+              signalLevel: 0,
+            }));
+          } else if (!action.active && currentGhostMode) {
+            // Device came online while ghost deactivation was pending — deactivate it
+            const result = await apiService.setGhostMode(false);
+            if (result.token) {
+              await AsyncStorage.setItem('proximity_token', result.token);
+              await (bleService as any).updateToken?.(result.token);
+            }
+            set((s) => ({
+              profile: { ...s.profile, ghostMode: false },
+              signalLevel: 3,
+            }));
+          }
+
+          await AsyncStorage.removeItem(GHOST_PENDING_ACTION_KEY);
+        } catch (err) {
+          console.warn('[ghost] failed to process pending actions', err);
+        }
       },
     }),
     {

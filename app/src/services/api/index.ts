@@ -127,6 +127,20 @@ export const apiService = {
     }));
   },
 
+  // ADR 0036: Toggle Ghost Mode (server-enforced token deactivation)
+  async setGhostMode(active: boolean): Promise<{ token?: string; expiresAt?: number }> {
+    const headers = { ...await authHeaders(), 'Content-Type': 'application/json' };
+    const res = await fetch(`${BASE_URL}/ghost`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ active }),
+    });
+    if (!res.ok) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+    return res.json();
+  },
+
   // ADR 0032: Phone OTP auth
   async requestOtp(phone: string): Promise<{ ok: boolean }> {
     const url = `${BASE_URL}/auth/request-otp`;

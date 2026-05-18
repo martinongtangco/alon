@@ -8,6 +8,7 @@ import { nearbyRouter } from './nearby';
 import { revealRouter } from './reveal';
 import { pushTokenRouter } from './push-token';
 import { authRouter } from './auth';
+import { ghostRouter } from './ghost';
 
 export const appRouter = Router();
 
@@ -24,3 +25,4 @@ appRouter.use('/nearby', nearbyRouter);
 appRouter.use('/reveal', revealRouter);
 appRouter.use('/push-token', pushTokenRouter);
 appRouter.use('/auth', authRouter);
+appRouter.use('/ghost', ghostRouter);

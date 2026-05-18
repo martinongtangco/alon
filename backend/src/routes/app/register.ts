@@ -19,6 +19,9 @@ registerRouter.post('/', async (req: Request, res: Response) => {
   // ADR 0011: token TTL = 15 min (900s) + 30s grace = 930s
   await redis.set(`token:${proximityToken}`, deviceId, 'EX', 930);
 
+  // ADR 0036: store reverse index for ghost mode token revocation
+  await redis.set(`device_token:${deviceId}`, proximityToken, 'EX', 930);
+
   const secret = process.env.DEVICE_JWT_SECRET ?? 'dev-device-secret';
   const authToken = jwt.sign({ sub: deviceId, type: 'device' }, secret, { expiresIn: '90d' });
 
