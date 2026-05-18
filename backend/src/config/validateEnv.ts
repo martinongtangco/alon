@@ -10,7 +10,16 @@ const REQUIRED = [
   'REDIS_URL',
 ];
 
-const WEAK_VALUES = ['dev-device-secret', 'dev-user-secret', 'dev-admin-secret', 'super_secret_dev_key_123'];
+const WEAK_VALUES = [
+  'dev-device-secret',
+  'dev-device-secret-change-in-prod',
+  'dev-user-secret',
+  'dev-user-secret-change-in-prod',
+  'dev-admin-secret',
+  'dev-admin-secret-change-in-prod',
+  'dev-admin-refresh-secret-change-in-prod',
+  'super_secret_dev_key_123',
+];
 
 export function validateEnv(): void {
   const missing = REQUIRED.filter((k) => !process.env[k]);
