@@ -4,6 +4,8 @@ import { authDevice } from '../../middleware/authDevice';
 import { redis } from '../../redis';
 import { validate } from '../../middleware/validate';
 import { GhostSchema } from '../../schemas/app';
+import { withDeviceAudit } from '../../audit/device';
+import { AuditAction } from '../../audit';
 
 export const ghostRouter = Router();
 
@@ -45,6 +47,11 @@ ghostRouter.post('/', validate(GhostSchema), async (req: Request, res: Response)
 
       // Also remove the device_token reference so rotation doesn't reuse it
       await redis.del(`device_token:${deviceId}`);
+
+      await withDeviceAudit(deviceId, AuditAction.GHOST_TOGGLE, {
+        before: { ghostMode: false },
+        after: { ghostMode: true },
+      });
     } else {
       // --- Ghost Mode deactivation: issue new token ---
 
@@ -59,6 +66,11 @@ ghostRouter.post('/', validate(GhostSchema), async (req: Request, res: Response)
 
       // Store the token reference for this device (ADR 0014)
       await redis.set(`device_token:${deviceId}`, proximityToken, 'EX', 930);
+
+      await withDeviceAudit(deviceId, AuditAction.GHOST_TOGGLE, {
+        before: { ghostMode: true },
+        after: { ghostMode: false, tokenIssued: true },
+      });
 
       return res.json({ token: proximityToken, expiresAt });
     }

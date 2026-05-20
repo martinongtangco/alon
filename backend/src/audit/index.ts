@@ -25,6 +25,7 @@ export enum AuditAction {
   ADMIN_CREATE = 'ADMIN_CREATE',
   ADMIN_DEACTIVATE = 'ADMIN_DEACTIVATE',
   ADMIN_ACTIVATE = 'ADMIN_ACTIVATE',
+  GHOST_TOGGLE = 'GHOST_TOGGLE',
 }
 
 interface AuditContext {

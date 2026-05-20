@@ -15,15 +15,15 @@ usersRouter.get('/', authAdmin(), requireRole([AdminRole.SUPER_ADMIN, AdminRole.
 
   try {
     let queryStr = `
-      SELECT id, display_name, internal_token, current_mode, vibes, plan, status, platform, last_active_at, created_at 
-      FROM app.users 
+      SELECT id, display_name, current_mode, vibes, plan, status, platform, last_active_at, created_at
+      FROM app.users
       WHERE 1=1
     `;
     const queryParams: any[] = [];
     let paramIdx = 1;
 
     if (search) {
-      queryStr += ` AND (display_name ILIKE $${paramIdx} OR internal_token ILIKE $${paramIdx})`;
+      queryStr += ` AND display_name ILIKE $${paramIdx}`;
       queryParams.push(`%${search}%`);
       paramIdx++;
     }
@@ -39,7 +39,7 @@ usersRouter.get('/', authAdmin(), requireRole([AdminRole.SUPER_ADMIN, AdminRole.
     let countStr = 'SELECT COUNT(*) FROM app.users WHERE 1=1';
     const countParams: any[] = [];
     let countIdx = 1;
-    if (search) { countStr += ` AND (display_name ILIKE $${countIdx} OR internal_token ILIKE $${countIdx})`; countParams.push(`%${search}%`); countIdx++; }
+    if (search) { countStr += ` AND display_name ILIKE $${countIdx}`; countParams.push(`%${search}%`); countIdx++; }
     if (status && status !== 'All') { countStr += ` AND status = $${countIdx++}`; countParams.push(status); }
     if (plan && plan !== 'All') { countStr += ` AND plan = $${countIdx++}`; countParams.push(plan); }
     if (platform && platform !== 'All') { countStr += ` AND platform = $${countIdx++}`; countParams.push(platform); }
