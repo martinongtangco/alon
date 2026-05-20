@@ -60,6 +60,12 @@ revealRouter.post('/', validate(RevealSchema), async (req: Request, res: Respons
   const myDeviceId = req.deviceId!;
   const { token }: { token: string } = req.body;
 
+  // ADR 0041: block reveals while ghost mode is active
+  const isGhosted = await redis.get(`ghost:${myDeviceId}`);
+  if (isGhosted) {
+    return res.status(403).json({ error: 'Ghost mode is active' });
+  }
+
   try {
     // 1. Resolve the target token to a deviceId via token:{uuid} in Redis
     const targetDeviceId = await redis.get(`token:${token}`);

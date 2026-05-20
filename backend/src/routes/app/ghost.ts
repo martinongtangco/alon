@@ -30,6 +30,14 @@ ghostRouter.post('/', validate(GhostSchema), async (req: Request, res: Response)
       if (currentToken) {
         // Delete the token so it no longer resolves
         await redis.del(`token:${currentToken}`);
+
+        // Sweep any pending reveal intents involving this token (ADR 0041).
+        // reveal keys are: reveal:{tokenA}:{tokenB} — ghosted token appears in either position.
+        // TODO: migrate to SCAN cursor if reveal key count exceeds ~1000
+        const revealKeys = await redis.keys(`reveal:*${currentToken}*`);
+        if (revealKeys.length > 0) {
+          await redis.del(...revealKeys);
+        }
       }
 
       // Set ghost flag with no TTL (persists until explicitly cleared)
