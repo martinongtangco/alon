@@ -9,7 +9,7 @@ import { UserActionSchema } from '../../schemas/admin';
 export const usersRouter = Router();
 
 // GET /api/v1/admin/users
-usersRouter.get('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
+usersRouter.get('/', authAdmin(), requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
   const { page = 1, limit = 50, search, status, plan, platform } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
 
@@ -60,7 +60,7 @@ usersRouter.get('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OP
 });
 
 // POST /api/v1/admin/users/:id/suspend
-usersRouter.post('/:id/suspend', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), validate(UserActionSchema), async (req: Request, res: Response) => {
+usersRouter.post('/:id/suspend', authAdmin(), requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), validate(UserActionSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const client = await pool.connect();
@@ -87,7 +87,7 @@ usersRouter.post('/:id/suspend', authAdmin, requireRole([AdminRole.SUPER_ADMIN, 
 });
 
 // POST /api/v1/admin/users/:id/ban
-usersRouter.post('/:id/ban', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), validate(UserActionSchema), async (req: Request, res: Response) => {
+usersRouter.post('/:id/ban', authAdmin(), requireRole([AdminRole.SUPER_ADMIN]), validate(UserActionSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const client = await pool.connect();
@@ -114,7 +114,7 @@ usersRouter.post('/:id/ban', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), va
 });
 
 // POST /api/v1/admin/users/:id/reinstate
-usersRouter.post('/:id/reinstate', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
+usersRouter.post('/:id/reinstate', authAdmin(), requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
   const { id } = req.params;
   const auditContext = extractAuditContext(req);
 

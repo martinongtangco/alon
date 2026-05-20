@@ -6,7 +6,7 @@ import { withAudit, AuditAction, extractAuditContext } from '../../audit';
 
 export const flagsRouter = Router();
 
-flagsRouter.use(authAdmin);
+flagsRouter.use(authAdmin());
 flagsRouter.use(requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]));
 
 // GET /api/v1/admin/flags

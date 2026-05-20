@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const promosRouter = Router();
 
-promosRouter.use(authAdmin);
+promosRouter.use(authAdmin());
 promosRouter.use(requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]));
 
 // GET /api/v1/admin/promos

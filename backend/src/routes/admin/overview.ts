@@ -4,7 +4,7 @@ import { authAdmin } from '../../middleware/authAdmin';
 
 export const overviewRouter = Router();
 
-overviewRouter.use(authAdmin);
+overviewRouter.use(authAdmin());
 
 // GET /api/v1/admin/overview
 overviewRouter.get('/', async (_req: Request, res: Response) => {

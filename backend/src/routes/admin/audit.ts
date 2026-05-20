@@ -5,7 +5,7 @@ import { requireRole, AdminRole } from '../../middleware/rbac';
 
 export const auditRouter = Router();
 
-auditRouter.use(authAdmin);
+auditRouter.use(authAdmin());
 auditRouter.use(requireRole([AdminRole.SUPER_ADMIN]));
 
 // GET /api/v1/admin/audit

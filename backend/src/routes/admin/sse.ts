@@ -44,15 +44,15 @@ const setupSSEConnection = (req: Request, res: Response, streamType: 'status' | 
 };
 
 // Stream endpoints
-sseRouter.get('/status', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS, AdminRole.FINANCE]), (req, res) => {
+sseRouter.get('/status', authAdmin({ allowCookie: true }), requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS, AdminRole.FINANCE]), (req, res) => {
   setupSSEConnection(req, res, 'status');
 });
 
-sseRouter.get('/activity', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), (req, res) => {
+sseRouter.get('/activity', authAdmin({ allowCookie: true }), requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), (req, res) => {
   setupSSEConnection(req, res, 'activity');
 });
 
-sseRouter.get('/logs', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), (req, res) => {
+sseRouter.get('/logs', authAdmin({ allowCookie: true }), requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), (req, res) => {
   setupSSEConnection(req, res, 'logs');
 });
 

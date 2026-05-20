@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const eventsRouter = Router();
 
-eventsRouter.use(authAdmin);
+eventsRouter.use(authAdmin());
 eventsRouter.use(requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]));
 
 // GET /api/v1/admin/events

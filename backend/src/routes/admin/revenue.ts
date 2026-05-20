@@ -5,7 +5,7 @@ import { requireRole, AdminRole } from '../../middleware/rbac';
 
 export const revenueRouter = Router();
 
-revenueRouter.use(authAdmin);
+revenueRouter.use(authAdmin());
 revenueRouter.use(requireRole([AdminRole.SUPER_ADMIN, AdminRole.FINANCE]));
 
 // GET /api/v1/admin/revenue

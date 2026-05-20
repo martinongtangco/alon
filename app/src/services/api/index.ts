@@ -141,6 +141,15 @@ export const apiService = {
     return res.json();
   },
 
+  // ADR 0042: signal server of logout; caller must clear AsyncStorage after this returns
+  async logout(): Promise<void> {
+    try {
+      const headers = await authHeaders();
+      await fetch(`${BASE_URL}/auth/logout`, { method: 'POST', headers });
+    } catch { /* best-effort */ }
+    await AsyncStorage.removeItem('authToken');
+  },
+
   // ADR 0032: Phone OTP auth
   async requestOtp(phone: string): Promise<{ ok: boolean }> {
     const url = `${BASE_URL}/auth/request-otp`;

@@ -1,8 +1,10 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import * as jose from 'jose';
+import { v4 as uuidv4 } from 'uuid';
 import { authenticator } from 'otplib';
 import { pool } from '../../db';
+import { redis } from '../../redis';
 import { withAudit, AuditAction } from '../../audit';
 import { getPrivateKey, getPublicKey } from '../../utils/keys';
 import { adminLoginLimiter } from '../../middleware/rateLimits';
@@ -11,23 +13,44 @@ import { AdminLoginSchema, AdminTotpSchema } from '../../schemas/admin';
 
 export const authRouter = Router();
 
-// Helper to generate access and refresh tokens
+const REFRESH_TTL_S = 8 * 60 * 60 + 5 * 60; // 8h + 5 min clock-skew buffer
+
 const issueTokens = async (userId: string, role: string) => {
   const privateKey = await jose.importPKCS8(getPrivateKey(), 'RS256');
-  
+
   const accessToken = await new jose.SignJWT({ id: userId, role, type: 'admin' })
     .setProtectedHeader({ alg: 'RS256' })
     .setIssuedAt()
     .setExpirationTime('15m')
     .sign(privateKey);
 
-  const refreshToken = await new jose.SignJWT({ id: userId, type: 'refresh' })
+  const jti = uuidv4();
+  const refreshToken = await new jose.SignJWT({ id: userId, type: 'refresh', jti })
     .setProtectedHeader({ alg: 'RS256' })
     .setIssuedAt()
     .setExpirationTime('8h')
     .sign(privateKey);
 
+  // Store JTI in Redis for server-side revocation (ADR 0042)
+  await redis.set(`admin_refresh_jti:${jti}`, userId, 'EX', REFRESH_TTL_S);
+
   return { accessToken, refreshToken };
+};
+
+const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
+  res.cookie('admin_refresh', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 8 * 60 * 60 * 1000,
+  });
+  // admin_token cookie enables SSE connections that can't set Authorization headers (ADR 0042)
+  res.cookie('admin_token', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 15 * 60 * 1000,
+  });
 };
 
 authRouter.post('/login', adminLoginLimiter, validate(AdminLoginSchema), async (req: Request, res: Response) => {
@@ -53,15 +76,8 @@ authRouter.post('/login', adminLoginLimiter, validate(AdminLoginSchema), async (
       return res.json({ totp_required: true, tempToken });
     }
 
-    // Fallback if TOTP is disabled (e.g., initial seed)
     const { accessToken, refreshToken } = await issueTokens(user.id, user.role);
-
-    res.cookie('admin_refresh', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 8 * 60 * 60 * 1000
-    });
+    setAuthCookies(res, accessToken, refreshToken);
 
     const client = await pool.connect();
     try {
@@ -77,7 +93,7 @@ authRouter.post('/login', adminLoginLimiter, validate(AdminLoginSchema), async (
     }
 
     res.json({ token: accessToken, role: user.role });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -91,7 +107,7 @@ authRouter.post('/totp', adminLoginLimiter, validate(AdminTotpSchema), async (re
 
     if (payload.type !== 'totp_pending') return res.status(403).json({ error: 'Invalid token' });
 
-    const result = await pool.query('SELECT totp_secret FROM admin.users WHERE id = $1', [payload.id]);
+    const result = await pool.query('SELECT totp_secret, role FROM admin.users WHERE id = $1', [payload.id]);
     const user = result.rows[0];
 
     if (!user || !user.totp_secret) return res.status(401).json({ error: 'TOTP not configured' });
@@ -100,13 +116,7 @@ authRouter.post('/totp', adminLoginLimiter, validate(AdminTotpSchema), async (re
     if (!isValid) return res.status(401).json({ error: 'Invalid TOTP code' });
 
     const { accessToken, refreshToken } = await issueTokens(payload.id as string, payload.role as string);
-
-    res.cookie('admin_refresh', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 8 * 60 * 60 * 1000
-    });
+    setAuthCookies(res, accessToken, refreshToken);
 
     const client = await pool.connect();
     try {
@@ -122,12 +132,11 @@ authRouter.post('/totp', adminLoginLimiter, validate(AdminTotpSchema), async (re
     }
 
     res.json({ token: accessToken, role: payload.role });
-  } catch (error) {
+  } catch {
     res.status(401).json({ error: 'Token expired or invalid' });
   }
 });
 
-// Refresh endpoint
 authRouter.post('/refresh', async (req: Request, res: Response) => {
   const token = req.cookies?.admin_refresh;
   if (!token) return res.status(401).json({ error: 'No refresh token provided' });
@@ -138,28 +147,38 @@ authRouter.post('/refresh', async (req: Request, res: Response) => {
 
     if (payload.type !== 'refresh') return res.status(403).json({ error: 'Invalid token type' });
 
+    // Verify JTI is still valid (not revoked) — ADR 0042
+    const jti = payload.jti as string;
+    const stored = jti ? await redis.get(`admin_refresh_jti:${jti}`) : null;
+    if (!stored) return res.status(401).json({ error: 'Session expired or revoked' });
+
     const result = await pool.query('SELECT role, status FROM admin.users WHERE id = $1', [payload.id]);
     const user = result.rows[0];
 
     if (!user || user.status !== 'Active') return res.status(401).json({ error: 'User invalid' });
 
+    // Rotate: delete old JTI and issue new tokens
+    await redis.del(`admin_refresh_jti:${jti}`);
     const { accessToken, refreshToken } = await issueTokens(payload.id as string, user.role);
-
-    res.cookie('admin_refresh', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 8 * 60 * 60 * 1000
-    });
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.json({ token: accessToken, role: user.role });
-  } catch (error) {
+  } catch {
     res.status(401).json({ error: 'Invalid refresh token' });
   }
 });
 
-// Logout endpoint
-authRouter.post('/logout', (_req: Request, res: Response) => {
+authRouter.post('/logout', async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.admin_refresh;
+  if (refreshToken) {
+    try {
+      const payload = jose.decodeJwt(refreshToken);
+      if (payload?.jti) {
+        await redis.del(`admin_refresh_jti:${payload.jti}`);
+      }
+    } catch { /* ignore decode errors — clear cookies regardless */ }
+  }
   res.clearCookie('admin_refresh');
-  res.json({ success: true });
+  res.clearCookie('admin_token');
+  res.json({ ok: true });
 });

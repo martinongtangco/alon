@@ -8,7 +8,7 @@ import { PlatformConfigUpdateSchema } from '../../schemas/admin';
 
 export const configRouter = Router();
 
-configRouter.use(authAdmin);
+configRouter.use(authAdmin());
 configRouter.use(requireRole([AdminRole.SUPER_ADMIN]));
 
 // GET /api/v1/admin/config

@@ -7,7 +7,7 @@ import { withAudit, AuditAction, extractAuditContext } from '../../audit';
 export const businessesRouter = Router();
 
 // Apply auth and RBAC to all business routes
-businessesRouter.use(authAdmin);
+businessesRouter.use(authAdmin());
 businessesRouter.use(requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]));
 
 // GET /api/v1/admin/businesses

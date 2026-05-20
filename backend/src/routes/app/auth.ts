@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { pool } from '../../db';
 import { otpRequestLimiter, otpVerifyLimiter } from '../../middleware/rateLimits';
+import { authUser } from '../../middleware/authUser';
 import { validate } from '../../middleware/validate';
 import { RequestOtpSchema, VerifyOtpSchema } from '../../schemas/app';
 
@@ -41,7 +42,8 @@ authRouter.post('/request-otp', otpRequestLimiter, validate(RequestOtpSchema), a
 
     if (!response.ok) {
       const body = await response.text();
-      return res.status(response.status).json({ error: 'Failed to send OTP', details: body });
+      console.error('[auth] Twilio request-otp error:', body);
+      return res.status(400).json({ error: 'Failed to send verification code. Try again.' });
     }
 
     res.json({ ok: true });
@@ -88,7 +90,8 @@ authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), asyn
 
     if (!response.ok) {
       const body = await response.text();
-      return res.status(response.status).json({ error: 'Verification check failed', details: body });
+      console.error('[auth] Twilio verify-otp error:', body);
+      return res.status(400).json({ error: 'Verification failed. Please try again.' });
     }
 
     const verifyResult = await response.json();
@@ -125,10 +128,10 @@ authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), asyn
       const userToken = jwt.sign(
         { sub: existingUserId, type: 'user' },
         secret,
-        { expiresIn: '90d' },
+        { expiresIn: '30d' },
       );
 
-      const expiresAt = Date.now() + 90 * 24 * 60 * 60 * 1000; // 90 days in ms
+      const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days in ms
       res.json({ userToken, expiresAt });
       return;
     }
@@ -157,10 +160,10 @@ authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), asyn
         const userToken = jwt.sign(
           { sub: existingUserId, type: 'user' },
           secret,
-          { expiresIn: '90d' },
+          { expiresIn: '30d' },
         );
 
-        const expiresAt = Date.now() + 90 * 24 * 60 * 60 * 1000;
+        const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
         res.json({ userToken, expiresAt });
         return;
       }
@@ -184,13 +187,20 @@ authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), asyn
     const userToken = jwt.sign(
       { sub: userId, type: 'user' },
       secret,
-      { expiresIn: '90d' },
+      { expiresIn: '30d' },
     );
 
-    const expiresAt = Date.now() + 90 * 24 * 60 * 60 * 1000; // 90 days in ms
+    const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days in ms
     res.json({ userToken, expiresAt });
   } catch (error: any) {
     console.error('[verify-otp] error:', error?.message ?? error);
-    res.status(500).json({ error: 'Verification failed', detail: error?.message });
+    res.status(500).json({ error: 'Verification failed. Please try again.' });
   }
+});
+
+// POST /api/auth/logout
+// M3: client-side logout — signals the client to clear its stored token.
+// Full server-side blacklist deferred to M4.
+authRouter.post('/logout', authUser, (_req: Request, res: Response) => {
+  res.json({ ok: true });
 });
