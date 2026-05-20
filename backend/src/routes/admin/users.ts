@@ -5,13 +5,14 @@ import { requireRole, AdminRole } from '../../middleware/rbac';
 import { withAudit, AuditAction, extractAuditContext } from '../../audit';
 import { validate } from '../../middleware/validate';
 import { UserActionSchema } from '../../schemas/admin';
+import { parsePagination } from '../../utils/pagination';
 
 export const usersRouter = Router();
 
 // GET /api/v1/admin/users
 usersRouter.get('/', authAdmin(), requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
-  const { page = 1, limit = 50, search, status, plan, platform } = req.query;
-  const offset = (Number(page) - 1) * Number(limit);
+  const { search, status, plan, platform } = req.query;
+  const { limit, offset, page } = parsePagination(req.query);
 
   try {
     let queryStr = `
@@ -50,9 +51,9 @@ usersRouter.get('/', authAdmin(), requireRole([AdminRole.SUPER_ADMIN, AdminRole.
       data: result.rows,
       meta: {
         total: parseInt(countResult.rows[0].count, 10),
-        page: Number(page),
-        limit: Number(limit)
-      }
+        page,
+        limit,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });

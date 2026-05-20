@@ -180,7 +180,9 @@ export const useAppStore = create<AppState>()(
           const matches = await apiService.fetchMatches();
           set({ matches });
         } catch {
-          // ignore errors — handled by empty fallback
+          // Do not overwrite existing matches on error — preserve stale data.
+          // The server returns 503 on DB failure; the client retains last known state.
+          console.warn('[matches] fetch failed — retaining cached matches');
         }
       },
 

@@ -32,8 +32,10 @@ nearbyRouter.get('/', validate(NearbySchema), async (req: Request, res: Response
   const featureFlag = process.env.FEATURE_VIBE_MATCHING;
   const enabled = featureFlag === 'true' || featureFlag === '1';
 
-  // Parse token list from query or body
-  const tokens: string[] = (req.body?.tokens as string[]) ?? (req.query.tokens as string[]) ?? [];
+  // Token array capped at 50 by NearbySchema (ADR 0039/0044).
+  // BLE scan in a realistic environment produces at most ~20-30 visible tokens.
+  // Query-param path is also capped to prevent Redis pipeline amplification.
+  const tokens: string[] = (req.body?.tokens as string[]) ?? ((req.query.tokens as string[])?.slice(0, 50) ?? []);
 
   if (!Array.isArray(tokens) || tokens.length === 0) {
     return res.json([]);

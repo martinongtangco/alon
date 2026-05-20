@@ -4,6 +4,7 @@ import { authAdmin } from '../../middleware/authAdmin';
 import { requireRole, AdminRole } from '../../middleware/rbac';
 import { withAudit, AuditAction, extractAuditContext } from '../../audit';
 import { v4 as uuidv4 } from 'uuid';
+import { parsePagination } from '../../utils/pagination';
 
 export const promosRouter = Router();
 
@@ -12,8 +13,8 @@ promosRouter.use(requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]));
 
 // GET /api/v1/admin/promos
 promosRouter.get('/', async (req: Request, res: Response) => {
-  const { page = 1, limit = 50, status, search } = req.query;
-  const offset = (Number(page) - 1) * Number(limit);
+  const { status, search } = req.query;
+  const { limit, offset, page } = parsePagination(req.query);
 
   try {
     let queryStr = `
@@ -55,9 +56,9 @@ promosRouter.get('/', async (req: Request, res: Response) => {
       data: result.rows,
       meta: {
         total: parseInt(countResult.rows[0].count, 10),
-        page: Number(page),
-        limit: Number(limit)
-      }
+        page,
+        limit,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });

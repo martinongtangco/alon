@@ -114,7 +114,7 @@ export const apiService = {
   },
 
   async fetchConfig(): Promise<PlatformConfig> {
-    const res = await fetch(`${BASE_URL}/config`);
+    const res = await fetch(`${BASE_URL}/config`, { headers: await authHeaders() });
     return (await checked(res)).json();
   },
 

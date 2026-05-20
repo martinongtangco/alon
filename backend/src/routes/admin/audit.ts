@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { pool } from '../../db';
 import { authAdmin } from '../../middleware/authAdmin';
 import { requireRole, AdminRole } from '../../middleware/rbac';
+import { parsePagination } from '../../utils/pagination';
 
 export const auditRouter = Router();
 
@@ -10,8 +11,8 @@ auditRouter.use(requireRole([AdminRole.SUPER_ADMIN]));
 
 // GET /api/v1/admin/audit
 auditRouter.get('/', async (req: Request, res: Response) => {
-  const { page = 1, limit = 50, action_type } = req.query;
-  const offset = (Number(page) - 1) * Number(limit);
+  const { action_type } = req.query;
+  const { limit, offset, page } = parsePagination(req.query);
 
   try {
     let queryStr = `
@@ -44,8 +45,8 @@ auditRouter.get('/', async (req: Request, res: Response) => {
       data: result.rows,
       meta: {
         total: parseInt(countResult.rows[0].count, 10),
-        page: Number(page),
-        limit: Number(limit),
+        page,
+        limit,
       },
     });
   } catch {
