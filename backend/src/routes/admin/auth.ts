@@ -6,6 +6,8 @@ import { pool } from '../../db';
 import { withAudit, AuditAction } from '../../audit';
 import { getPrivateKey, getPublicKey } from '../../utils/keys';
 import { adminLoginLimiter } from '../../middleware/rateLimits';
+import { validate } from '../../middleware/validate';
+import { AdminLoginSchema, AdminTotpSchema } from '../../schemas/admin';
 
 export const authRouter = Router();
 
@@ -28,7 +30,7 @@ const issueTokens = async (userId: string, role: string) => {
   return { accessToken, refreshToken };
 };
 
-authRouter.post('/login', adminLoginLimiter, async (req: Request, res: Response) => {
+authRouter.post('/login', adminLoginLimiter, validate(AdminLoginSchema), async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
@@ -80,10 +82,8 @@ authRouter.post('/login', adminLoginLimiter, async (req: Request, res: Response)
   }
 });
 
-authRouter.post('/totp', adminLoginLimiter, async (req: Request, res: Response) => {
+authRouter.post('/totp', adminLoginLimiter, validate(AdminTotpSchema), async (req: Request, res: Response) => {
   const { tempToken, code } = req.body;
-
-  if (!tempToken || !code) return res.status(400).json({ error: 'Missing tempToken or code' });
 
   try {
     const publicKey = await jose.importSPKI(getPublicKey(), 'RS256');

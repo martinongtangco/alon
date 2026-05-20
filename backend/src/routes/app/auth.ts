@@ -3,21 +3,15 @@ import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { pool } from '../../db';
 import { otpRequestLimiter, otpVerifyLimiter } from '../../middleware/rateLimits';
+import { validate } from '../../middleware/validate';
+import { RequestOtpSchema, VerifyOtpSchema } from '../../schemas/app';
 
 export const authRouter = Router();
 
 // POST /api/auth/request-otp
 // Requests a one-time password via Twilio Verify.
-authRouter.post('/request-otp', otpRequestLimiter, async (req: Request, res: Response) => {
+authRouter.post('/request-otp', otpRequestLimiter, validate(RequestOtpSchema), async (req: Request, res: Response) => {
   const { phone } = req.body;
-  if (!phone || typeof phone !== 'string') {
-    return res.status(400).json({ error: 'phone required' });
-  }
-
-  // Validate E.164 format: starts with + followed by 7-15 digits
-  if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
-    return res.status(400).json({ error: 'phone must be in E.164 format (e.g., +63XXXXXXXXXX)' });
-  }
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
@@ -58,11 +52,8 @@ authRouter.post('/request-otp', otpRequestLimiter, async (req: Request, res: Res
 
 // POST /api/auth/verify-otp
 // Verifies the OTP code and issues a user JWT.
-authRouter.post('/verify-otp', otpVerifyLimiter, async (req: Request, res: Response) => {
+authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), async (req: Request, res: Response) => {
   const { phone, code } = req.body;
-  if (!phone || typeof phone !== 'string' || !code || typeof code !== 'string') {
-    return res.status(400).json({ error: 'phone and code required' });
-  }
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;

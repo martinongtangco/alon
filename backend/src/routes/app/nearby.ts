@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { authDevice } from '../../middleware/authDevice';
 import { redis } from '../../redis';
 import { pool } from '../../db';
+import { validate } from '../../middleware/validate';
+import { NearbySchema } from '../../schemas/app';
 
 export const nearbyRouter = Router();
 
@@ -26,7 +28,7 @@ async function isGhost(deviceId: string): Promise<boolean> {
 //   compatibility: number,             // Jaccard score 0–1
 //   distanceBand: 'very-near' | 'near' | 'far'
 // }>
-nearbyRouter.get('/', async (req: Request, res: Response) => {
+nearbyRouter.get('/', validate(NearbySchema), async (req: Request, res: Response) => {
   const featureFlag = process.env.FEATURE_VIBE_MATCHING;
   const enabled = featureFlag === 'true' || featureFlag === '1';
 

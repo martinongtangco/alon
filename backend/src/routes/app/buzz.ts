@@ -3,6 +3,8 @@ import { authDevice } from '../../middleware/authDevice';
 import { redis } from '../../redis';
 import { pool } from '../../db';
 import { DEFAULTS } from '../../config';
+import { validate } from '../../middleware/validate';
+import { BuzzSchema } from '../../schemas/app';
 
 export const buzzRouter = Router();
 
@@ -68,7 +70,7 @@ async function isGhost(deviceId: string): Promise<boolean> {
 // Body: { targetToken?: string }  — BLE proximity token of the target device.
 // If present, a push notification is sent to the target device (ADR 0031).
 // ADR 0036: if the target device is ghosted, return "too-far" instead of "sent".
-buzzRouter.post('/', async (req: Request, res: Response) => {
+buzzRouter.post('/', validate(BuzzSchema), async (req: Request, res: Response) => {
   const deviceId = req.deviceId!;
   const cooldownKey = `cooldown:${deviceId}`;
 

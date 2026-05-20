@@ -3,6 +3,8 @@ import { pool } from '../../db';
 import { authAdmin } from '../../middleware/authAdmin';
 import { requireRole, AdminRole } from '../../middleware/rbac';
 import { withAudit, AuditAction, extractAuditContext } from '../../audit';
+import { validate } from '../../middleware/validate';
+import { UserActionSchema } from '../../schemas/admin';
 
 export const usersRouter = Router();
 
@@ -58,13 +60,8 @@ usersRouter.get('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OP
 });
 
 // POST /api/v1/admin/users/:id/suspend
-usersRouter.post('/:id/suspend', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
+usersRouter.post('/:id/suspend', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), validate(UserActionSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { confirmation } = req.body; 
-
-  if (confirmation !== true) {
-    return res.status(400).json({ error: 'Confirmation required for destructive action' });
-  }
 
   const client = await pool.connect();
   try {
@@ -90,13 +87,8 @@ usersRouter.post('/:id/suspend', authAdmin, requireRole([AdminRole.SUPER_ADMIN, 
 });
 
 // POST /api/v1/admin/users/:id/ban
-usersRouter.post('/:id/ban', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), async (req: Request, res: Response) => {
+usersRouter.post('/:id/ban', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), validate(UserActionSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { confirmation } = req.body; 
-
-  if (confirmation !== true) {
-    return res.status(400).json({ error: 'Confirmation required for destructive action' });
-  }
 
   const client = await pool.connect();
   try {

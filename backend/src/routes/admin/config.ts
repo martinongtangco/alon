@@ -3,6 +3,8 @@ import { pool } from '../../db';
 import { authAdmin } from '../../middleware/authAdmin';
 import { requireRole, AdminRole } from '../../middleware/rbac';
 import { withAudit, AuditAction, extractAuditContext } from '../../audit';
+import { validate } from '../../middleware/validate';
+import { PlatformConfigUpdateSchema } from '../../schemas/admin';
 
 export const configRouter = Router();
 
@@ -22,13 +24,10 @@ configRouter.get('/', async (_req: Request, res: Response) => {
 });
 
 // PUT /api/v1/admin/config/:key
-configRouter.put('/:key', async (req: Request, res: Response) => {
+configRouter.put('/:key', validate(PlatformConfigUpdateSchema), async (req: Request, res: Response) => {
   const { key } = req.params;
-  const { value, confirmation } = req.body;
+  const { value } = req.body;
   const auditContext = extractAuditContext(req);
-
-  if (confirmation !== true) return res.status(400).json({ error: 'Confirmation required for config change' });
-  if (value === undefined) return res.status(400).json({ error: 'Missing value' });
 
   const client = await pool.connect();
   try {

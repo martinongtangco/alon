@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { authDevice } from '../../middleware/authDevice';
 import { redis } from '../../redis';
+import { validate } from '../../middleware/validate';
+import { GhostSchema } from '../../schemas/app';
 
 export const ghostRouter = Router();
 
@@ -10,13 +12,9 @@ ghostRouter.use(authDevice);
 // POST /api/ghost
 // Toggle Ghost Mode: server-enforced token deactivation (ADR 0036).
 // Body: { active: boolean }
-ghostRouter.post('/', async (req: Request, res: Response) => {
+ghostRouter.post('/', validate(GhostSchema), async (req: Request, res: Response) => {
   const deviceId = req.deviceId!;
   const { active }: { active: boolean } = req.body;
-
-  if (typeof active !== 'boolean') {
-    return res.status(400).json({ error: 'active must be a boolean' });
-  }
 
   try {
     if (active) {
