@@ -3,25 +3,28 @@ import { pool } from '../../db';
 import { authAdmin } from '../../middleware/authAdmin';
 import { requireRole, AdminRole } from '../../middleware/rbac';
 import { withAudit, AuditAction, extractAuditContext } from '../../audit';
+import { validate } from '../../middleware/validate';
+import { UserActionSchema } from '../../schemas/admin';
+import { parsePagination } from '../../utils/pagination';
 
 export const usersRouter = Router();
 
 // GET /api/v1/admin/users
-usersRouter.get('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
-  const { page = 1, limit = 50, search, status, plan, platform } = req.query;
-  const offset = (Number(page) - 1) * Number(limit);
+usersRouter.get('/', authAdmin(), requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
+  const { search, status, plan, platform } = req.query;
+  const { limit, offset, page } = parsePagination(req.query);
 
   try {
     let queryStr = `
-      SELECT id, display_name, internal_token, current_mode, vibes, plan, status, platform, last_active_at, created_at 
-      FROM app.users 
+      SELECT id, display_name, current_mode, vibes, plan, status, platform, last_active_at, created_at
+      FROM app.users
       WHERE 1=1
     `;
     const queryParams: any[] = [];
     let paramIdx = 1;
 
     if (search) {
-      queryStr += ` AND (display_name ILIKE $${paramIdx} OR internal_token ILIKE $${paramIdx})`;
+      queryStr += ` AND display_name ILIKE $${paramIdx}`;
       queryParams.push(`%${search}%`);
       paramIdx++;
     }
@@ -37,7 +40,7 @@ usersRouter.get('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OP
     let countStr = 'SELECT COUNT(*) FROM app.users WHERE 1=1';
     const countParams: any[] = [];
     let countIdx = 1;
-    if (search) { countStr += ` AND (display_name ILIKE $${countIdx} OR internal_token ILIKE $${countIdx})`; countParams.push(`%${search}%`); countIdx++; }
+    if (search) { countStr += ` AND display_name ILIKE $${countIdx}`; countParams.push(`%${search}%`); countIdx++; }
     if (status && status !== 'All') { countStr += ` AND status = $${countIdx++}`; countParams.push(status); }
     if (plan && plan !== 'All') { countStr += ` AND plan = $${countIdx++}`; countParams.push(plan); }
     if (platform && platform !== 'All') { countStr += ` AND platform = $${countIdx++}`; countParams.push(platform); }
@@ -48,9 +51,9 @@ usersRouter.get('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OP
       data: result.rows,
       meta: {
         total: parseInt(countResult.rows[0].count, 10),
-        page: Number(page),
-        limit: Number(limit)
-      }
+        page,
+        limit,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -58,13 +61,8 @@ usersRouter.get('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OP
 });
 
 // POST /api/v1/admin/users/:id/suspend
-usersRouter.post('/:id/suspend', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
+usersRouter.post('/:id/suspend', authAdmin(), requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), validate(UserActionSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { confirmation } = req.body; 
-
-  if (confirmation !== true) {
-    return res.status(400).json({ error: 'Confirmation required for destructive action' });
-  }
 
   const client = await pool.connect();
   try {
@@ -90,13 +88,8 @@ usersRouter.post('/:id/suspend', authAdmin, requireRole([AdminRole.SUPER_ADMIN, 
 });
 
 // POST /api/v1/admin/users/:id/ban
-usersRouter.post('/:id/ban', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), async (req: Request, res: Response) => {
+usersRouter.post('/:id/ban', authAdmin(), requireRole([AdminRole.SUPER_ADMIN]), validate(UserActionSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { confirmation } = req.body; 
-
-  if (confirmation !== true) {
-    return res.status(400).json({ error: 'Confirmation required for destructive action' });
-  }
 
   const client = await pool.connect();
   try {
@@ -122,7 +115,7 @@ usersRouter.post('/:id/ban', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), as
 });
 
 // POST /api/v1/admin/users/:id/reinstate
-usersRouter.post('/:id/reinstate', authAdmin, requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
+usersRouter.post('/:id/reinstate', authAdmin(), requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]), async (req: Request, res: Response) => {
   const { id } = req.params;
   const auditContext = extractAuditContext(req);
 

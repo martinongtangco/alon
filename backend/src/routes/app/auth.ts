@@ -3,21 +3,16 @@ import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { pool } from '../../db';
 import { otpRequestLimiter, otpVerifyLimiter } from '../../middleware/rateLimits';
+import { authUser } from '../../middleware/authUser';
+import { validate } from '../../middleware/validate';
+import { RequestOtpSchema, VerifyOtpSchema } from '../../schemas/app';
 
 export const authRouter = Router();
 
 // POST /api/auth/request-otp
 // Requests a one-time password via Twilio Verify.
-authRouter.post('/request-otp', otpRequestLimiter, async (req: Request, res: Response) => {
+authRouter.post('/request-otp', otpRequestLimiter, validate(RequestOtpSchema), async (req: Request, res: Response) => {
   const { phone } = req.body;
-  if (!phone || typeof phone !== 'string') {
-    return res.status(400).json({ error: 'phone required' });
-  }
-
-  // Validate E.164 format: starts with + followed by 7-15 digits
-  if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
-    return res.status(400).json({ error: 'phone must be in E.164 format (e.g., +63XXXXXXXXXX)' });
-  }
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
@@ -47,7 +42,8 @@ authRouter.post('/request-otp', otpRequestLimiter, async (req: Request, res: Res
 
     if (!response.ok) {
       const body = await response.text();
-      return res.status(response.status).json({ error: 'Failed to send OTP', details: body });
+      console.error('[auth] Twilio request-otp error:', body);
+      return res.status(400).json({ error: 'Failed to send verification code. Try again.' });
     }
 
     res.json({ ok: true });
@@ -58,11 +54,8 @@ authRouter.post('/request-otp', otpRequestLimiter, async (req: Request, res: Res
 
 // POST /api/auth/verify-otp
 // Verifies the OTP code and issues a user JWT.
-authRouter.post('/verify-otp', otpVerifyLimiter, async (req: Request, res: Response) => {
+authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), async (req: Request, res: Response) => {
   const { phone, code } = req.body;
-  if (!phone || typeof phone !== 'string' || !code || typeof code !== 'string') {
-    return res.status(400).json({ error: 'phone and code required' });
-  }
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
@@ -97,7 +90,8 @@ authRouter.post('/verify-otp', otpVerifyLimiter, async (req: Request, res: Respo
 
     if (!response.ok) {
       const body = await response.text();
-      return res.status(response.status).json({ error: 'Verification check failed', details: body });
+      console.error('[auth] Twilio verify-otp error:', body);
+      return res.status(400).json({ error: 'Verification failed. Please try again.' });
     }
 
     const verifyResult = await response.json();
@@ -134,10 +128,10 @@ authRouter.post('/verify-otp', otpVerifyLimiter, async (req: Request, res: Respo
       const userToken = jwt.sign(
         { sub: existingUserId, type: 'user' },
         secret,
-        { expiresIn: '90d' },
+        { expiresIn: '30d' },
       );
 
-      const expiresAt = Date.now() + 90 * 24 * 60 * 60 * 1000; // 90 days in ms
+      const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days in ms
       res.json({ userToken, expiresAt });
       return;
     }
@@ -166,10 +160,10 @@ authRouter.post('/verify-otp', otpVerifyLimiter, async (req: Request, res: Respo
         const userToken = jwt.sign(
           { sub: existingUserId, type: 'user' },
           secret,
-          { expiresIn: '90d' },
+          { expiresIn: '30d' },
         );
 
-        const expiresAt = Date.now() + 90 * 24 * 60 * 60 * 1000;
+        const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
         res.json({ userToken, expiresAt });
         return;
       }
@@ -193,13 +187,20 @@ authRouter.post('/verify-otp', otpVerifyLimiter, async (req: Request, res: Respo
     const userToken = jwt.sign(
       { sub: userId, type: 'user' },
       secret,
-      { expiresIn: '90d' },
+      { expiresIn: '30d' },
     );
 
-    const expiresAt = Date.now() + 90 * 24 * 60 * 60 * 1000; // 90 days in ms
+    const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days in ms
     res.json({ userToken, expiresAt });
   } catch (error: any) {
     console.error('[verify-otp] error:', error?.message ?? error);
-    res.status(500).json({ error: 'Verification failed', detail: error?.message });
+    res.status(500).json({ error: 'Verification failed. Please try again.' });
   }
+});
+
+// POST /api/auth/logout
+// M3: client-side logout — signals the client to clear its stored token.
+// Full server-side blacklist deferred to M4.
+authRouter.post('/logout', authUser, (_req: Request, res: Response) => {
+  res.json({ ok: true });
 });

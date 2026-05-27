@@ -78,7 +78,7 @@ matchesRouter.get('/', async (req: Request, res: Response) => {
 
     res.json(matches);
   } catch (err) {
-    console.error('[matches] error:', err);
-    res.json([]);
+    console.error('[matches] db error:', err);
+    res.status(503).json({ error: 'Service temporarily unavailable' });
   }
 });

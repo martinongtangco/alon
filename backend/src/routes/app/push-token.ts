@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { authDevice } from '../../middleware/authDevice';
 import { pool } from '../../db';
+import { validate } from '../../middleware/validate';
+import { PushTokenSchema } from '../../schemas/app';
 
 export const pushTokenRouter = Router();
 
@@ -8,13 +10,9 @@ pushTokenRouter.use(authDevice);
 
 // POST /api/push-token
 // Register or update the Expo push token for this device.
-pushTokenRouter.post('/', async (req: Request, res: Response) => {
+pushTokenRouter.post('/', validate(PushTokenSchema), async (req: Request, res: Response) => {
   const deviceId = req.deviceId!;
   const { token }: { token: string } = req.body;
-
-  if (!token) {
-    return res.status(400).json({ error: 'token is required' });
-  }
 
   try {
     await pool.query(

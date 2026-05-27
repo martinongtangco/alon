@@ -3,16 +3,17 @@ import { pool } from '../../db';
 import { authAdmin } from '../../middleware/authAdmin';
 import { requireRole, AdminRole } from '../../middleware/rbac';
 import { withAudit, AuditAction, extractAuditContext } from '../../audit';
+import { parsePagination } from '../../utils/pagination';
 
 export const flagsRouter = Router();
 
-flagsRouter.use(authAdmin);
+flagsRouter.use(authAdmin());
 flagsRouter.use(requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]));
 
 // GET /api/v1/admin/flags
 flagsRouter.get('/', async (req: Request, res: Response) => {
-  const { page = 1, limit = 50, status, severity, type } = req.query;
-  const offset = (Number(page) - 1) * Number(limit);
+  const { status, severity, type } = req.query;
+  const { limit, offset, page } = parsePagination(req.query);
 
   try {
     let queryStr = `
@@ -46,9 +47,9 @@ flagsRouter.get('/', async (req: Request, res: Response) => {
       data: result.rows,
       meta: {
         total: parseInt(countResult.rows[0].count, 10),
-        page: Number(page),
-        limit: Number(limit)
-      }
+        page,
+        limit,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });

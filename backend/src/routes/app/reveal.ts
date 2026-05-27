@@ -3,6 +3,8 @@ import { authDevice } from '../../middleware/authDevice';
 import { redis } from '../../redis';
 import { pool } from '../../db';
 import { DEFAULTS } from '../../config';
+import { validate } from '../../middleware/validate';
+import { RevealSchema } from '../../schemas/app';
 
 export const revealRouter = Router();
 
@@ -54,12 +56,14 @@ async function resolvePushToken(deviceId: string): Promise<string | null> {
 // POST /api/reveal
 // Submit a reveal intent for the given proximity token.
 // If the reciprocal intent already exists → mutual match.
-revealRouter.post('/', async (req: Request, res: Response) => {
+revealRouter.post('/', validate(RevealSchema), async (req: Request, res: Response) => {
   const myDeviceId = req.deviceId!;
   const { token }: { token: string } = req.body;
 
-  if (!token) {
-    return res.status(400).json({ error: 'token is required' });
+  // ADR 0041: block reveals while ghost mode is active
+  const isGhosted = await redis.get(`ghost:${myDeviceId}`);
+  if (isGhosted) {
+    return res.status(403).json({ error: 'Ghost mode is active' });
   }
 
   try {

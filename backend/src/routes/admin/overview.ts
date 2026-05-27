@@ -1,10 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../../db';
 import { authAdmin } from '../../middleware/authAdmin';
+import { requireRole, AdminRole } from '../../middleware/rbac';
 
 export const overviewRouter = Router();
 
-overviewRouter.use(authAdmin);
+overviewRouter.use(authAdmin());
+overviewRouter.use(requireRole([AdminRole.SUPER_ADMIN, AdminRole.OPS]));
 
 // GET /api/v1/admin/overview
 overviewRouter.get('/', async (_req: Request, res: Response) => {

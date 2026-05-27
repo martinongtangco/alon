@@ -4,11 +4,13 @@ import { pool } from '../../db';
 import { authAdmin } from '../../middleware/authAdmin';
 import { requireRole, AdminRole } from '../../middleware/rbac';
 import { withAudit, AuditAction, extractAuditContext } from '../../audit';
+import { validate } from '../../middleware/validate';
+import { CreateAdminSchema } from '../../schemas/admin';
 
 export const adminsRouter = Router();
 
 // GET /api/v1/admin/admins
-adminsRouter.get('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), async (req: Request, res: Response) => {
+adminsRouter.get('/', authAdmin(), requireRole([AdminRole.SUPER_ADMIN]), async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       `SELECT id, email, role, status, totp_enabled, last_login_at, created_at
@@ -22,11 +24,8 @@ adminsRouter.get('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), async (re
 });
 
 // POST /api/v1/admin/admins
-adminsRouter.post('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), async (req: Request, res: Response) => {
+adminsRouter.post('/', authAdmin(), requireRole([AdminRole.SUPER_ADMIN]), validate(CreateAdminSchema), async (req: Request, res: Response) => {
   const { email, role } = req.body;
-
-  if (!email || !role) return res.status(400).json({ error: 'email and role are required' });
-  if (!Object.values(AdminRole).includes(role)) return res.status(400).json({ error: 'Invalid role' });
 
   const tempPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10).toUpperCase() + '!';
   const hash = await bcrypt.hash(tempPassword, 12);
@@ -58,7 +57,7 @@ adminsRouter.post('/', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), async (r
 });
 
 // POST /api/v1/admin/admins/:id/deactivate
-adminsRouter.post('/:id/deactivate', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), async (req: Request, res: Response) => {
+adminsRouter.post('/:id/deactivate', authAdmin(), requireRole([AdminRole.SUPER_ADMIN]), async (req: Request, res: Response) => {
   const { id } = req.params;
   const auditContext = extractAuditContext(req);
 
@@ -86,7 +85,7 @@ adminsRouter.post('/:id/deactivate', authAdmin, requireRole([AdminRole.SUPER_ADM
 });
 
 // POST /api/v1/admin/admins/:id/activate
-adminsRouter.post('/:id/activate', authAdmin, requireRole([AdminRole.SUPER_ADMIN]), async (req: Request, res: Response) => {
+adminsRouter.post('/:id/activate', authAdmin(), requireRole([AdminRole.SUPER_ADMIN]), async (req: Request, res: Response) => {
   const { id } = req.params;
   const auditContext = extractAuditContext(req);
 

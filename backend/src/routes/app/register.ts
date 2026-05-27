@@ -3,16 +3,15 @@ import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { redis } from '../../redis';
 import { registerLimiter } from '../../middleware/rateLimits';
+import { validate } from '../../middleware/validate';
+import { RegisterSchema } from '../../schemas/app';
 
 export const registerRouter = Router();
 
 // POST /api/register
 // Issues a proximity token and a device auth JWT for a new or returning device.
-registerRouter.post('/', registerLimiter, async (req: Request, res: Response) => {
+registerRouter.post('/', registerLimiter, validate(RegisterSchema), async (req: Request, res: Response) => {
   const { deviceId } = req.body;
-  if (!deviceId || typeof deviceId !== 'string') {
-    return res.status(400).json({ error: 'deviceId required' });
-  }
 
   const proximityToken = uuidv4();
   const expiresAt = Date.now() + 900 * 1000; // 15 min

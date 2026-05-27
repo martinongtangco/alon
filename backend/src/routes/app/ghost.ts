@@ -2,6 +2,10 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { authDevice } from '../../middleware/authDevice';
 import { redis } from '../../redis';
+import { validate } from '../../middleware/validate';
+import { GhostSchema } from '../../schemas/app';
+import { withDeviceAudit } from '../../audit/device';
+import { AuditAction } from '../../audit';
 
 export const ghostRouter = Router();
 
@@ -10,13 +14,9 @@ ghostRouter.use(authDevice);
 // POST /api/ghost
 // Toggle Ghost Mode: server-enforced token deactivation (ADR 0036).
 // Body: { active: boolean }
-ghostRouter.post('/', async (req: Request, res: Response) => {
+ghostRouter.post('/', validate(GhostSchema), async (req: Request, res: Response) => {
   const deviceId = req.deviceId!;
   const { active }: { active: boolean } = req.body;
-
-  if (typeof active !== 'boolean') {
-    return res.status(400).json({ error: 'active must be a boolean' });
-  }
 
   try {
     if (active) {
@@ -32,6 +32,14 @@ ghostRouter.post('/', async (req: Request, res: Response) => {
       if (currentToken) {
         // Delete the token so it no longer resolves
         await redis.del(`token:${currentToken}`);
+
+        // Sweep any pending reveal intents involving this token (ADR 0041).
+        // reveal keys are: reveal:{tokenA}:{tokenB} — ghosted token appears in either position.
+        // TODO: migrate to SCAN cursor if reveal key count exceeds ~1000
+        const revealKeys = await redis.keys(`reveal:*${currentToken}*`);
+        if (revealKeys.length > 0) {
+          await redis.del(...revealKeys);
+        }
       }
 
       // Set ghost flag with no TTL (persists until explicitly cleared)
@@ -39,6 +47,11 @@ ghostRouter.post('/', async (req: Request, res: Response) => {
 
       // Also remove the device_token reference so rotation doesn't reuse it
       await redis.del(`device_token:${deviceId}`);
+
+      await withDeviceAudit(deviceId, AuditAction.GHOST_TOGGLE, {
+        before: { ghostMode: false },
+        after: { ghostMode: true },
+      });
     } else {
       // --- Ghost Mode deactivation: issue new token ---
 
@@ -53,6 +66,11 @@ ghostRouter.post('/', async (req: Request, res: Response) => {
 
       // Store the token reference for this device (ADR 0014)
       await redis.set(`device_token:${deviceId}`, proximityToken, 'EX', 930);
+
+      await withDeviceAudit(deviceId, AuditAction.GHOST_TOGGLE, {
+        before: { ghostMode: true },
+        after: { ghostMode: false, tokenIssued: true },
+      });
 
       return res.json({ token: proximityToken, expiresAt });
     }
