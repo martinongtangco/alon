@@ -65,7 +65,7 @@ export const apiService = {
     return (await checked(res)).json();
   },
 
-  async sendBuzz(targetToken?: string): Promise<'sent' | 'rate-limited'> {
+  async sendBuzz(targetToken?: string): Promise<'sent' | 'rate-limited' | 'too-far'> {
     const headers = { ...await authHeaders(), 'Content-Type': 'application/json' };
     const res = await fetch(`${BASE_URL}/buzz`, {
       method: 'POST',
