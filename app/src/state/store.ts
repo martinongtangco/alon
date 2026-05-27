@@ -117,11 +117,11 @@ export const useAppStore = create<AppState>()(
             await AsyncStorage.removeItem(GHOST_PENDING_ACTION_KEY);
           }
         } catch (err) {
-          // Revert optimistic update on failure
+          // Revert optimistic update on failure — only ghostMode can be safely reverted
+          // nearby/signalLevel are modified by the optimistic update and their previous
+          // values are not available here; they will be corrected on the next UI cycle.
           set((s) => ({
-            profile: { ...s.profile, ghostMode: !ghostMode },
-            nearby: ghostMode ? s.nearby : [],
-            signalLevel: ghostMode ? s.signalLevel : 0,
+            profile: { ...s.profile, ghostMode: !s.profile.ghostMode },
           }));
           console.warn('[ghost] failed to update server ghost state', err);
 
