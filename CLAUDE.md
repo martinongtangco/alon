@@ -75,3 +75,19 @@ Do not load the full spec unless doing product or design work. Do not read all A
 - Platform-specific code: `.ios.ts` / `.android.ts` suffixes — no `Platform.OS` checks in business logic.
 - Packages named in an accepted ADR are pre-authorized. Install them without asking.
 - If a feature request conflicts with the six principles above, flag it before building.
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Issues tracked as GitHub issues in martinongtangco/alon. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo. No `CONTEXT.md` yet. ADRs live in `docs/decisions/`. See `docs/agents/domain.md`.
