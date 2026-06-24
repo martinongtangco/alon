@@ -42,3 +42,8 @@ export const GhostSchema = z.object({
 export const PushTokenSchema = z.object({
   token: z.string().regex(/^ExponentPushToken\[.+\]$|^[a-zA-Z0-9_-]{20,}$/, 'Invalid push token format'),
 });
+
+// ADR 0035: Age Verification — DOB self-declaration schema
+export const VerifyAgeSchema = z.object({
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD format'),
+});

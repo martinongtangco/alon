@@ -38,13 +38,18 @@ async function sendExpoPush(pushToken: string, title: string, body: string, data
 
 /**
  * Resolve the push token for a target device from the proximity token chain.
- * Returns null if the device is not found or has no push token.
+ * Returns null if the device is not found, has no push token, or is in Ghost Mode.
+ * Ghost check is performed HERE (not before) to avoid a race condition where
+ * the target activates ghost mode between the external check and this resolution.
  */
 async function resolvePushToken(proximityToken: string): Promise<string | null> {
   try {
     // Look up the target device ID from the proximity token in Redis
     const targetDeviceId = await redis.get(`token:${proximityToken}`);
     if (!targetDeviceId) return null;
+
+    // ADR 0036: check ghost status at resolution time (not before) to avoid race condition
+    if (await isGhost(targetDeviceId)) return null;
 
     // Look up the push token for the target device from Postgres
     const result = await pool.query(
@@ -80,14 +85,19 @@ buzzRouter.post('/', validate(BuzzSchema), async (req: Request, res: Response) =
   await redis.set(cooldownKey, '1', 'EX', BUZZ_COOLDOWN_S);
 
   // ADR 0031: notify the target device if a proximity token was supplied
+  // Ghost check is now inside resolvePushToken to avoid race conditions.
+  // We still do a preliminary ghost check here only to return "too-far" early
+  // when the buzz should appear as if the target isn't nearby.
   const { targetToken } = req.body as { targetToken?: string };
   if (targetToken) {
-    // ADR 0036: check if target is ghosted before sending
+    // Preliminary ghost check for response semantics:
+    // If ghosted, return "too-far" so the client doesn't show a buzz confirmation.
     const targetDeviceId = await redis.get(`token:${targetToken}`);
-    if (targetDeviceId && (await isGhost(targetDeviceId))) {
+    if (targetDeviceId && await isGhost(targetDeviceId)) {
       return res.json('too-far' as const);
     }
 
+    // Fire-and-forget push: ghost re-checked inside resolvePushToken
     resolvePushToken(targetToken).then((pushToken) => {
       if (pushToken) {
         sendExpoPush(pushToken, 'someone buzzed you', 'open Alon to see who\'s nearby', { type: 'buzz' });

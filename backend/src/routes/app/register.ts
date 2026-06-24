@@ -22,8 +22,9 @@ registerRouter.post('/', registerLimiter, validate(RegisterSchema), async (req: 
   // ADR 0036: store reverse index for ghost mode token revocation
   await redis.set(`device_token:${deviceId}`, proximityToken, 'EX', 930);
 
-  const secret = process.env.DEVICE_JWT_SECRET ?? 'dev-device-secret';
-  const authToken = jwt.sign({ sub: deviceId, type: 'device' }, secret, { expiresIn: '90d' });
+  const secret = process.env.DEVICE_JWT_SECRET;
+  if (!secret) throw new Error('[register] DEVICE_JWT_SECRET not configured');
+  const authToken = jwt.sign({ sub: deviceId, type: 'device' }, secret, { expiresIn: '90d', algorithm: 'HS256' });
 
   res.json({ token: proximityToken, expiresAt, authToken });
 });

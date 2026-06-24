@@ -4,24 +4,27 @@ import jwt from 'jsonwebtoken';
 import { pool } from '../../db';
 import { otpRequestLimiter, otpVerifyLimiter } from '../../middleware/rateLimits';
 import { authUser } from '../../middleware/authUser';
+import { authDevice } from '../../middleware/authDevice';
 import { validate } from '../../middleware/validate';
-import { RequestOtpSchema, VerifyOtpSchema } from '../../schemas/app';
+import { RequestOtpSchema, VerifyOtpSchema, VerifyAgeSchema } from '../../schemas/app';
+import { normalizePhone } from '../../utils/normalizePhone';
 
 export const authRouter = Router();
 
 // POST /api/auth/request-otp
 // Requests a one-time password via Twilio Verify.
 authRouter.post('/request-otp', otpRequestLimiter, validate(RequestOtpSchema), async (req: Request, res: Response) => {
-  const { phone } = req.body;
+  let { phone } = req.body;
+
+  // Normalize to E.164 before sending to Twilio and storing
+  try {
+    phone = normalizePhone(phone);
+  } catch {
+    return res.status(400).json({ error: 'Invalid phone number format' });
+  }
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
-
-    // DEV: bypass Twilio entirely — any code works in verify-otp
-    if (process.env.BYPASS_OTP === 'true') {
-      console.warn(`[request-otp] BYPASS_OTP active — pretend SMS sent to ${phone}, accept code 000000`);
-    return res.json({ ok: true });
-  }
 
   if (!accountSid || !verifyServiceSid) {
     return res.status(503).json({ error: 'SMS service not configured' });
@@ -55,27 +58,24 @@ authRouter.post('/request-otp', otpRequestLimiter, validate(RequestOtpSchema), a
 // POST /api/auth/verify-otp
 // Verifies the OTP code and issues a user JWT.
 authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), async (req: Request, res: Response) => {
-  const { phone, code } = req.body;
+  let { phone, code } = req.body;
+
+  // Normalize to E.164 before verifying with Twilio and storing
+  try {
+    phone = normalizePhone(phone);
+  } catch {
+    return res.status(400).json({ error: 'Invalid phone number format' });
+  }
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
-  // DEV: bypass — accept code "000000" without hitting Twilio
-  const bypass = process.env.BYPASS_OTP === 'true';
-
-  if (!bypass && (!accountSid || !verifyServiceSid)) {
+  if (!accountSid || !verifyServiceSid) {
     return res.status(503).json({ error: 'SMS service not configured' });
   }
 
   // Verify the OTP code via Twilio Verify API
   try {
-      if (bypass) {
-        console.warn(`[verify-otp] BYPASS_OTP active — accepting any code for ${phone}`);
-      if (code !== '000000') {
-        return res.status(401).json({ error: 'Invalid code (dev bypass: use 000000)' });
-      }
-      // Skip directly to user linkage with a synthetic "approved" result
-    } else {
     const response = await fetch(`https://verify.twilio.com/v2/Services/${verifyServiceSid}/VerificationCheck`, {
       method: 'POST',
       headers: {
@@ -95,16 +95,15 @@ authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), asyn
     }
 
     const verifyResult = await response.json();
-    console.log('[verify-otp] twilio result:', JSON.stringify(verifyResult));
 
     if (verifyResult.status !== 'approved') {
-      console.log('[verify-otp] not approved, status:', verifyResult.status);
+      console.warn('[verify-otp] rejected, status:', verifyResult.status);
       return res.status(401).json({ error: 'Invalid or expired code' });
     }
-    } // end else (non-bypass Twilio check)
 
     // Link phone to user account
-    const secret = process.env.USER_JWT_SECRET ?? 'dev-user-secret';
+    const secret = process.env.USER_JWT_SECRET;
+    if (!secret) throw new Error('[verify-otp] USER_JWT_SECRET not configured');
     const userId = uuidv4();
 
     // Check if phone already exists in app.users
@@ -112,7 +111,6 @@ authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), asyn
       'SELECT id FROM app.users WHERE phone = $1',
       [phone],
     );
-    console.log('[verify-otp] existing phone rows:', existing.rows.length);
 
     if (existing.rows.length > 0) {
       // Returning user — update phone_verified
@@ -128,7 +126,7 @@ authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), asyn
       const userToken = jwt.sign(
         { sub: existingUserId, type: 'user' },
         secret,
-        { expiresIn: '30d' },
+        { expiresIn: '30d', algorithm: 'HS256' },
       );
 
       const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days in ms
@@ -160,7 +158,7 @@ authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), asyn
         const userToken = jwt.sign(
           { sub: existingUserId, type: 'user' },
           secret,
-          { expiresIn: '30d' },
+          { expiresIn: '30d', algorithm: 'HS256' },
         );
 
         const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
@@ -187,13 +185,14 @@ authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), asyn
     const userToken = jwt.sign(
       { sub: userId, type: 'user' },
       secret,
-      { expiresIn: '30d' },
+      { expiresIn: '30d', algorithm: 'HS256' },
     );
 
     const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days in ms
     res.json({ userToken, expiresAt });
-  } catch (error: any) {
-    console.error('[verify-otp] error:', error?.message ?? error);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('[verify-otp] error:', msg);
     res.status(500).json({ error: 'Verification failed. Please try again.' });
   }
 });
@@ -203,4 +202,50 @@ authRouter.post('/verify-otp', otpVerifyLimiter, validate(VerifyOtpSchema), asyn
 // Full server-side blacklist deferred to M4.
 authRouter.post('/logout', authUser, (_req: Request, res: Response) => {
   res.json({ ok: true });
+});
+
+// POST /api/auth/verify-age
+// ADR 0035: Age Verification — DOB self-declaration (M2).
+// Third-party ID verification feature-flagged via FEATURE_ID_VERIFICATION.
+authRouter.post('/verify-age', authDevice, validate(VerifyAgeSchema), async (req: Request, res: Response) => {
+  const deviceId = req.deviceId!;
+  const { dateOfBirth }: { dateOfBirth: string } = req.body;
+
+  try {
+    // Server-side age check: must be at least 18 years old
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) {
+      return res.status(400).json({ error: 'Invalid date of birth' });
+    }
+
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    if (age < 18) {
+      return res.status(403).json({ error: 'You must be at least 18 years old to use Alon' });
+    }
+
+    const featureIdVerification = process.env.FEATURE_ID_VERIFICATION === 'true';
+
+    if (featureIdVerification) {
+      // TODO: M3 — create Stripe Identity verification session
+      // For now, scaffold returns success but logs that third-party verification is pending
+      console.warn(`[verify-age] FEATURE_ID_VERIFICATION active but third-party provider not configured for device ${deviceId}`);
+    }
+
+    await pool.query(
+      `UPDATE app.users SET date_of_birth = $1, age_verified = $2, age_verified_at = NOW()
+       WHERE id = $3`,
+      [dateOfBirth, featureIdVerification ? false : true, deviceId]
+    );
+
+    res.json({ ok: true, ageVerified: !featureIdVerification });
+  } catch (err) {
+    console.error('[verify-age] error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });

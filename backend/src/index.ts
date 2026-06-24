@@ -24,7 +24,7 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],  // Tailwind requires inline styles
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "https://exp.host", "https://verify.twilio.com"],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       frameSrc: ["'none'"],
@@ -62,10 +62,12 @@ app.use(express.urlencoded({ extended: true, limit: '64kb' }));
 
 app.use(cookieParser());
 
-// Request logger — every request and its response
+// Request logger — every request and its response (with request ID propagation)
 app.use((req, res, next) => {
   const start = Date.now();
   const reqId = Math.random().toString(36).slice(2, 8);
+  // Attach request ID to req for downstream use
+  (req as any).id = reqId;
   console.log(`[${reqId}] → ${req.method} ${req.url} from ${req.ip}`);
   res.on('finish', () => {
     console.log(`[${reqId}] ← ${res.statusCode} (${Date.now() - start}ms)`);
@@ -80,6 +82,21 @@ app.use('/api/events', publicEventsRouter);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Global error handler — catches unhandled errors in async route handlers
+app.use((err: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const reqId = (_req as any).id ?? 'unknown';
+  console.error(`[${reqId}] UNHANDLED ERROR:`, err?.message ?? err);
+
+  // In development, expose the error message for debugging
+  if (process.env.NODE_ENV === 'development' && err.message) {
+    res.status(err.status ?? 500).json({ error: err.message });
+    return;
+  }
+
+  // In production, return a generic error
+  res.status(err.status ?? 500).json({ error: 'Internal server error' });
 });
 
 app.listen(Number(PORT), '0.0.0.0', () => {

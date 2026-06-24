@@ -9,6 +9,7 @@ import { revealRouter } from './reveal';
 import { pushTokenRouter } from './push-token';
 import { authRouter } from './auth';
 import { ghostRouter } from './ghost';
+import { webhooksRouter } from './webhooks';
 import { appApiLimiter } from '../../middleware/rateLimits';
 
 export const appRouter = Router();
@@ -30,3 +31,4 @@ appRouter.use('/reveal', revealRouter);
 appRouter.use('/push-token', pushTokenRouter);
 appRouter.use('/auth', authRouter);
 appRouter.use('/ghost', ghostRouter);
+appRouter.use('/webhooks', webhooksRouter);

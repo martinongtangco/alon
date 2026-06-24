@@ -43,18 +43,33 @@ export const ProfileScreen = () => {
         </Section>
 
         <Section title="mode">
+          {/* ADR 0035: Dating mode requires age verification */}
+          {!profile.ageVerified && (
+            <Text style={styles.ageGateHint}>
+              Age verification required to use Dating mode. Complete it in settings.
+            </Text>
+          )}
           <View style={styles.chipWrap}>
             {ALL_MODES.map((m) => {
               const active = profile.mode === m;
+              const isDating = m === 'dating';
+              const blocked = isDating && !profile.ageVerified;
               return (
                 <Pressable
                   key={m}
-                  onPress={() => setMode(m as Mode)}
+                  onPress={() => {
+                    if (!blocked) {
+                      setMode(m as Mode);
+                    }
+                  }}
                   style={[
                     styles.chip,
                     active && {
                       backgroundColor: colors.teal600,
                       borderColor: colors.teal900,
+                    },
+                    blocked && {
+                      opacity: 0.4,
                     },
                   ]}
                 >
@@ -64,7 +79,7 @@ export const ProfileScreen = () => {
                       active && { color: colors.bgWarm },
                     ]}
                   >
-                    {m}
+                    {m}{blocked ? ' 🔒' : ''}
                   </Text>
                 </Pressable>
               );
@@ -188,6 +203,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
     letterSpacing: 0.4,
+  },
+  ageGateHint: {
+    fontSize: 11,
+    color: colors.amber800,
+    fontStyle: 'italic',
+    marginBottom: space.s2,
   },
   phoneBanner: {
     flexDirection: 'row',

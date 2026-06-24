@@ -18,7 +18,8 @@ import { requestBlePermissions } from '../../utils/permissions';
 import { apiService } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STEPS = ['intro', 'name', 'vibes', 'mode', 'permissions', 'phone'] as const;
+// ADR 0035: birthdate step inserted between name and vibes
+const STEPS = ['intro', 'name', 'birthdate', 'vibes', 'mode', 'permissions', 'phone'] as const;
 type Step = (typeof STEPS)[number];
 
 export const OnboardingScreen = () => {
@@ -33,6 +34,10 @@ export const OnboardingScreen = () => {
   const [stepIndex, setStepIndex] = useState(0);
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
+  // ADR 0035: Age Verification — birthdate + 18+ confirmation
+  const [birthdate, setBirthdate] = useState('');
+  const [confirm18, setConfirm18] = useState(false);
+  const [ageError, setAgeError] = useState('');
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [mode, setMode] = useState<Mode>('networking');
   const [permissionsGranted, setPermissionsGranted] = useState(true);
@@ -59,6 +64,8 @@ export const OnboardingScreen = () => {
 
   const canAdvance = (() => {
     if (step === 'name') return name.trim().length > 0;
+    // ADR 0035: birthdate step validation
+    if (step === 'birthdate') return birthdate.length >= 10 && confirm18;
     if (step === 'vibes') return vibes.length >= 1;
     if (step === 'phone') {
       if (phoneStep === 'input') return /^\+[1-9]\d{6,14}$/.test(phone.trim());
@@ -68,6 +75,33 @@ export const OnboardingScreen = () => {
   })();
 
   const advance = async () => {
+    // ADR 0035: verify age when advancing past birthdate step
+    if (step === 'birthdate') {
+      setAgeError('');
+      try {
+        // Client-side age check before calling server
+        const dob = new Date(birthdate);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+          age--;
+        }
+        if (age < 18) {
+          setAgeError('Alon is for users 18 and older.');
+          return;
+        }
+        await apiService.verifyAge(birthdate);
+      } catch (err: any) {
+        setAgeError(err?.message ?? 'Age verification failed');
+        return;
+      }
+      if (stepIndex < STEPS.length - 1) {
+        setStepIndex(stepIndex + 1);
+      }
+      return;
+    }
+
     if (step === 'phone') {
       // In phone verify sub-step, verify the OTP
       if (phoneStep === 'verify') {
@@ -84,6 +118,8 @@ export const OnboardingScreen = () => {
             vibes,
             mode,
             ghostMode: false,
+            // ADR 0035: age verified during birthdate step
+            ageVerified: true,
           });
         } catch (err: any) {
           setPhoneError(`Verify failed: ${err?.message ?? 'unknown'}`);
@@ -116,6 +152,8 @@ export const OnboardingScreen = () => {
         vibes,
         mode,
         ghostMode: false,
+        // ADR 0035: age verified during birthdate step
+        ageVerified: true,
       });
     }
   };
@@ -161,32 +199,63 @@ export const OnboardingScreen = () => {
             </View>
           )}
 
-          {step === 'name' && (
-            <View style={styles.section}>
-              <Text style={styles.h1}>what should we call you?</Text>
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                placeholder="your name"
-                placeholderTextColor={colors.textDim}
-                style={styles.input}
-                autoFocus
-              />
-              <TextInput
-                value={bio}
-                onChangeText={setBio}
-                placeholder="a short bio (optional)"
-                placeholderTextColor={colors.textDim}
-                style={styles.input}
-              />
-              <Text style={styles.hint}>
-                only your initials show up to others — full name only after a
-                mutual reveal.
-              </Text>
-            </View>
-          )}
+           {step === 'name' && (
+             <View style={styles.section}>
+               <Text style={styles.h1}>what should we call you?</Text>
+               <TextInput
+                 value={name}
+                 onChangeText={setName}
+                 placeholder="your name"
+                 placeholderTextColor={colors.textDim}
+                 style={styles.input}
+                 autoFocus
+               />
+               <TextInput
+                 value={bio}
+                 onChangeText={setBio}
+                 placeholder="a short bio (optional)"
+                 placeholderTextColor={colors.textDim}
+                 style={styles.input}
+               />
+               <Text style={styles.hint}>
+                 only your initials show up to others — full name only after a
+                 mutual reveal.
+               </Text>
+             </View>
+           )}
 
-          {step === 'vibes' && (
+           {step === 'birthdate' && (
+             <View style={styles.section}>
+               <Text style={styles.h1}>verify your age</Text>
+               <Text style={styles.p}>
+                 Alon is for users 18 and older. enter your date of birth.
+               </Text>
+               <TextInput
+                 value={birthdate}
+                 onChangeText={(text) => { setBirthdate(text); setAgeError(''); }}
+                 placeholder="YYYY-MM-DD"
+                 placeholderTextColor={colors.textDim}
+                 style={styles.input}
+                 autoFocus
+               />
+               <Text style={styles.hint}>
+                 example: 1995-06-15
+               </Text>
+               <Pressable
+                 onPress={() => { setConfirm18(!confirm18); setAgeError(''); }}
+                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}
+               >
+                 <View style={{
+                   width: 20, height: 20, borderRadius: 4, borderWidth: StyleSheet.hairlineWidth,
+                   borderColor: colors.borderWarm, backgroundColor: confirm18 ? colors.amber600 : 'transparent',
+                 }} />
+                 <Text style={styles.p}>I confirm I am 18 years of age or older</Text>
+               </Pressable>
+               {ageError ? <Text style={styles.error}>{ageError}</Text> : null}
+             </View>
+           )}
+
+           {step === 'vibes' && (
             <View style={styles.section}>
               <Text style={styles.h1}>what are your vibes?</Text>
               <Text style={styles.p}>pick at least one. shared vibes = stronger buzz.</Text>

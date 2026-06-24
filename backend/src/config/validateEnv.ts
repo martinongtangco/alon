@@ -27,10 +27,6 @@ export function validateEnv(): void {
     throw new Error(`[startup] Missing required env vars: ${missing.join(', ')}`);
   }
 
-  if (process.env.BYPASS_OTP === 'true' && process.env.NODE_ENV === 'production') {
-    throw new Error('[startup] BYPASS_OTP=true is not allowed in production');
-  }
-
   const weak = REQUIRED.filter((k) => WEAK_VALUES.includes(process.env[k] ?? ''));
   if (weak.length && process.env.NODE_ENV === 'production') {
     throw new Error(`[startup] Weak/default secret values detected in production for: ${weak.join(', ')}`);

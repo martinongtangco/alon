@@ -27,6 +27,8 @@ export interface UserProfile {
   vibes: Vibe[];
   mode: Mode;
   ghostMode: boolean;
+  // ADR 0035: Age Verification — true after DOB self-declaration (or third-party)
+  ageVerified: boolean;
 }
 
 export interface NearbyPerson {

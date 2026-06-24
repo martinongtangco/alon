@@ -58,6 +58,8 @@ const defaultProfile: UserProfile = {
   vibes: ['tech', 'music', 'food'],
   mode: 'networking',
   ghostMode: false,
+  // ADR 0035: defaults true for existing users; new users set during onboarding
+  ageVerified: false,
 };
 
 export const useAppStore = create<AppState>()(
