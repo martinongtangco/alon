@@ -1,4 +1,5 @@
-import { Haptics, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
+import * as Haptics from 'expo-haptics';
+import { ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
 export type HapticPattern =
   | 'faint_pulse'

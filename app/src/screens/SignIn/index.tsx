@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   hint: { fontSize: 11, color: colors.textMuted },
   error: {
     fontSize: 11,
-    color: colors.red500,
+    color: colors.rust600,
   },
   input: {
     borderWidth: StyleSheet.hairlineWidth,

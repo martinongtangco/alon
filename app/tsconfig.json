@@ -1,7 +1,10 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    // Resolve platform-split modules (foo.ios.ts / foo.android.ts) for type-checking.
+    // Both variants are still checked because "include" covers every file.
+    "moduleSuffixes": [".ios", ""]
   },
   "include": ["**/*.ts", "**/*.tsx"]
 }

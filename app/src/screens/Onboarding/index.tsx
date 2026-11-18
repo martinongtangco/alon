@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 11,
-    color: colors.red500,
+    color: colors.rust600,
   },
   otpInput: {
     borderWidth: StyleSheet.hairlineWidth,

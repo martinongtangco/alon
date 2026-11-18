@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   },
   ageGateHint: {
     fontSize: 11,
-    color: colors.amber800,
+    color: colors.amber900,
     fontStyle: 'italic',
     marginBottom: space.s2,
   },
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     padding: space.s3,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.amber300,
+    borderColor: colors.amber600,
     gap: space.s2,
   },
   phoneBannerTitle: {
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   },
   phoneBannerSub: {
     fontSize: 11,
-    color: colors.amber800,
+    color: colors.amber900,
     marginTop: 2,
   },
   phoneBannerDismiss: {
@@ -235,6 +235,6 @@ const styles = StyleSheet.create({
   },
   phoneBannerDismissText: {
     fontSize: 14,
-    color: colors.amber700,
+    color: colors.amber900,
   },
 });
