@@ -18,9 +18,5 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
-    rules: {
-      // TODO: back to 'error' once API response types are modelled (15 sites in src/pages).
-      '@typescript-eslint/no-explicit-any': 'warn',
-    },
   },
 ])

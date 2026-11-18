@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
+import type { Flag, Paginated } from '../lib/types';
 import { ShieldAlert, Eye, ArrowUpCircle, CheckCircle, XCircle } from 'lucide-react';
 
 export const Flags = () => {
@@ -9,9 +10,9 @@ export const Flags = () => {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('Open');
   const [severityFilter, setSeverityFilter] = useState('All');
-  const [viewFlag, setViewFlag] = useState<any>(null);
+  const [viewFlag, setViewFlag] = useState<Flag | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<Paginated<Flag>>({
     queryKey: ['flags', page, statusFilter, severityFilter],
     queryFn: () => {
       const params = new URLSearchParams({
@@ -81,7 +82,7 @@ export const Flags = () => {
         ) : data?.data?.length === 0 ? (
           <div className="col-span-full p-8 text-center text-gray-500">No flags matching criteria</div>
         ) : (
-          data?.data.map((flag: any) => (
+          data?.data.map((flag) => (
             <div key={flag.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg flex flex-col">
               <div className="flex justify-between items-start mb-3">
                 <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${
