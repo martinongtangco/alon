@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
+import type { Business, Paginated } from '../lib/types';
 import { Search, Store, ShieldAlert, CheckCircle, XCircle, AlertTriangle, Eye, RotateCcw } from 'lucide-react';
 export const Businesses = () => {
   const queryClient = useQueryClient();
@@ -10,12 +11,12 @@ export const Businesses = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [planFilter, setPlanFilter] = useState('All');
 
-  const [modal, setModal] = useState<{ isOpen: boolean; type: 'approve' | 'suspend'; business: any } | null>(null);
+  const [modal, setModal] = useState<{ isOpen: boolean; type: 'approve' | 'suspend'; business: Business } | null>(null);
   const [modalNotes, setModalNotes] = useState('');
   const [modalPlan, setModalPlan] = useState('');
-  const [viewBiz, setViewBiz] = useState<any>(null);
+  const [viewBiz, setViewBiz] = useState<Business | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<Paginated<Business>>({
     queryKey: ['businesses', page, search, statusFilter, planFilter],
     queryFn: () => {
       const params = new URLSearchParams({ page: page.toString(), limit: '15' });
@@ -28,7 +29,7 @@ export const Businesses = () => {
   });
 
   const actionMutation = useMutation({
-    mutationFn: ({ id, endpoint, payload }: any) => apiFetch(`/businesses/${id}/${endpoint}`, { method: 'POST', body: JSON.stringify(payload) }),
+    mutationFn: ({ id, endpoint, payload }: { id: string; endpoint: 'approve' | 'suspend' | 'reinstate'; payload?: Record<string, unknown> }) => apiFetch(`/businesses/${id}/${endpoint}`, { method: 'POST', body: JSON.stringify(payload) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['businesses'] });
       setModal(null);
@@ -116,7 +117,7 @@ export const Businesses = () => {
               ) : data?.data?.length === 0 ? (
                 <tr><td colSpan={6} className="p-8 text-center text-gray-500">No businesses found matching filters</td></tr>
               ) : (
-                data?.data.map((biz: any) => (
+                data?.data.map((biz) => (
                   <tr key={biz.id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center space-x-3">

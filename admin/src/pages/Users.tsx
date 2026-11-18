@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
+import type { AppUser, Paginated } from '../lib/types';
 import { Search, ShieldAlert, Ban, AlertTriangle, Eye, User as UserIcon, XCircle, RotateCcw } from 'lucide-react';
 import { useAuth } from '../contexts/useAuth';
 
@@ -13,10 +14,10 @@ export const Users = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [planFilter, setPlanFilter] = useState('All');
 
-  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; action: 'suspend' | 'ban' | 'reinstate'; user: any } | null>(null);
-  const [viewUser, setViewUser] = useState<any>(null);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; action: 'suspend' | 'ban' | 'reinstate'; user: AppUser } | null>(null);
+  const [viewUser, setViewUser] = useState<AppUser | null>(null);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<Paginated<AppUser>>({
     queryKey: ['users', page, search, statusFilter, planFilter],
     queryFn: () => {
       const params = new URLSearchParams({
@@ -45,7 +46,7 @@ export const Users = () => {
     }
   });
 
-  const handleAction = (user: any, action: 'suspend' | 'ban' | 'reinstate') => {
+  const handleAction = (user: AppUser, action: 'suspend' | 'ban' | 'reinstate') => {
     if (action === 'reinstate') {
       actionMutation.mutate({ id: user.id, action: 'reinstate' });
     } else {
@@ -124,7 +125,7 @@ export const Users = () => {
               ) : data?.data?.length === 0 ? (
                 <tr><td colSpan={7} className="p-8 text-center text-gray-500">No users found matching filters</td></tr>
               ) : (
-                data?.data.map((user: any) => (
+                data?.data.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center space-x-3">

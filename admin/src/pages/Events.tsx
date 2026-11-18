@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
+import type { AppEvent, EventStatus, Paginated } from '../lib/types';
 import { Star, StarOff, CheckCircle, XCircle, AlertTriangle, Plus, X } from 'lucide-react';
 import { useAuth } from '../contexts/useAuth';
 
@@ -24,7 +25,7 @@ export const Events = () => {
     is_community: false,
   });
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<Paginated<AppEvent>>({
     queryKey: ['events', page, statusFilter],
     queryFn: () => {
       const params = new URLSearchParams({ page: page.toString(), limit: '15' });
@@ -51,7 +52,7 @@ export const Events = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiFetch('/events', {
+    mutationFn: (data: Omit<typeof createForm, 'vibe_tags'> & { vibe_tags: string[]; status: EventStatus }) => apiFetch('/events', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
@@ -130,7 +131,7 @@ export const Events = () => {
             ) : data?.data?.length === 0 ? (
               <tr><td colSpan={5} className="p-8 text-center text-gray-500">No events found</td></tr>
             ) : (
-              data?.data.map((event: any) => (
+              data?.data.map((event) => (
                 <tr key={event.id} className="hover:bg-gray-800/30 transition-colors">
                   <td className="p-4">
                     <div className="flex items-center space-x-2">

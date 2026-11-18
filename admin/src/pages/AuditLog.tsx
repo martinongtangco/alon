@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
+import type { AuditEntry, Paginated } from '../lib/types';
 import { Shield } from 'lucide-react';
 
 const ACTION_TYPES = [
@@ -34,7 +35,7 @@ export const AuditLog = () => {
   const [actionType, setActionType] = useState('All');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<Paginated<AuditEntry>>({
     queryKey: ['audit', page, actionType],
     queryFn: () => {
       const params = new URLSearchParams({ page: page.toString(), limit: PAGE_SIZE.toString() });
@@ -92,7 +93,7 @@ export const AuditLog = () => {
             ) : data?.data?.length === 0 ? (
               <tr><td colSpan={6} className="p-8 text-center text-gray-500">No audit entries found</td></tr>
             ) : (
-              data?.data.map((entry: any) => (
+              data?.data.map((entry) => (
                 <Fragment key={entry.id}>
                   <tr className="hover:bg-gray-800/30 transition-colors">
                     <td className="p-4 font-mono text-xs text-gray-400 whitespace-nowrap">
@@ -109,7 +110,7 @@ export const AuditLog = () => {
                     </td>
                     <td className="p-4 font-mono text-xs text-gray-600">{entry.ip_address || '—'}</td>
                     <td className="p-4 text-right">
-                      {(entry.before_state || entry.after_state) && (
+                      {(!!entry.before_state || !!entry.after_state) && (
                         <button
                           type="button"
                           onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
@@ -124,7 +125,7 @@ export const AuditLog = () => {
                     <tr className="bg-gray-950/60">
                       <td colSpan={6} className="px-4 pb-4 pt-2">
                         <div className="grid grid-cols-2 gap-4">
-                          {entry.before_state && (
+                          {!!entry.before_state && (
                             <div>
                               <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-medium">Before</p>
                               <pre className="text-xs text-gray-400 bg-gray-900 border border-gray-800 rounded-lg p-3 overflow-auto max-h-40">
@@ -132,7 +133,7 @@ export const AuditLog = () => {
                               </pre>
                             </div>
                           )}
-                          {entry.after_state && (
+                          {!!entry.after_state && (
                             <div>
                               <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-medium">After</p>
                               <pre className="text-xs text-green-400/80 bg-gray-900 border border-gray-800 rounded-lg p-3 overflow-auto max-h-40">

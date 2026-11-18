@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
+import type { Paginated, Promo, PromoStatus } from '../lib/types';
+
+// null means no limit at all; >= 10000 is effectively unlimited. Both are a fraud indicator.
+const isUnlimited = (promo: Promo) => promo.redemption_limit === null || promo.redemption_limit >= 10000;
 import { Search, AlertTriangle, Eye, PauseCircle, Trash2, Store, Plus, X } from 'lucide-react';
 import { useAuth } from '../contexts/useAuth';
 
@@ -22,7 +26,7 @@ export const Promos = () => {
     expires_at: '',
   });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<Paginated<Promo>>({
     queryKey: ['promos', page, search, statusFilter],
     queryFn: () => {
       const params = new URLSearchParams({ page: page.toString(), limit: '15' });
@@ -47,7 +51,7 @@ export const Promos = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiFetch('/promos', {
+    mutationFn: (data: typeof createForm & { business_id: string | null; status: PromoStatus }) => apiFetch('/promos', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
@@ -129,7 +133,7 @@ export const Promos = () => {
               ) : data?.data?.length === 0 ? (
                 <tr><td colSpan={6} className="p-8 text-center text-gray-500">No promos found matching filters</td></tr>
               ) : (
-                data?.data.map((promo: any) => (
+                data?.data.map((promo) => (
                   <tr key={promo.id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="p-4">
                       <div className="font-medium text-gray-200">{promo.headline}</div>
@@ -145,10 +149,10 @@ export const Promos = () => {
                       <span className="font-mono text-gray-300">{promo.broadcast_radius}m</span>
                     </td>
                     <td className="p-4">
-                      <span className={`font-mono ${promo.redemption_limit >= 10000 ? 'text-red-400 font-bold' : 'text-gray-300'}`}>
-                        {promo.redemption_count} / {promo.redemption_limit >= 10000 ? '∞' : promo.redemption_limit}
+                      <span className={`font-mono ${isUnlimited(promo) ? 'text-red-400 font-bold' : 'text-gray-300'}`}>
+                        {promo.redemption_count} / {isUnlimited(promo) ? '∞' : promo.redemption_limit}
                       </span>
-                      {promo.redemption_limit >= 10000 && <AlertTriangle className="w-3 h-3 inline-block ml-2 text-red-500" />}
+                      {isUnlimited(promo) && <AlertTriangle className="w-3 h-3 inline-block ml-2 text-red-500" />}
                     </td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded text-xs flex w-fit items-center ${
