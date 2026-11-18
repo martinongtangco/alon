@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
-import { UserPlus, ShieldCheck, XCircle, AlertTriangle, Copy, Check } from 'lucide-react';
+import { UserPlus, ShieldCheck, AlertTriangle, Copy, Check } from 'lucide-react';
 
 type AdminUser = {
   id: string;
