@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 import { UserPlus, ShieldCheck, AlertTriangle, Copy, Check } from 'lucide-react';
 
 type AdminUser = {
@@ -186,7 +186,7 @@ export const AdminUsers = () => {
             </div>
 
             {createMutation.isError && (
-              <p className="mt-3 text-xs text-red-400">{(createMutation.error as any)?.message || 'Failed to create admin'}</p>
+              <p className="mt-3 text-xs text-red-400">{createMutation.error?.message || 'Failed to create admin'}</p>
             )}
 
             <div className="flex space-x-3 justify-end mt-6">

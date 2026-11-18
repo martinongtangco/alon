@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAccessToken } from '../lib/api';
 import { Activity, Users, Radio, Zap, Server } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface ActivityData {
   metrics: {
@@ -24,8 +25,27 @@ interface LogEntry {
   level: string;
   type: string;
   message: string;
-  metadata: any;
+  metadata: unknown;
 }
+
+interface MetricCardProps {
+  title: string;
+  value?: number;
+  icon: LucideIcon;
+  colorClass: string;
+}
+
+const MetricCard = ({ title, value, icon: Icon, colorClass }: MetricCardProps) => (
+  <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl flex items-center justify-between">
+    <div>
+      <h3 className="text-gray-400 text-sm font-medium mb-1">{title}</h3>
+      <p className={`text-3xl font-mono font-bold ${colorClass}`}>{value?.toLocaleString() || '--'}</p>
+    </div>
+    <div className={`p-3 rounded-lg bg-gray-950 border border-gray-800 ${colorClass}`}>
+      <Icon size={24} />
+    </div>
+  </div>
+);
 
 export const LiveActivity = () => {
   const [data, setData] = useState<ActivityData | null>(null);
@@ -57,18 +77,6 @@ export const LiveActivity = () => {
       logsSource.close();
     };
   }, []);
-
-  const MetricCard = ({ title, value, icon: Icon, colorClass }: any) => (
-    <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl flex items-center justify-between">
-      <div>
-        <h3 className="text-gray-400 text-sm font-medium mb-1">{title}</h3>
-        <p className={`text-3xl font-mono font-bold ${colorClass}`}>{value?.toLocaleString() || '--'}</p>
-      </div>
-      <div className={`p-3 rounded-lg bg-gray-950 border border-gray-800 ${colorClass}`}>
-        <Icon size={24} />
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">

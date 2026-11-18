@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
 import { Search, ShieldAlert, Ban, AlertTriangle, Eye, User as UserIcon, XCircle, RotateCcw } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 
 export const Users = () => {
   const { role } = useAuth();

@@ -5,7 +5,7 @@ import { AlertTriangle } from 'lucide-react';
 
 interface ConfigItem {
   key: string;
-  value: any;
+  value: unknown;
   tier: string;
   updated_at: string;
 }
