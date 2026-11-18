@@ -11,7 +11,7 @@ const SERVICE_UUID = 'f7a5c2d9-9d4e-11ef-b864-0242ac120002';
  */
 function waitForPoweredOn(manager: BleManager): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    const subscription = manager.on('StateChange', (state: string) => {
+    const subscription = manager.onStateChange((state) => {
       if (state === 'PoweredOn') {
         subscription.remove();
         resolve();
@@ -19,7 +19,7 @@ function waitForPoweredOn(manager: BleManager): Promise<void> {
         subscription.remove();
         reject(new Error(`BLE adapter in state: ${state}`));
       }
-    });
+    }, true);
 
     // Timeout after 5 seconds — fall back to scanning anyway
     setTimeout(() => {

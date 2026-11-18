@@ -37,7 +37,7 @@ class BleServiceImpl implements BleService {
     // Start BLE peripheral advertising
     const token = await getCurrentToken();
     await BLEAdvertiser.setCompanyId(MANUFACTURER_ID);
-    await BLEAdvertiser.broadcast(SERVICE_UUID, tokenToBytes(token), {
+    await BLEAdvertiser.broadcast(SERVICE_UUID, Array.from(tokenToBytes(token)), {
       advertiseMode: BLEAdvertiser.ADVERTISE_MODE_LOW_LATENCY,
       txPowerLevel: BLEAdvertiser.ADVERTISE_TX_POWER_MEDIUM,
       connectable: false,
@@ -105,7 +105,7 @@ class BleServiceImpl implements BleService {
   async updateToken(token: string): Promise<void> {
     if (!BLEAdvertiser) return;
     await BLEAdvertiser.stopBroadcast();
-    await BLEAdvertiser.broadcast(SERVICE_UUID, tokenToBytes(token), {
+    await BLEAdvertiser.broadcast(SERVICE_UUID, Array.from(tokenToBytes(token)), {
       advertiseMode: BLEAdvertiser.ADVERTISE_MODE_LOW_LATENCY,
       txPowerLevel: BLEAdvertiser.ADVERTISE_TX_POWER_MEDIUM,
       connectable: false,

@@ -8,6 +8,7 @@ export type TabParamList = {
 };
 
 export type RootStackParamList = {
+  SignIn: { onSignIn?: () => void } | undefined;
   Onboarding: undefined;
   Main: NavigatorScreenParams<TabParamList>;
   Visualizer: undefined;
