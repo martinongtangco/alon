@@ -6,6 +6,14 @@ export const setAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => accessToken;
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const headers = new Headers(options.headers || {});
   
@@ -25,9 +33,7 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
 
   if (response.status === 401) {
     // We let the AuthContext handle 401s (e.g., by attempting a refresh or logging out)
-    const err = new Error('Unauthorized');
-    (err as any).status = 401;
-    throw err;
+    throw new ApiError('Unauthorized', 401);
   }
 
   if (!response.ok) {
@@ -35,7 +41,7 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     try {
       const errData = await response.json();
       errMessage = errData.error || errMessage;
-    } catch (e) {
+    } catch {
       // Not JSON
     }
     throw new Error(errMessage);

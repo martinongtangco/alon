@@ -1,19 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { apiFetch, setAccessToken } from '../lib/api';
-
-interface AuthContextType {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  role: string | null;
-  loginStep: 1 | 2;
-  tempToken: string | null;
-  loginCredentials: (email: string, password: string) => Promise<void>;
-  loginTotp: (code: string) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from './auth-context';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -32,7 +20,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAccessToken(data.token);
         setRole(data.role);
         setIsAuthenticated(true);
-      } catch (error) {
+      } catch {
         setAccessToken(null);
         setIsAuthenticated(false);
       } finally {
@@ -52,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const data = await apiFetch('/auth/refresh', { method: 'POST' });
         setAccessToken(data.token);
         setRole(data.role);
-      } catch (error) {
+      } catch {
         // Refresh failed (e.g. cookie expired), log them out
         setAccessToken(null);
         setIsAuthenticated(false);
@@ -98,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       await apiFetch('/auth/logout', { method: 'POST' });
-    } catch (e) {
+    } catch {
       // Ignore errors on logout
     } finally {
       setAccessToken(null);
@@ -123,12 +111,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

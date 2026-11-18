@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 import { ShieldAlert } from 'lucide-react';
 
 export const Login = () => {
@@ -17,8 +17,8 @@ export const Login = () => {
     setIsSubmitting(true);
     try {
       await loginCredentials(email, password);
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+    } catch (err) {
+      setError((err instanceof Error && err.message) || 'Login failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -30,8 +30,8 @@ export const Login = () => {
     setIsSubmitting(true);
     try {
       await loginTotp(code);
-    } catch (err: any) {
-      setError(err.message || 'Invalid code');
+    } catch (err) {
+      setError((err instanceof Error && err.message) || 'Invalid code');
     } finally {
       setIsSubmitting(false);
     }

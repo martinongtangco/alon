@@ -2,7 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } f
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { Activity, Users, ShieldAlert, Store, Tag, Calendar, DollarSign, Settings, Server, LogOut, Radio, BookOpen, UserCog } from 'lucide-react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './contexts/useAuth';
 import { Login } from './pages/Login';
 import { LiveActivity } from './pages/LiveActivity';
 import { Users as UsersPage } from './pages/Users';
@@ -22,7 +23,7 @@ const queryClient = new QueryClient();
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { logout, role } = useAuth();
   const location = useLocation();
-  const [status, setStatus] = useState<any>(null);
+  const [status, setStatus] = useState<Record<string, string> | null>(null);
 
   useEffect(() => {
     const token = getAccessToken();
